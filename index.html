@@ -7,19 +7,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: 'Noto Sans SC', sans-serif;
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             color: white;
-            overflow-x: hidden;
+            overflow: hidden;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
             position: fixed;
             width: 100%;
             height: 100%;
+            margin: 0;
+            padding: 0;
         }
         
-        /* 统一卡片颜色 - 关键修复：所有身份使用相同色系，防止余光偷瞄 */
         .uniform-card {
             background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%) !important;
         }
@@ -27,6 +29,8 @@
         .card-container {
             perspective: 1000px;
             transform-style: preserve-3d;
+            width: 100%;
+            height: 100%;
         }
         
         .game-card {
@@ -52,23 +56,21 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            padding: 2rem;
         }
         
-        /* 正面：统一深色背景 */
         .card-front {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border: 2px solid rgba(255,255,255,0.1);
             z-index: 2;
         }
         
-        /* 背面：统一蓝紫色，不区分身份 */
         .card-back {
             background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
             transform: rotateY(180deg);
             border: 2px solid rgba(255,255,255,0.2);
         }
         
-        /* 隐私遮罩 - 最强防窥 */
         .privacy-shield {
             position: fixed;
             inset: 0;
@@ -79,13 +81,39 @@
             align-items: center;
             justify-content: center;
             transition: opacity 0.3s;
+            cursor: pointer;
         }
         
-        /* 惩罚转盘 */
+        .privacy-shield.hidden {
+            display: none;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .btn-press:active {
+            transform: scale(0.95);
+            opacity: 0.9;
+        }
+        
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
         .roulette-container {
             position: relative;
-            width: 300px;
-            height: 300px;
+            width: 280px;
+            height: 280px;
             margin: 0 auto;
         }
         
@@ -109,7 +137,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: bold;
             text-align: center;
             padding-right: 20%;
@@ -117,33 +145,26 @@
             box-sizing: border-box;
             color: white;
             text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 2px;
         }
         
         .roulette-pointer {
             position: absolute;
-            top: -10px;
+            top: -15px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-top: 30px solid #ef4444;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #ef4444;
             z-index: 10;
             filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
         }
         
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-        
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
         .speech-bubble {
-            position: relative;
             animation: slideIn 0.3s ease-out;
         }
         @keyframes slideIn {
@@ -151,33 +172,30 @@
             to { opacity: 1; transform: translateX(0); }
         }
         
-        .animate-float {
-            animation: float 3s ease-in-out infinite;
+        .screen {
+            display: none;
+            height: 100%;
+            overflow-y: auto;
         }
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        .btn-press:active {
-            transform: scale(0.95);
+        .screen.active {
+            display: block;
         }
     </style>
 </head>
-<body class="antialiased overflow-hidden">
+<body class="antialiased">
 
 <div id="app" class="h-full flex flex-col relative bg-slate-900">
     
     <!-- 隐私遮罩层 -->
     <div id="privacyShield" class="privacy-shield" onclick="hidePrivacyShield()">
         <div class="text-6xl mb-4 animate-pulse">👆</div>
-        <div class="text-2xl font-bold mb-2"> PRIVATE MODE</div>
+        <div class="text-2xl font-bold mb-2">PRIVATE MODE</div>
         <div class="text-gray-400 text-sm mb-8">点击确认只有你一人观看</div>
         <div class="text-xs text-gray-600 bg-gray-900 px-4 py-2 rounded-full">防窥屏保护中</div>
     </div>
 
     <!-- 顶部栏 -->
-    <header class="glass-panel sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-white/10 shrink-0">
+    <header class="glass-panel sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-white/10 shrink-0 h-16">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xl shadow-lg">
                 🎭
@@ -188,7 +206,7 @@
             </div>
         </div>
         <div class="flex gap-2">
-            <button onclick="toggleSound()" id="soundBtn" class="p-2 rounded-lg hover:bg-white/10 text-gray-400 transition-colors">
+            <button onclick="toggleSound()" id="soundBtn" class="p-2 rounded-lg hover:bg-white/10 text-gray-400 transition-colors text-lg">
                 🔊
             </button>
             <button onclick="showMenu()" class="p-2 rounded-lg hover:bg-white/10 transition-colors">
@@ -197,388 +215,405 @@
         </div>
     </header>
 
-    <main id="mainContent" class="flex-1 overflow-y-auto hide-scrollbar p-4 pb-24 relative">
+    <main id="mainContent" class="flex-1 overflow-hidden relative">
         
         <!-- 首页 -->
-        <div id="homeScreen" class="space-y-6 fade-in h-full flex flex-col justify-center max-w-md mx-auto">
-            <div class="text-center space-y-4 mb-8">
-                <div class="text-7xl mb-4 animate-float inline-block">🕵️</div>
-                <h2 class="text-4xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">谁是卧底</h2>
-                <p class="text-gray-400 text-sm">防窥屏 · 惩罚转盘 · 词库系统</p>
-            </div>
+        <div id="homeScreen" class="screen active h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
+            <div class="max-w-md mx-auto h-full flex flex-col justify-center space-y-6">
+                <div class="text-center space-y-4 mb-8">
+                    <div class="text-7xl mb-4 animate-float inline-block">🕵️</div>
+                    <h2 class="text-4xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">谁是卧底</h2>
+                    <p class="text-gray-400 text-sm">防窥屏 · 惩罚转盘 · 智能词库</p>
+                </div>
 
-            <div class="space-y-3">
-                <button onclick="showSetup()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 font-bold text-lg shadow-xl shadow-blue-500/25 btn-press transition-all flex items-center justify-center gap-2">
-                    <span>🚀</span> 开始游戏
-                </button>
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="showWordBank()" class="py-3 rounded-2xl glass-panel hover:bg-white/10 font-medium text-gray-300 transition-all btn-press flex items-center justify-center gap-2">
-                        <span>📚</span> 词库
+                <div class="space-y-3">
+                    <button onclick="showSetup()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 font-bold text-lg shadow-xl shadow-blue-500/25 btn-press transition-all flex items-center justify-center gap-2">
+                        <span>🚀</span> 开始游戏
                     </button>
-                    <button onclick="showPunishmentWheel()" class="py-3 rounded-2xl glass-panel hover:bg-white/10 font-medium text-gray-300 transition-all btn-press flex items-center justify-center gap-2">
-                        <span>🎯</span> 惩罚
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="showWordBank()" class="py-3 rounded-2xl glass-panel hover:bg-white/10 font-medium text-gray-300 transition-all btn-press flex items-center justify-center gap-2">
+                            <span>📚</span> 词库
+                        </button>
+                        <button onclick="showPunishmentWheel()" class="py-3 rounded-2xl glass-panel hover:bg-white/10 font-medium text-gray-300 transition-all btn-press flex items-center justify-center gap-2">
+                            <span>🎯</span> 惩罚
+                        </button>
+                    </div>
+                    <button onclick="showHistory()" class="w-full py-3 rounded-2xl glass-panel hover:bg-white/10 font-medium text-gray-300 transition-all btn-press flex items-center justify-center gap-2">
+                        <span>📊</span> 历史记录
                     </button>
                 </div>
-                <button onclick="showHistory()" class="w-full py-3 rounded-2xl glass-panel hover:bg-white/10 font-medium text-gray-300 transition-all btn-press flex items-center justify-center gap-2">
-                    <span>📊</span> 历史记录
-                </button>
-            </div>
 
-            <div class="mt-8 grid grid-cols-3 gap-3 text-center">
-                <div class="glass-panel rounded-xl p-3">
-                    <div class="text-2xl font-bold text-blue-400" id="totalGames">0</div>
-                    <div class="text-xs text-gray-500">总场次</div>
-                </div>
-                <div class="glass-panel rounded-xl p-3">
-                    <div class="text-2xl font-bold text-purple-400" id="wordCount">47</div>
-                    <div class="text-xs text-gray-500">词库数量</div>
-                </div>
-                <div class="glass-panel rounded-xl p-3">
-                    <div class="text-2xl font-bold text-pink-400" id="punishCount">20</div>
-                    <div class="text-xs text-gray-500">惩罚项目</div>
+                <div class="grid grid-cols-3 gap-3 text-center mt-8">
+                    <div class="glass-panel rounded-xl p-3">
+                        <div class="text-2xl font-bold text-blue-400" id="totalGames">0</div>
+                        <div class="text-xs text-gray-500">总场次</div>
+                    </div>
+                    <div class="glass-panel rounded-xl p-3">
+                        <div class="text-2xl font-bold text-purple-400" id="wordCount">47</div>
+                        <div class="text-xs text-gray-500">词库数量</div>
+                    </div>
+                    <div class="glass-panel rounded-xl p-3">
+                        <div class="text-2xl font-bold text-pink-400" id="punishCount">20</div>
+                        <div class="text-xs text-gray-500">惩罚项目</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- 设置页面 -->
-        <div id="setupScreen" class="hidden space-y-6 max-w-md mx-auto py-4">
-            <h2 class="text-2xl font-bold text-center mb-6">游戏设置</h2>
-            
-            <div class="glass-panel rounded-2xl p-5 space-y-6">
-                <div>
-                    <label class="flex justify-between text-sm font-medium mb-2 text-gray-300">
-                        <span>玩家人数</span>
-                        <span class="text-blue-400 font-bold" id="playerCountDisplay">6人</span>
-                    </label>
-                    <input type="range" id="playerCount" min="4" max="16" value="6" 
-                           class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                           oninput="updateSetup()">
+        <div id="setupScreen" class="screen h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
+            <div class="max-w-md mx-auto space-y-6 py-4">
+                <div class="flex items-center gap-4 mb-6">
+                    <button onclick="showScreen('homeScreen')" class="p-2 rounded-lg hover:bg-white/10">←</button>
+                    <h2 class="text-2xl font-bold">游戏设置</h2>
                 </div>
-
-                <div>
-                    <label class="flex justify-between text-sm font-medium mb-2 text-gray-300">
-                        <span>卧底数量</span>
-                        <span class="text-purple-400 font-bold" id="undercoverCountDisplay">1人</span>
-                    </label>
-                    <input type="range" id="undercoverCount" min="1" max="4" value="1" 
-                           class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
-                           oninput="updateSetup()">
-                </div>
-
-                <div class="flex items-center justify-between py-2 border-t border-white/10">
+                
+                <div class="glass-panel rounded-2xl p-5 space-y-6">
                     <div>
-                        <div class="font-medium text-gray-200">启用白板</div>
-                        <div class="text-xs text-gray-500">白板猜对双词即胜利</div>
+                        <label class="flex justify-between text-sm font-medium mb-2 text-gray-300">
+                            <span>玩家人数</span>
+                            <span class="text-blue-400 font-bold" id="playerCountDisplay">6人</span>
+                        </label>
+                        <input type="range" id="playerCount" min="4" max="16" value="6" 
+                               class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                               oninput="updateSetup()">
                     </div>
-                    <button id="blankToggle" onclick="toggleBlank()" class="w-14 h-8 rounded-full bg-gray-700 relative transition-colors duration-300">
-                        <div class="w-6 h-6 bg-white rounded-full absolute top-1 left-1 transition-transform duration-300 shadow-md"></div>
-                    </button>
-                </div>
 
-                <div class="flex items-center justify-between py-2 border-t border-white/10">
                     <div>
-                        <div class="font-medium text-gray-200">发言计时</div>
-                        <div class="text-xs text-gray-500">每人限时60秒</div>
+                        <label class="flex justify-between text-sm font-medium mb-2 text-gray-300">
+                            <span>卧底数量</span>
+                            <span class="text-purple-400 font-bold" id="undercoverCountDisplay">1人</span>
+                        </label>
+                        <input type="range" id="undercoverCount" min="1" max="4" value="1" 
+                               class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                               oninput="updateSetup()">
                     </div>
-                    <button id="timerToggle" onclick="toggleTimer()" class="w-14 h-8 rounded-full bg-blue-600 relative transition-colors duration-300">
-                        <div class="w-6 h-6 bg-white rounded-full absolute top-1 left-1 transition-transform duration-300 shadow-md transform translate-x-6"></div>
-                    </button>
+
+                    <div class="flex items-center justify-between py-2 border-t border-white/10">
+                        <div>
+                            <div class="font-medium text-gray-200">启用白板</div>
+                            <div class="text-xs text-gray-500">白板猜对双词即获胜</div>
+                        </div>
+                        <button id="blankToggle" onclick="toggleBlank()" class="w-14 h-8 rounded-full bg-gray-700 relative transition-colors duration-300">
+                            <div class="w-6 h-6 bg-white rounded-full absolute top-1 left-1 transition-transform duration-300 shadow-md"></div>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between py-2 border-t border-white/10">
+                        <div>
+                            <div class="font-medium text-gray-200">发言计时</div>
+                            <div class="text-xs text-gray-500">每人限时60秒</div>
+                        </div>
+                        <button id="timerToggle" onclick="toggleTimer()" class="w-14 h-8 rounded-full bg-blue-600 relative transition-colors duration-300">
+                            <div class="w-6 h-6 bg-white rounded-full absolute top-1 left-1 transition-transform duration-300 shadow-md transform translate-x-6"></div>
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div class="glass-panel rounded-2xl p-4">
-                <h3 class="font-bold mb-3 text-sm text-gray-300">角色分配预览</h3>
-                <div class="flex gap-2 flex-wrap justify-center" id="rolePreview"></div>
-                <div class="text-center text-xs text-gray-500 mt-2" id="roleSummary"></div>
-            </div>
+                <div class="glass-panel rounded-2xl p-4">
+                    <h3 class="font-bold mb-3 text-sm text-gray-300">角色分配预览</h3>
+                    <div class="flex gap-2 flex-wrap justify-center" id="rolePreview"></div>
+                    <div class="text-center text-xs text-gray-500 mt-2" id="roleSummary">5平民 vs 1卧底</div>
+                </div>
 
-            <button onclick="startDealing()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 font-bold text-lg shadow-xl btn-press transition-all">
-                开始发牌 🎲
-            </button>
+                <!-- 关键修复：onclick调用正确的函数名 -->
+                <button onclick="startDealing()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 font-bold text-lg shadow-xl btn-press transition-all flex items-center justify-center gap-2">
+                    <span>🎲</span> 开始发牌
+                </button>
+            </div>
         </div>
 
-        <!-- 发牌页面 - 核心修复区域 -->
-        <div id="dealingScreen" class="hidden h-full flex flex-col max-w-md mx-auto py-4">
-            <div class="text-center mb-6">
-                <div class="text-sm text-gray-400 mb-1">当前玩家</div>
-                <div class="text-3xl font-black text-white" id="currentPlayerName">玩家 1</div>
-                <div class="text-xs text-gray-500 mt-2">点击卡片 → 查看 → 翻转传递</div>
-            </div>
+        <!-- 发牌页面 -->
+        <div id="dealingScreen" class="screen h-full p-4 pb-24 overflow-hidden flex flex-col">
+            <div class="max-w-md mx-auto w-full h-full flex flex-col">
+                <div class="text-center mb-4 shrink-0">
+                    <div class="text-sm text-gray-400 mb-1">当前玩家</div>
+                    <div class="text-3xl font-black text-white" id="currentPlayerName">玩家 1</div>
+                    <div class="text-xs text-gray-500 mt-1">点击卡片 → 查看 → 确认传递</div>
+                </div>
 
-            <div class="flex-1 flex items-center justify-center min-h-[400px] px-4">
-                <div class="w-full aspect-[3/4] max-w-sm relative card-container">
-                    <div id="identityCard" class="game-card w-full h-full cursor-pointer" onclick="flipCard(this)">
-                        <!-- 正面：完全统一，绝不暴露信息 -->
-                        <div class="card-face card-front">
-                            <div class="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center text-5xl mb-6 backdrop-blur-sm border-2 border-white/20">
-                                🎴
-                            </div>
-                            <div class="text-2xl font-bold text-white mb-2">点击翻开</div>
-                            <div class="text-sm text-gray-400">查看你的身份牌</div>
-                            <div class="mt-8 text-xs text-gray-600 px-8 text-center leading-relaxed">
-                                请确保周围无人窥屏<br>
-                                只有你能看到内容<br>
-                                <span class="text-gray-700 mt-2 block">[SECURITY MODE]</span>
-                            </div>
-                        </div>
-                        
-                        <!-- 背面：统一蓝紫色，绝不使用红绿区分 -->
-                        <div class="card-face card-back uniform-card">
-                            <div class="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-4xl mb-6 backdrop-blur-sm border-2 border-white/30 shadow-inner" id="roleIcon">
-                                👥
-                            </div>
-                            <div class="text-sm text-white/80 mb-2 uppercase tracking-widest text-xs">你的身份</div>
-                            <div class="text-4xl font-black text-white mb-8 drop-shadow-lg" id="roleTitle">平民</div>
-                            
-                            <div class="bg-black/20 rounded-2xl p-6 w-full mx-4 backdrop-blur-sm border border-white/10">
-                                <div class="text-xs text-white/60 mb-2 uppercase tracking-wider">提示词</div>
-                                <div class="text-5xl font-bold text-white mb-2 tracking-wider" id="roleWord">苹果</div>
-                                <div class="text-xs text-white/70 mt-2 font-medium" id="wordHint">请记住这个词</div>
+                <div class="flex-1 flex items-center justify-center min-h-0 py-4">
+                    <div class="w-full max-w-sm h-full max-h-[500px] relative card-container">
+                        <div id="identityCard" class="game-card w-full h-full cursor-pointer" onclick="flipCard(this)">
+                            <!-- 正面 -->
+                            <div class="card-face card-front">
+                                <div class="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center text-5xl mb-6 backdrop-blur-sm border-2 border-white/20 animate-pulse">
+                                    🎴
+                                </div>
+                                <div class="text-2xl font-bold text-white mb-2">点击翻开</div>
+                                <div class="text-sm text-gray-400 mb-8">查看你的身份牌</div>
+                                <div class="text-xs text-gray-600 text-center leading-relaxed px-4">
+                                    请确保周围无人窥屏<br>
+                                    只有你能看到内容
+                                </div>
                             </div>
                             
-                            <div class="mt-6 text-xs text-white/70 px-6 text-center leading-relaxed" id="roleHint">
-                                描述这个词，但不要直接说出来
+                            <!-- 背面：统一蓝紫色 -->
+                            <div class="card-face card-back uniform-card">
+                                <div class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-3xl mb-4 backdrop-blur-sm border-2 border-white/30 shadow-inner" id="roleIcon">
+                                    👥
+                                </div>
+                                <div class="text-xs text-white/80 mb-1 uppercase tracking-widest">你的身份</div>
+                                <div class="text-3xl font-black text-white mb-6 drop-shadow-lg" id="roleTitle">平民</div>
+                                
+                                <div class="bg-black/20 rounded-2xl p-4 w-full backdrop-blur-sm border border-white/10 mb-4">
+                                    <div class="text-xs text-white/60 mb-1 uppercase tracking-wider">提示词</div>
+                                    <div class="text-4xl font-bold text-white tracking-wider" id="roleWord">苹果</div>
+                                    <div class="text-xs text-white/70 mt-2 font-medium" id="wordHint">请记住这个词</div>
+                                </div>
+                                
+                                <div class="text-xs text-white/80 text-center leading-relaxed px-2" id="roleHint">
+                                    描述这个词，但不要直接说出来
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="mt-8 space-y-3 px-4">
-                <button id="nextPlayerBtn" onclick="nextPlayer()" class="hidden w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 font-bold text-lg shadow-xl btn-press transition-all flex items-center justify-center gap-2">
-                    <span>确认并传递</span>
-                    <span>→</span>
-                </button>
-                
-                <button id="startGameBtn" onclick="startPlaying()" class="hidden w-full py-4 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 font-bold text-lg shadow-xl btn-press transition-all animate-pulse">
-                    所有人准备完毕，开始游戏！
-                </button>
-                
-                <div class="text-center text-sm text-gray-500 font-mono" id="dealingProgress">
-                    第 1 / 6 位玩家
+                <div class="space-y-3 shrink-0">
+                    <button id="nextPlayerBtn" onclick="nextPlayer()" class="hidden w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 font-bold text-lg shadow-xl btn-press transition-all flex items-center justify-center gap-2">
+                        <span>确认并传递给下一位</span>
+                        <span>→</span>
+                    </button>
+                    
+                    <button id="startGameBtn" onclick="startPlaying()" class="hidden w-full py-4 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 font-bold text-lg shadow-xl btn-press transition-all animate-pulse flex items-center justify-center gap-2">
+                        <span>🎮</span> 所有人就绪，开始游戏！
+                    </button>
+                    
+                    <div class="text-center text-sm text-gray-500 font-mono" id="dealingProgress">
+                        第 1 / 6 位玩家
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- 游戏进行页面 -->
-        <div id="gameScreen" class="hidden space-y-4 max-w-2xl mx-auto py-2">
-            <div class="glass-panel rounded-2xl p-4 flex items-center justify-between sticky top-0 z-10">
-                <div>
-                    <div class="text-xs text-gray-400 mb-1">第 <span id="roundNumber" class="text-white font-bold text-lg">1</span> 轮</div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                        <span class="text-sm font-bold" id="phaseText">发言阶段</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="text-right hidden sm:block">
-                        <div class="text-xs text-gray-400">当前发言</div>
-                        <div class="font-bold" id="speakerName">玩家1</div>
-                    </div>
-                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-lg font-bold shadow-lg" id="speakerAvatar">
-                        1
-                    </div>
-                </div>
-            </div>
-
-            <div id="timerSection" class="glass-panel rounded-2xl p-4">
-                <div class="flex justify-between text-xs text-gray-400 mb-2">
-                    <span>剩余时间</span>
-                    <span id="timerText" class="text-xl font-bold text-white font-mono">60</span>
-                </div>
-                <div class="h-3 bg-gray-700 rounded-full overflow-hidden relative">
-                    <div id="timerBar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000 w-full"></div>
-                </div>
-            </div>
-
-            <div id="blankGuessBtn" class="hidden glass-panel rounded-2xl p-4 border-2 border-purple-500/50 bg-purple-500/10">
-                <div class="flex items-center justify-between">
+        <div id="gameScreen" class="screen h-full p-4 pb-32 overflow-y-auto hide-scrollbar">
+            <div class="max-w-2xl mx-auto space-y-4">
+                <div class="glass-panel rounded-2xl p-4 flex items-center justify-between sticky top-0 z-10">
                     <div>
-                        <div class="font-bold text-purple-300 text-lg">你是白板！</div>
-                        <div class="text-xs text-gray-400">听取描述后猜两个词</div>
+                        <div class="text-xs text-gray-400 mb-1">第 <span id="roundNumber" class="text-white font-bold text-lg">1</span> 轮</div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span class="text-sm font-bold" id="phaseText">发言阶段</span>
+                        </div>
                     </div>
-                    <button onclick="showBlankGuessModal()" class="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-colors shadow-lg">
-                        猜词
+                    <div class="flex items-center gap-3">
+                        <div class="text-right hidden sm:block">
+                            <div class="text-xs text-gray-400">当前发言</div>
+                            <div class="font-bold" id="speakerName">玩家1</div>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-lg font-bold shadow-lg" id="speakerAvatar">1</div>
+                    </div>
+                </div>
+
+                <div id="timerSection" class="glass-panel rounded-2xl p-4">
+                    <div class="flex justify-between text-xs text-gray-400 mb-2">
+                        <span>剩余时间</span>
+                        <span id="timerText" class="text-xl font-bold text-white font-mono">60</span>
+                    </div>
+                    <div class="h-3 bg-gray-700 rounded-full overflow-hidden relative">
+                        <div id="timerBar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000 w-full"></div>
+                    </div>
+                </div>
+
+                <div id="blankGuessSection" class="hidden glass-panel rounded-2xl p-4 border-2 border-purple-500/50 bg-purple-500/10">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-bold text-purple-300 text-lg">你是白板！</div>
+                            <div class="text-xs text-gray-400">听取描述后猜两个词</div>
+                        </div>
+                        <button onclick="showBlankGuess()" class="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-colors shadow-lg btn-press">
+                            猜词
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-sm text-gray-300">📝 发言记录板</h3>
+                        <button onclick="clearRecords()" class="text-xs text-gray-500 hover:text-white btn-press">清空</button>
+                    </div>
+                    <div id="speechRecords" class="space-y-2 max-h-32 overflow-y-auto hide-scrollbar">
+                        <div class="text-center text-sm text-gray-500 py-4">暂无记录，点击下方添加</div>
+                    </div>
+                    <button onclick="addRecord()" class="w-full mt-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-sm text-gray-400 transition-colors border border-dashed border-white/20 btn-press">
+                        + 记录当前发言要点
                     </button>
                 </div>
-            </div>
 
-            <div class="glass-panel rounded-2xl p-4">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="font-bold text-sm text-gray-300">📝 发言记录板</h3>
-                    <button onclick="clearRecords()" class="text-xs text-gray-500 hover:text-white">清空</button>
-                </div>
-                <div id="speechRecords" class="space-y-2 max-h-32 overflow-y-auto hide-scrollbar">
-                    <div class="text-center text-sm text-gray-500 py-4">暂无记录</div>
-                </div>
-                <button onclick="addSpeechRecord()" class="w-full mt-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-sm text-gray-400 transition-colors border border-dashed border-white/20">
-                    + 记录当前发言要点
-                </button>
-            </div>
-
-            <div class="glass-panel rounded-2xl p-4">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="font-bold text-sm text-gray-300">玩家状态</h3>
-                    <span class="text-xs text-gray-500" id="aliveCount">存活 6/6</span>
-                </div>
-                <div class="grid grid-cols-4 sm:grid-cols-6 gap-3" id="playerGrid"></div>
-            </div>
-
-            <div class="h-32"></div> <!-- 底部 spacer -->
-        </div>
-
-        <!-- 底部操作栏 -->
-        <div class="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-slate-900 via-slate-900/95 to-transparent z-50 pointer-events-none">
-            <div class="max-w-md mx-auto space-y-2 pointer-events-auto">
-                <button id="actionBtn" onclick="nextSpeaker()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 font-bold text-lg shadow-xl btn-press transition-all flex items-center justify-center gap-2">
-                    <span>下一位发言</span>
-                    <span>→</span>
-                </button>
-                <div class="flex gap-2">
-                    <button onclick="startVoting()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 font-bold text-sm shadow-lg btn-press transition-all">
-                        发起投票
-                    </button>
-                    <button onclick="toggleNightMode()" class="px-4 py-3 rounded-xl glass-panel hover:bg-white/10 font-bold text-sm" title="护眼模式">
-                        🌙
-                    </button>
+                <div class="glass-panel rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-sm text-gray-300">玩家状态</h3>
+                        <span class="text-xs text-gray-500" id="aliveCount">存活 6/6</span>
+                    </div>
+                    <div class="grid grid-cols-4 sm:grid-cols-6 gap-3" id="playerGrid"></div>
                 </div>
             </div>
         </div>
 
         <!-- 投票页面 -->
-        <div id="voteScreen" class="hidden space-y-6 max-w-md mx-auto py-4 pb-32">
-            <div class="text-center py-4">
-                <h2 class="text-3xl font-black mb-2 text-red-400">投票时刻</h2>
-                <p class="text-gray-400 text-sm">选出最像卧底的人</p>
+        <div id="voteScreen" class="screen h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
+            <div class="max-w-md mx-auto py-4">
+                <div class="text-center py-4 mb-6">
+                    <h2 class="text-3xl font-black mb-2 text-red-400">投票时刻</h2>
+                    <p class="text-gray-400 text-sm">选出最像卧底的人</p>
+                </div>
+                <div id="voteGrid" class="grid grid-cols-2 gap-3"></div>
             </div>
-            <div id="voteGrid" class="grid grid-cols-3 gap-3"></div>
         </div>
 
         <!-- 结果页面 -->
-        <div id="resultScreen" class="hidden space-y-6 max-w-md mx-auto py-8 text-center">
-            <div class="text-6xl mb-4 animate-bounce" id="resultEmoji">🎉</div>
-            <h2 class="text-4xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400" id="resultTitle">平民胜利！</h2>
-            <p class="text-gray-400 mb-6" id="resultDesc"></p>
+        <div id="resultScreen" class="screen h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
+            <div class="max-w-md mx-auto py-8 text-center space-y-6">
+                <div class="text-6xl mb-4 animate-bounce" id="resultEmoji">🎉</div>
+                <h2 class="text-4xl font-black mb-2" id="resultTitle">平民胜利！</h2>
+                <p class="text-gray-400" id="resultDesc"></p>
 
-            <div class="glass-panel rounded-2xl p-6 space-y-3 text-left max-h-64 overflow-y-auto hide-scrollbar">
-                <h3 class="font-bold text-lg mb-4 text-center border-b border-white/10 pb-2">身份揭晓</h3>
-                <div id="resultList" class="space-y-2"></div>
-            </div>
-
-            <div class="glass-panel rounded-2xl p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-white/20">
-                <div class="text-sm text-gray-400 mb-1">本局词语</div>
-                <div class="flex items-center justify-center gap-4 text-lg font-bold">
-                    <div class="text-green-400">「<span id="resultCivilianWord">?</span>」</div>
-                    <span class="text-gray-600">vs</span>
-                    <div class="text-red-400">「<span id="resultUndercoverWord">?</span>」</div>
+                <div class="glass-panel rounded-2xl p-6 space-y-3 text-left max-h-64 overflow-y-auto hide-scrollbar">
+                    <h3 class="font-bold text-lg mb-4 text-center border-b border-white/10 pb-2">身份揭晓</h3>
+                    <div id="resultList" class="space-y-2"></div>
                 </div>
-            </div>
 
-            <div class="space-y-3">
-                <button onclick="showPunishmentWheel()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 font-bold text-lg shadow-xl btn-press">
-                    <span>🎯</span> 惩罚转盘
-                </button>
-                <button onclick="location.reload()" class="w-full py-3 rounded-2xl glass-panel hover:bg-white/10 font-bold">
-                    再来一局 ↺
-                </button>
+                <div class="glass-panel rounded-2xl p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-white/20">
+                    <div class="text-sm text-gray-400 mb-1">本局词语</div>
+                    <div class="flex items-center justify-center gap-4 text-lg font-bold flex-wrap">
+                        <div class="text-green-400">「<span id="resultCivilianWord">?</span>」</div>
+                        <span class="text-gray-600">vs</span>
+                        <div class="text-red-400">「<span id="resultUndercoverWord">?</span>」</div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <button onclick="showPunishmentWheel()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 font-bold text-lg shadow-xl btn-press">
+                        <span>🎯</span> 惩罚转盘
+                    </button>
+                    <button onclick="location.reload()" class="w-full py-3 rounded-2xl glass-panel hover:bg-white/10 font-bold btn-press">
+                        再来一局 ↺
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- 词库页面 -->
-        <div id="wordBankScreen" class="hidden space-y-6 max-w-md mx-auto py-4">
-            <div class="flex items-center justify-between mb-4">
-                <button onclick="showScreen('homeScreen')" class="p-2 rounded-lg hover:bg-white/10">←</button>
-                <h2 class="text-xl font-bold">词库管理</h2>
-                <button onclick="showAddWordModal()" class="px-4 py-2 rounded-lg bg-blue-600 text-sm font-bold">+ 添加</button>
+        <div id="wordBankScreen" class="screen h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
+            <div class="max-w-md mx-auto py-4">
+                <div class="flex items-center justify-between mb-4">
+                    <button onclick="showScreen('homeScreen')" class="p-2 rounded-lg hover:bg-white/10">←</button>
+                    <h2 class="text-xl font-bold">词库管理</h2>
+                    <button onclick="showAddWord()" class="px-4 py-2 rounded-lg bg-blue-600 text-sm font-bold btn-press">+ 添加</button>
+                </div>
+                <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-2 mb-4" id="categoryTabs">
+                    <button class="px-4 py-2 rounded-full bg-blue-600 text-sm font-bold whitespace-nowrap" onclick="filterWords('all', this)">全部</button>
+                    <button class="px-4 py-2 rounded-full bg-white/10 text-sm whitespace-nowrap" onclick="filterWords('food', this)">美食</button>
+                    <button class="px-4 py-2 rounded-full bg-white/10 text-sm whitespace-nowrap" onclick="filterWords('daily', this)">生活</button>
+                    <button class="px-4 py-2 rounded-full bg-white/10 text-sm whitespace-nowrap" onclick="filterWords('ent', this)">娱乐</button>
+                    <button class="px-4 py-2 rounded-full bg-white/10 text-sm whitespace-nowrap" onclick="filterWords('custom', this)">自定义</button>
+                </div>
+                <div id="wordList" class="space-y-2"></div>
             </div>
-            <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-2" id="categoryTabs">
-                <button class="px-4 py-2 rounded-full bg-blue-600 text-sm font-bold whitespace-nowrap" onclick="filterWords('all', this)">全部</button>
-                <button class="px-4 py-2 rounded-full bg-white/10 text-sm whitespace-nowrap" onclick="filterWords('food', this)">美食</button>
-                <button class="px-4 py-2 rounded-full bg-white/10 text-sm whitespace-nowrap" onclick="filterWords('daily', this)">生活</button>
-                <button class="px-4 py-2 rounded-full bg-white/10 text-sm whitespace-nowrap" onclick="filterWords('ent', this)">娱乐</button>
-                <button class="px-4 py-2 rounded-full bg-white/10 text-sm whitespace-nowrap" onclick="filterWords('custom', this)">自定义</button>
-            </div>
-            <div id="wordList" class="space-y-2 max-h-[60vh] overflow-y-auto hide-scrollbar"></div>
         </div>
 
         <!-- 惩罚转盘页面 -->
-        <div id="wheelScreen" class="hidden space-y-6 max-w-md mx-auto py-4 h-full flex flex-col">
-            <div class="flex items-center justify-between mb-4">
-                <button onclick="showScreen('homeScreen')" class="p-2 rounded-lg hover:bg-white/10">←</button>
-                <h2 class="text-xl font-bold">惩罚转盘</h2>
-                <button onclick="customizePunishments()" class="text-sm text-blue-400">编辑</button>
-            </div>
-            <div class="flex-1 flex flex-col items-center justify-center">
-                <div class="roulette-container mb-8">
-                    <div class="roulette-pointer"></div>
-                    <div id="rouletteWheel" class="roulette-wheel"></div>
+        <div id="wheelScreen" class="screen h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
+            <div class="max-w-md mx-auto py-4 h-full flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <button onclick="showScreen('homeScreen')" class="p-2 rounded-lg hover:bg-white/10">←</button>
+                    <h2 class="text-xl font-bold">惩罚转盘</h2>
+                    <button onclick="editPunishments()" class="text-sm text-blue-400 btn-press">编辑</button>
                 </div>
-                <button onclick="spinWheel()" class="px-8 py-4 rounded-full bg-gradient-to-r from-red-600 to-pink-600 font-bold text-xl shadow-xl btn-press animate-pulse">
-                    开始旋转！
-                </button>
-                <div id="punishmentResult" class="mt-8 text-center hidden">
-                    <div class="text-sm text-gray-400 mb-2">惩罚结果</div>
-                    <div class="text-2xl font-bold text-red-400 px-6 py-3 bg-red-500/10 rounded-xl border border-red-500/30" id="punishmentText">--</div>
+                <div class="flex-1 flex flex-col items-center justify-center min-h-0 py-8">
+                    <div class="roulette-container mb-8 shrink-0">
+                        <div class="roulette-pointer"></div>
+                        <div id="rouletteWheel" class="roulette-wheel"></div>
+                    </div>
+                    <button onclick="spinWheel()" class="px-8 py-4 rounded-full bg-gradient-to-r from-red-600 to-pink-600 font-bold text-xl shadow-xl btn-press animate-pulse shrink-0">
+                        开始旋转！
+                    </button>
+                    <div id="punishmentResult" class="mt-8 text-center hidden w-full px-4">
+                        <div class="text-sm text-gray-400 mb-2">惩罚结果</div>
+                        <div class="text-2xl font-bold text-red-400 px-6 py-4 bg-red-500/10 rounded-xl border border-red-500/30 break-words" id="punishmentText">--</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- 历史记录页面 -->
-        <div id="historyScreen" class="hidden space-y-6 max-w-md mx-auto py-4">
-            <div class="flex items-center gap-4 mb-6">
-                <button onclick="showScreen('homeScreen')" class="p-2 rounded-lg hover:bg-white/10">←</button>
-                <h2 class="text-xl font-bold">历史记录</h2>
+        <div id="historyScreen" class="screen h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
+            <div class="max-w-md mx-auto py-4">
+                <div class="flex items-center gap-4 mb-6">
+                    <button onclick="showScreen('homeScreen')" class="p-2 rounded-lg hover:bg-white/10">←</button>
+                    <h2 class="text-xl font-bold">历史记录</h2>
+                </div>
+                <div id="historyList" class="space-y-3"></div>
             </div>
-            <div id="historyList" class="space-y-3"></div>
         </div>
 
     </main>
 
-    <!-- 各种模态框 -->
-    <div id="addWordModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="glass-panel rounded-2xl p-6 w-full max-w-md space-y-4">
-            <h3 class="text-xl font-bold">添加自定义词语</h3>
-            <div class="space-y-3">
-                <input type="text" id="newCivilianWord" placeholder="平民词（如：苹果）" class="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
-                <input type="text" id="newUndercoverWord" placeholder="卧底词（如：梨子）" class="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500">
-            </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="closeAddWordModal()" class="flex-1 py-3 rounded-xl bg-gray-700 font-bold">取消</button>
-                <button onclick="confirmAddWord()" class="flex-1 py-3 rounded-xl bg-blue-600 font-bold">添加</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="blankGuessModal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="glass-panel rounded-2xl p-6 w-full max-w-md space-y-4 border-2 border-purple-500/50">
-            <h3 class="text-xl font-bold text-purple-400">白板猜词</h3>
-            <p class="text-sm text-gray-400">猜对两个词即可获胜</p>
-            <div class="space-y-3">
-                <input type="text" id="guessWord1" placeholder="第一个词" class="w-full bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-purple-500">
-                <input type="text" id="guessWord2" placeholder="第二个词" class="w-full bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-purple-500">
-            </div>
-            <div class="flex gap-3">
-                <button onclick="closeBlankGuessModal()" class="flex-1 py-3 rounded-xl bg-gray-700 font-bold">取消</button>
-                <button onclick="confirmBlankGuess()" class="flex-1 py-3 rounded-xl bg-purple-600 font-bold">提交</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="recordModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="glass-panel rounded-2xl p-6 w-full max-w-md space-y-4">
-            <h3 class="text-lg font-bold">记录发言</h3>
-            <textarea id="speechContent" rows="3" placeholder="记录关键线索..." class="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white resize-none focus:outline-none focus:border-blue-500"></textarea>
-            <div class="flex gap-3">
-                <button onclick="closeRecordModal()" class="flex-1 py-3 rounded-xl bg-gray-700 font-bold">取消</button>
-                <button onclick="saveSpeechRecord()" class="flex-1 py-3 rounded-xl bg-blue-600 font-bold">保存</button>
+    <!-- 底部操作栏（游戏时显示） -->
+    <div id="gameControls" class="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-slate-900 via-slate-900/95 to-transparent z-50 hidden">
+        <div class="max-w-md mx-auto space-y-2">
+            <button id="nextBtn" onclick="nextSpeaker()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 font-bold text-lg shadow-xl btn-press transition-all flex items-center justify-center gap-2">
+                <span>下一位发言</span>
+                <span>→</span>
+            </button>
+            <div class="flex gap-2">
+                <button onclick="startVoting()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 font-bold text-sm shadow-lg btn-press">
+                    发起投票
+                </button>
+                <button onclick="toggleNightMode()" class="px-4 py-3 rounded-xl glass-panel hover:bg-white/10 font-bold text-sm btn-press">
+                    🌙
+                </button>
             </div>
         </div>
     </div>
 
 </div>
 
+<!-- 模态框 -->
+<div id="addWordModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel rounded-2xl p-6 w-full max-w-md space-y-4">
+        <h3 class="text-xl font-bold">添加自定义词语</h3>
+        <div class="space-y-3">
+            <input type="text" id="newCivilianWord" placeholder="平民词（如：苹果）" class="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
+            <input type="text" id="newUndercoverWord" placeholder="卧底词（如：梨子）" class="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500">
+        </div>
+        <div class="flex gap-3 mt-6">
+            <button onclick="closeAddWord()" class="flex-1 py-3 rounded-xl bg-gray-700 font-bold btn-press">取消</button>
+            <button onclick="confirmAddWord()" class="flex-1 py-3 rounded-xl bg-blue-600 font-bold btn-press">添加</button>
+        </div>
+    </div>
+</div>
+
+<div id="recordModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel rounded-2xl p-6 w-full max-w-md space-y-4">
+        <h3 class="text-lg font-bold">记录发言</h3>
+        <textarea id="recordContent" rows="3" placeholder="记录关键线索..." class="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white resize-none focus:outline-none focus:border-blue-500"></textarea>
+        <div class="flex gap-3">
+            <button onclick="closeRecord()" class="flex-1 py-3 rounded-xl bg-gray-700 font-bold btn-press">取消</button>
+            <button onclick="saveRecord()" class="flex-1 py-3 rounded-xl bg-blue-600 font-bold btn-press">保存</button>
+        </div>
+    </div>
+</div>
+
+<div id="blankGuessModal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-panel rounded-2xl p-6 w-full max-w-md space-y-4 border-2 border-purple-500/50">
+        <h3 class="text-xl font-bold text-purple-400">白板猜词</h3>
+        <p class="text-sm text-gray-400">猜对两个词即可获胜</p>
+        <div class="space-y-3">
+            <input type="text" id="guessWord1" placeholder="第一个词" class="w-full bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-purple-500">
+            <input type="text" id="guessWord2" placeholder="第二个词" class="w-full bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-purple-500">
+        </div>
+        <div class="flex gap-3">
+            <button onclick="closeBlankGuess()" class="flex-1 py-3 rounded-xl bg-gray-700 font-bold btn-press">取消</button>
+            <button onclick="confirmBlankGuess()" class="flex-1 py-3 rounded-xl bg-purple-600 font-bold btn-press">提交</button>
+        </div>
+    </div>
+</div>
+
 <script>
-// 完整词库（47组）
+// ============ 数据 ============
 const wordBank = {
     food: [
         {c:"苹果",u:"梨子"},{c:"麦当劳",u:"肯德基"},{c:"火锅",u:"烧烤"},{c:"咖啡",u:"奶茶"},
@@ -612,194 +647,276 @@ if(localStorage.getItem('punishments')) {
     punishments = JSON.parse(localStorage.getItem('punishments'));
 }
 
+// ============ 游戏状态 ============
 let gameState = {
-    phase:'home',players:[],currentPlayerIndex:0,round:1,words:{},
-    useBlank:false,useTimer:true,timer:null,votes:{},eliminated:[],
-    speechRecords:[],soundEnabled:true,nightMode:false
+    phase:'home',
+    players:[],
+    currentPlayerIndex:0,
+    round:1,
+    words:{},
+    useBlank:false,
+    useTimer:true,
+    timer:null,
+    votes:{},
+    eliminated:[],
+    speechRecords:[],
+    soundEnabled:true,
+    nightMode:false
 };
 
-document.addEventListener('DOMContentLoaded',()=>{
+// ============ 初始化 ============
+document.addEventListener('DOMContentLoaded', () => {
     updateWordCount();
-    document.getElementById('totalGames').textContent = localStorage.getItem('totalGames')||0;
+    document.getElementById('totalGames').textContent = localStorage.getItem('totalGames') || '0';
     updateSetup();
+    
+    // 确保所有屏幕隐藏，只显示首页
+    showScreen('homeScreen');
 });
 
-function updateWordCount(){
-    const total = wordBank.food.length+wordBank.daily.length+wordBank.ent.length+wordBank.custom.length;
+// ============ 核心导航 ============
+function showScreen(screenId) {
+    // 隐藏所有屏幕
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    // 显示目标屏幕
+    const target = document.getElementById(screenId);
+    if(target) target.classList.add('active');
+    
+    // 控制底部栏显示
+    const gameControls = document.getElementById('gameControls');
+    if(screenId === 'gameScreen') {
+        gameControls.classList.remove('hidden');
+    } else {
+        gameControls.classList.add('hidden');
+    }
+    
+    // 更新游戏状态
+    if(screenId === 'homeScreen') gameState.phase = 'home';
+    else if(screenId === 'setupScreen') gameState.phase = 'setup';
+    else if(screenId === 'dealingScreen') gameState.phase = 'dealing';
+    else if(screenId === 'gameScreen') gameState.phase = 'playing';
+    else if(screenId === 'voteScreen') gameState.phase = 'voting';
+    else if(screenId === 'resultScreen') gameState.phase = 'result';
+}
+
+// ============ 首页功能 ============
+function showSetup() {
+    showScreen('setupScreen');
+}
+
+function toggleSound() {
+    gameState.soundEnabled = !gameState.soundEnabled;
+    document.getElementById('soundBtn').textContent = gameState.soundEnabled ? '🔊' : '🔇';
+}
+
+function updateWordCount() {
+    const total = wordBank.food.length + wordBank.daily.length + wordBank.ent.length + wordBank.custom.length;
     document.getElementById('wordCount').textContent = total;
+    document.getElementById('punishCount').textContent = punishments.length;
 }
 
-function showScreen(id){
-    ['homeScreen','setupScreen','dealingScreen','gameScreen','voteScreen','resultScreen','wordBankScreen','wheelScreen','historyScreen'].forEach(s=>{
-        document.getElementById(s).classList.add('hidden');
-    });
-    document.getElementById(id).classList.remove('hidden');
-}
-
-function toggleSound(){
-    gameState.soundEnabled=!gameState.soundEnabled;
-    document.getElementById('soundBtn').textContent = gameState.soundEnabled?'🔊':'🔇';
-}
-
-function updateSetup(){
-    const pc=parseInt(document.getElementById('playerCount').value);
-    const uc=parseInt(document.getElementById('undercoverCount').value);
-    document.getElementById('playerCountDisplay').textContent=pc+'人';
-    document.getElementById('undercoverCountDisplay').textContent=uc+'人';
+// ============ 设置页面 ============
+function updateSetup() {
+    const pc = parseInt(document.getElementById('playerCount').value);
+    const uc = parseInt(document.getElementById('undercoverCount').value);
     
-    const maxU=Math.floor((pc-(gameState.useBlank?1:0))/2);
-    if(uc>maxU) document.getElementById('undercoverCount').value=maxU;
+    document.getElementById('playerCountDisplay').textContent = pc + '人';
+    document.getElementById('undercoverCountDisplay').textContent = uc + '人';
     
-    const cc=pc-uc-(gameState.useBlank?1:0);
-    document.getElementById('roleSummary').textContent = `${cc}平民 vs ${uc}卧底${gameState.useBlank?' vs 1白板':''}`;
+    // 限制卧底数量
+    const maxU = Math.floor((pc - (gameState.useBlank ? 1 : 0)) / 2);
+    if(uc > maxU) {
+        document.getElementById('undercoverCount').value = maxU;
+    }
     
-    const preview=document.getElementById('rolePreview');
-    preview.innerHTML='';
-    for(let i=0;i<cc;i++) preview.innerHTML+=`<span class="px-2 py-1 rounded bg-blue-500/20 text-blue-400 text-xs border border-blue-500/30">平</span>`;
-    for(let i=0;i<uc;i++) preview.innerHTML+=`<span class="px-2 py-1 rounded bg-purple-500/20 text-purple-400 text-xs border border-purple-500/30">卧</span>`;
-    if(gameState.useBlank) preview.innerHTML+=`<span class="px-2 py-1 rounded bg-gray-500/20 text-gray-400 text-xs border border-gray-500/30">白</span>`;
+    const actualUC = parseInt(document.getElementById('undercoverCount').value);
+    const cc = pc - actualUC - (gameState.useBlank ? 1 : 0);
+    document.getElementById('roleSummary').textContent = `${cc}平民 vs ${actualUC}卧底${gameState.useBlank ? ' vs 1白板' : ''}`;
+    
+    const preview = document.getElementById('rolePreview');
+    preview.innerHTML = '';
+    for(let i = 0; i < cc; i++) preview.innerHTML += `<span class="px-2 py-1 rounded bg-blue-500/20 text-blue-400 text-xs border border-blue-500/30">平</span>`;
+    for(let i = 0; i < actualUC; i++) preview.innerHTML += `<span class="px-2 py-1 rounded bg-purple-500/20 text-purple-400 text-xs border border-purple-500/30">卧</span>`;
+    if(gameState.useBlank) preview.innerHTML += `<span class="px-2 py-1 rounded bg-gray-500/20 text-gray-400 text-xs border border-gray-500/30">白</span>`;
 }
 
-function toggleBlank(){
-    gameState.useBlank=!gameState.useBlank;
-    const btn=document.getElementById('blankToggle'),dot=btn.querySelector('div');
-    if(gameState.useBlank){
-        btn.classList.remove('bg-gray-700');btn.classList.add('bg-purple-600');
-        dot.style.transform='translateX(24px)';
-    }else{
-        btn.classList.add('bg-gray-700');btn.classList.remove('bg-purple-600');
-        dot.style.transform='translateX(0)';
+function toggleBlank() {
+    gameState.useBlank = !gameState.useBlank;
+    const btn = document.getElementById('blankToggle');
+    const dot = btn.querySelector('div');
+    
+    if(gameState.useBlank) {
+        btn.classList.remove('bg-gray-700');
+        btn.classList.add('bg-purple-600');
+        dot.style.transform = 'translateX(24px)';
+    } else {
+        btn.classList.add('bg-gray-700');
+        btn.classList.remove('bg-purple-600');
+        dot.style.transform = 'translateX(0)';
     }
     updateSetup();
 }
 
-function toggleTimer(){
-    gameState.useTimer=!gameState.useTimer;
-    const btn=document.getElementById('timerToggle'),dot=btn.querySelector('div');
-    if(gameState.useTimer){
-        btn.classList.remove('bg-gray-700');btn.classList.add('bg-blue-600');
-        dot.style.transform='translateX(24px)';
-    }else{
-        btn.classList.add('bg-gray-700');btn.classList.remove('bg-blue-600');
-        dot.style.transform='translateX(0)';
+function toggleTimer() {
+    gameState.useTimer = !gameState.useTimer;
+    const btn = document.getElementById('timerToggle');
+    const dot = btn.querySelector('div');
+    
+    if(gameState.useTimer) {
+        btn.classList.remove('bg-gray-700');
+        btn.classList.add('bg-blue-600');
+        dot.style.transform = 'translateX(24px)';
+    } else {
+        btn.classList.add('bg-gray-700');
+        btn.classList.remove('bg-blue-600');
+        dot.style.transform = 'translateX(0)';
     }
 }
 
-// 关键修复：发牌流程确保不泄露信息
-function startDealing(){
-    const pc=parseInt(document.getElementById('playerCount').value);
-    const uc=parseInt(document.getElementById('undercoverCount').value);
+// ============ 发牌系统（关键修复） ============
+function startDealing() {
+    const pc = parseInt(document.getElementById('playerCount').value);
+    const uc = parseInt(document.getElementById('undercoverCount').value);
     
-    gameState.players=[];
-    for(let i=1;i<=pc;i++) gameState.players.push({id:i,name:`玩家${i}`,role:'civilian',word:'',alive:true});
+    // 初始化玩家
+    gameState.players = [];
+    for(let i = 1; i <= pc; i++) {
+        gameState.players.push({
+            id: i,
+            name: `玩家${i}`,
+            role: 'civilian',
+            word: '',
+            alive: true
+        });
+    }
     
-    const roles=[];
-    for(let i=0;i<pc-uc-(gameState.useBlank?1:0);i++) roles.push('civilian');
-    for(let i=0;i<uc;i++) roles.push('undercover');
+    // 分配角色
+    const roles = [];
+    for(let i = 0; i < pc - uc - (gameState.useBlank ? 1 : 0); i++) roles.push('civilian');
+    for(let i = 0; i < uc; i++) roles.push('undercover');
     if(gameState.useBlank) roles.push('blank');
     
-    for(let i=roles.length-1;i>0;i--){
-        const j=Math.floor(Math.random()*(i+1));
-        [roles[i],roles[j]]=[roles[j],roles[i]];
+    // 洗牌
+    for(let i = roles.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [roles[i], roles[j]] = [roles[j], roles[i]];
     }
     
-    const allWords=[...wordBank.food,...wordBank.daily,...wordBank.ent,...wordBank.custom];
-    const wp=allWords[Math.floor(Math.random()*allWords.length)];
-    gameState.words=wp;
+    // 选词
+    const allWords = [...wordBank.food, ...wordBank.daily, ...wordBank.ent, ...wordBank.custom];
+    gameState.words = allWords[Math.floor(Math.random() * allWords.length)];
     
-    gameState.players.forEach((p,i)=>{
-        p.role=roles[i];
-        p.word = p.role==='civilian'?wp.civilian : p.role==='undercover'?wp.undercover : null;
+    // 分配词语
+    gameState.players.forEach((p, i) => {
+        p.role = roles[i];
+        p.word = p.role === 'civilian' ? gameState.words.civilian : 
+                 p.role === 'undercover' ? gameState.words.undercover : null;
     });
     
-    gameState.currentPlayerIndex=0;
-    gameState.speechRecords=[];
-    showScreen('dealingScreen');
-    updateDealingView();
-}
-
-function updateDealingView(){
-    const card=document.getElementById('identityCard');
-    card.classList.remove('flipped'); // 确保是背面
+    // 重置索引并切换屏幕
+    gameState.currentPlayerIndex = 0;
+    gameState.speechRecords = [];
+    gameState.eliminated = [];
     
-    setTimeout(()=>{
-        const p=gameState.players[gameState.currentPlayerIndex];
-        document.getElementById('currentPlayerName').textContent=p.name;
-        document.getElementById('dealingProgress').textContent=`第 ${gameState.currentPlayerIndex+1} / ${gameState.players.length} 位`;
-        
-        // 关键：统一使用蓝紫色，绝不暴露身份颜色
-        document.getElementById('roleIcon').textContent = p.role==='civilian'?'👥':p.role==='undercover'?'🕵️':'🃏';
-        document.getElementById('roleTitle').textContent = p.role==='civilian'?'平民':p.role==='undercover'?'卧底':'白板';
-        document.getElementById('roleWord').textContent = p.word||'?';
-        document.getElementById('roleWord').style.opacity = p.word?'1':'0.3';
-        document.getElementById('wordHint').textContent = p.role==='blank'?'靠听描述猜词':'请记住这个词';
-        document.getElementById('roleHint').textContent = p.role==='undercover'?'你的词和别人不同，小心隐藏':p.role==='blank'?'你没有词！听别人的描述':'描述这个词，但不要说出来';
-        
-        document.getElementById('nextPlayerBtn').classList.add('hidden');
-        document.getElementById('startGameBtn').classList.add('hidden');
-        document.getElementById('privacyShield').classList.remove('hidden');
-    },300);
+    showScreen('dealingScreen');
+    
+    // 延迟初始化视图，确保DOM切换完成
+    setTimeout(() => {
+        updateDealingView();
+    }, 100);
 }
 
-function hidePrivacyShield(){
+function updateDealingView() {
+    const card = document.getElementById('identityCard');
+    card.classList.remove('flipped');
+    
+    const p = gameState.players[gameState.currentPlayerIndex];
+    document.getElementById('currentPlayerName').textContent = p.name;
+    document.getElementById('dealingProgress').textContent = `第 ${gameState.currentPlayerIndex + 1} / ${gameState.players.length} 位`;
+    
+    // 更新卡片内容（统一颜色）
+    document.getElementById('roleIcon').textContent = p.role === 'civilian' ? '👥' : p.role === 'undercover' ? '🕵️' : '🃏';
+    document.getElementById('roleTitle').textContent = p.role === 'civilian' ? '平民' : p.role === 'undercover' ? '卧底' : '白板';
+    document.getElementById('roleWord').textContent = p.word || '?';
+    document.getElementById('roleWord').style.opacity = p.word ? '1' : '0.3';
+    document.getElementById('wordHint').textContent = p.role === 'blank' ? '靠听描述猜词' : '请记住这个词';
+    document.getElementById('roleHint').textContent = p.role === 'undercover' ? '你的词和别人不同，小心隐藏' : 
+                                                      p.role === 'blank' ? '你没有词！听别人的描述' : 
+                                                      '描述这个词，但不要直接说出来';
+    
+    document.getElementById('nextPlayerBtn').classList.add('hidden');
+    document.getElementById('startGameBtn').classList.add('hidden');
+    
+    // 显示隐私遮罩
+    document.getElementById('privacyShield').classList.remove('hidden');
+}
+
+function hidePrivacyShield() {
     document.getElementById('privacyShield').classList.add('hidden');
 }
 
-function flipCard(el){
+function flipCard(el) {
     if(el.classList.contains('flipped')) return;
     el.classList.add('flipped');
     if(navigator.vibrate) navigator.vibrate(50);
     
-    const isLast=gameState.currentPlayerIndex===gameState.players.length-1;
-    if(isLast) document.getElementById('startGameBtn').classList.remove('hidden');
-    else document.getElementById('nextPlayerBtn').classList.remove('hidden');
+    const isLast = gameState.currentPlayerIndex === gameState.players.length - 1;
+    if(isLast) {
+        document.getElementById('startGameBtn').classList.remove('hidden');
+    } else {
+        document.getElementById('nextPlayerBtn').classList.remove('hidden');
+    }
 }
 
-function nextPlayer(){
-    // 关键修复：先翻回，再显示遮罩，再更新数据
+function nextPlayer() {
+    // 先翻回
     document.getElementById('identityCard').classList.remove('flipped');
     document.getElementById('privacyShield').classList.remove('hidden');
     
-    setTimeout(()=>{
+    setTimeout(() => {
         gameState.currentPlayerIndex++;
-        if(gameState.currentPlayerIndex<gameState.players.length){
+        if(gameState.currentPlayerIndex < gameState.players.length) {
             updateDealingView();
         }
-    },600);
+    }, 400);
 }
 
-function startPlaying(){
+function startPlaying() {
     showScreen('gameScreen');
-    gameState.phase='playing';
-    gameState.round=1;
-    gameState.currentPlayerIndex=0;
+    gameState.phase = 'playing';
+    gameState.round = 1;
+    gameState.currentPlayerIndex = 0;
     updateGameView();
     if(gameState.useTimer) startTimer(60);
 }
 
-function updateGameView(){
-    const alive=gameState.players.filter(p=>p.alive);
-    const curr=alive[gameState.currentPlayerIndex%alive.length];
+// ============ 游戏进行 ============
+function updateGameView() {
+    const alive = gameState.players.filter(p => p.alive);
+    const curr = alive[gameState.currentPlayerIndex % alive.length];
+    
     if(!curr) return;
     
-    document.getElementById('roundNumber').textContent=gameState.round;
-    document.getElementById('speakerName').textContent=curr.name;
-    document.getElementById('speakerAvatar').textContent=curr.id;
-    document.getElementById('aliveCount').textContent=`存活 ${alive.length}/${gameState.players.length}`;
+    document.getElementById('roundNumber').textContent = gameState.round;
+    document.getElementById('speakerName').textContent = curr.name;
+    document.getElementById('speakerAvatar').textContent = curr.id;
+    document.getElementById('aliveCount').textContent = `存活 ${alive.length}/${gameState.players.length}`;
     
-    // 白板按钮显隐
-    document.getElementById('blankGuessBtn').classList.toggle('hidden', curr.role!=='blank');
+    // 白板按钮
+    document.getElementById('blankGuessSection').classList.toggle('hidden', curr.role !== 'blank');
     
     // 玩家网格
-    const grid=document.getElementById('playerGrid');
-    grid.innerHTML='';
-    gameState.players.forEach(p=>{
+    const grid = document.getElementById('playerGrid');
+    grid.innerHTML = '';
+    gameState.players.forEach(p => {
         if(!p.alive) return;
-        const div=document.createElement('div');
-        div.className='flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition-all';
-        div.onclick=()=>{if(gameState.phase==='voting') castVote(p.id);};
-        div.innerHTML=`
-            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center font-bold shadow-lg ${gameState.votes[p.id]?'ring-4 ring-yellow-400':''}">${p.id}</div>
+        const div = document.createElement('div');
+        div.className = 'flex flex-col items-center gap-1 p-2 rounded-xl transition-all cursor-pointer hover:bg-white/5';
+        div.onclick = () => { if(gameState.phase === 'voting') castVote(p.id); };
+        div.innerHTML = `
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center font-bold shadow-lg transition-all ${gameState.votes[p.id] ? 'ring-4 ring-yellow-400 scale-110' : ''}">
+                ${p.id}
+            </div>
             <div class="text-xs text-gray-400 truncate w-full text-center">${p.name}</div>
         `;
         grid.appendChild(div);
@@ -808,350 +925,500 @@ function updateGameView(){
     updateSpeechRecords();
 }
 
-function startTimer(s){
-    if(!gameState.useTimer){document.getElementById('timerSection').classList.add('hidden');return;}
+function startTimer(s) {
+    if(!gameState.useTimer) {
+        document.getElementById('timerSection').classList.add('hidden');
+        return;
+    }
     document.getElementById('timerSection').classList.remove('hidden');
-    let r=s;
-    const bar=document.getElementById('timerBar'),txt=document.getElementById('timerText');
-    if(gameState.timer) clearInterval(gameState.timer);
-    bar.style.width='100%';
-    bar.className='h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000';
     
-    gameState.timer=setInterval(()=>{
+    let r = s;
+    const bar = document.getElementById('timerBar');
+    const txt = document.getElementById('timerText');
+    
+    if(gameState.timer) clearInterval(gameState.timer);
+    
+    bar.style.width = '100%';
+    bar.className = 'h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000';
+    
+    gameState.timer = setInterval(() => {
         r--;
-        bar.style.width=(r/s*100)+'%';
-        txt.textContent=r;
-        if(r<=10){
-            bar.classList.remove('from-blue-500','to-purple-500');
-            bar.classList.add('bg-red-500');
-            if(navigator.vibrate&&r%2===0) navigator.vibrate(30);
+        bar.style.width = (r/s*100) + '%';
+        txt.textContent = r;
+        
+        if(r <= 10) {
+            bar.className = 'h-full bg-red-500 transition-all duration-1000';
+            if(navigator.vibrate && r % 2 === 0) navigator.vibrate(30);
         }
-        if(r<=0){
+        if(r <= 0) {
             clearInterval(gameState.timer);
             if(navigator.vibrate) navigator.vibrate([100,50,100]);
         }
-    },1000);
+    }, 1000);
 }
 
-function nextSpeaker(){
+function nextSpeaker() {
     if(gameState.timer) clearInterval(gameState.timer);
-    const alive=gameState.players.filter(p=>p.alive);
+    
+    const alive = gameState.players.filter(p => p.alive);
     gameState.currentPlayerIndex++;
-    if(gameState.currentPlayerIndex>=alive.length){
-        gameState.currentPlayerIndex=0;
+    
+    if(gameState.currentPlayerIndex >= alive.length) {
+        gameState.currentPlayerIndex = 0;
         startVoting();
-    }else{
+    } else {
         updateGameView();
         if(gameState.useTimer) startTimer(60);
     }
 }
 
-// 记录系统
-function addSpeechRecord(){
+// ============ 记录系统 ============
+function addRecord() {
     document.getElementById('recordModal').classList.remove('hidden');
-    document.getElementById('speechContent').value='';
-    document.getElementById('speechContent').focus();
+    document.getElementById('recordContent').value = '';
+    document.getElementById('recordContent').focus();
 }
-function closeRecordModal(){document.getElementById('recordModal').classList.add('hidden');}
-function saveSpeechRecord(){
-    const c=document.getElementById('speechContent').value.trim();
+
+function closeRecord() {
+    document.getElementById('recordModal').classList.add('hidden');
+}
+
+function saveRecord() {
+    const c = document.getElementById('recordContent').value.trim();
     if(!c) return;
+    
     gameState.speechRecords.push({
-        round:gameState.round,
-        speaker:document.getElementById('speakerName').textContent,
-        content:c,
-        time:new Date().toLocaleTimeString()
+        round: gameState.round,
+        speaker: document.getElementById('speakerName').textContent,
+        content: c,
+        time: new Date().toLocaleTimeString()
     });
     updateSpeechRecords();
-    closeRecordModal();
+    closeRecord();
 }
-function updateSpeechRecords(){
-    const c=document.getElementById('speechRecords');
-    if(gameState.speechRecords.length===0){
-        c.innerHTML='<div class="text-center text-sm text-gray-500 py-4">暂无记录，点击下方添加线索</div>';
+
+function updateSpeechRecords() {
+    const c = document.getElementById('speechRecords');
+    if(gameState.speechRecords.length === 0) {
+        c.innerHTML = '<div class="text-center text-sm text-gray-500 py-4">暂无记录，点击下方添加线索</div>';
         return;
     }
-    c.innerHTML=gameState.speechRecords.map(r=>`
+    c.innerHTML = gameState.speechRecords.map(r => `
         <div class="speech-bubble glass-panel rounded-lg p-3 text-sm border-l-4 border-blue-500 mb-2">
             <div class="flex justify-between text-xs text-gray-500 mb-1">
                 <span class="font-bold text-blue-400">第${r.round}轮 ${r.speaker}</span>
             </div>
-            <div class="text-gray-200">${r.content}</div>
+            <div class="text-gray-200 break-words">${r.content}</div>
         </div>
     `).join('');
-    c.scrollTop=c.scrollHeight;
+    c.scrollTop = c.scrollHeight;
 }
-function clearRecords(){
-    if(confirm('清空所有记录？')){
-        gameState.speechRecords=[];
+
+function clearRecords() {
+    if(confirm('清空所有记录？')) {
+        gameState.speechRecords = [];
         updateSpeechRecords();
     }
 }
 
-// 白板猜词
-function showBlankGuessModal(){document.getElementById('blankGuessModal').classList.remove('hidden');}
-function closeBlankGuessModal(){document.getElementById('blankGuessModal').classList.add('hidden');}
-function confirmBlankGuess(){
-    const w1=document.getElementById('guessWord1').value.trim();
-    const w2=document.getElementById('guessWord2').value.trim();
-    if(!w1||!w2){alert('请填两个词');return;}
-    const words=[gameState.words.civilian,gameState.words.undercover].sort();
-    const guesses=[w1,w2].sort();
-    if(guesses[0]===words[0]&&guesses[1]===words[1]){
+// ============ 白板猜词 ============
+function showBlankGuess() {
+    document.getElementById('blankGuessModal').classList.remove('hidden');
+}
+
+function closeBlankGuess() {
+    document.getElementById('blankGuessModal').classList.add('hidden');
+}
+
+function confirmBlankGuess() {
+    const w1 = document.getElementById('guessWord1').value.trim();
+    const w2 = document.getElementById('guessWord2').value.trim();
+    
+    if(!w1 || !w2) {
+        alert('请填写两个词');
+        return;
+    }
+    
+    const words = [gameState.words.civilian, gameState.words.undercover].sort();
+    const guesses = [w1, w2].sort();
+    
+    if(guesses[0] === words[0] && guesses[1] === words[1]) {
         alert('🎉 白板猜对了！白板获胜！');
-        showResult('blank','白板猜出双词');
-    }else{
-        alert(`❌ 错误！正确是：${gameState.words.civilian} 和 ${gameState.words.undercover}`);
-        closeBlankGuessModal();
+        showResult('blank', '白板猜出双词');
+    } else {
+        alert(`❌ 错误！正确答案是：${gameState.words.civilian} 和 ${gameState.words.undercover}`);
+        closeBlankGuess();
     }
 }
 
-// 投票系统
-function startVoting(){
+// ============ 投票系统 ============
+function startVoting() {
     if(gameState.timer) clearInterval(gameState.timer);
-    gameState.phase='voting';
-    gameState.votes={};
+    gameState.phase = 'voting';
+    gameState.votes = {};
     showScreen('voteScreen');
-    const alive=gameState.players.filter(p=>p.alive);
-    const grid=document.getElementById('voteGrid');
-    grid.innerHTML='';
-    alive.forEach(p=>{
-        const btn=document.createElement('button');
-        btn.className='flex flex-col items-center gap-2 p-4 rounded-2xl glass-panel hover:bg-white/10 active:scale-95 transition-all';
-        btn.onclick=()=>castVote(p.id);
-        btn.innerHTML=`
-            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-2xl font-bold shadow-lg">${p.id}</div>
-            <div class="font-bold">${p.name}</div>
+    
+    const alive = gameState.players.filter(p => p.alive);
+    const grid = document.getElementById('voteGrid');
+    grid.innerHTML = '';
+    
+    alive.forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'flex flex-col items-center gap-2 p-6 rounded-2xl glass-panel hover:bg-white/10 active:scale-95 transition-all btn-press';
+        btn.onclick = () => castVote(p.id);
+        btn.innerHTML = `
+            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-3xl font-bold shadow-lg">${p.id}</div>
+            <div class="font-bold text-lg">${p.name}</div>
             <div class="text-xs text-gray-500">点击投票</div>
         `;
         grid.appendChild(btn);
     });
 }
 
-function castVote(targetId){
-    // 模拟投票过程
-    const alive=gameState.players.filter(p=>p.alive);
-    const votes={};
-    alive.forEach(p=>votes[p.id]=0);
+function castVote(targetId) {
+    // 模拟投票：目标得票高
+    const alive = gameState.players.filter(p => p.alive);
+    const votes = {};
+    alive.forEach(p => votes[p.id] = 0);
     
-    // 简单模拟：目标得票高
-    alive.forEach(p=>{
-        if(p.id!==targetId){
-            if(Math.random()>0.4) votes[targetId]++;
-            else{
-                const other=alive[Math.floor(Math.random()*alive.length)];
-                if(other.id!==p.id) votes[other.id]++;
+    // 给目标投票
+    alive.forEach(p => {
+        if(p.id !== targetId) {
+            if(Math.random() > 0.3) {
+                votes[targetId]++;
+            } else {
+                const others = alive.filter(x => x.id !== p.id && x.id !== targetId);
+                if(others.length > 0) {
+                    const rand = others[Math.floor(Math.random() * others.length)];
+                    votes[rand.id]++;
+                }
             }
         }
     });
     
-    let max=0,out=null;
-    for(let id in votes){
-        if(votes[id]>max){max=votes[id];out=gameState.players.find(p=>p.id===parseInt(id));}
+    // 找最高票
+    let max = 0, outId = null;
+    for(let id in votes) {
+        if(votes[id] > max) {
+            max = votes[id];
+            outId = parseInt(id);
+        }
     }
     
-    if(out){
-        out.alive=false;
+    const out = gameState.players.find(p => p.id === outId);
+    if(out) {
+        out.alive = false;
         gameState.eliminated.push(out);
-        const rt=out.role==='civilian'?'平民':out.role==='undercover'?'卧底':'白板';
-        const icon=out.role==='civilian'?'👥':out.role==='undercover'?'🕵️':'🃏';
-        alert(`${out.name} 被淘汰！\n\n${icon} 身份：${rt}\n📝 词语：${out.word||'白板无词'}\n\n游戏继续...`);
-    }
-    
-    if(!checkWin()){
-        gameState.round++;
-        gameState.phase='playing';
-        gameState.currentPlayerIndex=0;
-        showScreen('gameScreen');
-        updateGameView();
-        if(gameState.useTimer) startTimer(60);
+        
+        const roleText = out.role === 'civilian' ? '平民' : out.role === 'undercover' ? '卧底' : '白板';
+        const icon = out.role === 'civilian' ? '👥' : out.role === 'undercover' ? '🕵️' : '🃏';
+        
+        alert(`${out.name} 被淘汰！\n\n${icon} 身份：${roleText}\n📝 词语：${out.word || '白板无词'}`);
+        
+        if(!checkWin()) {
+            gameState.round++;
+            gameState.phase = 'playing';
+            gameState.currentPlayerIndex = 0;
+            showScreen('gameScreen');
+            updateGameView();
+            if(gameState.useTimer) startTimer(60);
+        }
     }
 }
 
-function checkWin(){
-    const alive=gameState.players.filter(p=>p.alive);
-    const civ=alive.filter(p=>p.role==='civilian').length;
-    const und=alive.filter(p=>p.role==='undercover').length;
+function checkWin() {
+    const alive = gameState.players.filter(p => p.alive);
+    const civ = alive.filter(p => p.role === 'civilian').length;
+    const und = alive.filter(p => p.role === 'undercover').length;
     
-    if(und===0){showResult('civilian','卧底全灭');return true;}
-    if(und>=civ){showResult('undercover','卧底人数≥平民');return true;}
+    if(und === 0) {
+        showResult('civilian', '卧底全部被淘汰');
+        return true;
+    }
+    if(und >= civ) {
+        showResult('undercover', '卧底人数不少于平民');
+        return true;
+    }
     return false;
 }
 
-function showResult(winner,reason){
+function showResult(winner, reason) {
     showScreen('resultScreen');
-    document.getElementById('resultTitle').textContent=winner==='civilian'?'平民胜利！':winner==='undercover'?'卧底胜利！':'白板胜利！';
-    document.getElementById('resultTitle').className=winner==='civilian'?'text-4xl font-black mb-2 text-green-400':winner==='undercover'?'text-4xl font-black mb-2 text-red-400':'text-4xl font-black mb-2 text-purple-400';
-    document.getElementById('resultEmoji').textContent=winner==='civilian'?'🎉':winner==='undercover'?'🕵️':'🃏';
-    document.getElementById('resultDesc').textContent=reason;
-    document.getElementById('resultCivilianWord').textContent=gameState.words.civilian;
-    document.getElementById('resultUndercoverWord').textContent=gameState.words.undercover;
     
-    const list=document.getElementById('resultList');
-    list.innerHTML='';
-    gameState.players.forEach(p=>{
-        const rc=p.role==='civilian'?'text-green-400':p.role==='undercover'?'text-red-400':'text-purple-400';
-        const rt=p.role==='civilian'?'平民':p.role==='undercover'?'卧底':'白板';
-        list.innerHTML+=`
+    const titleMap = {
+        'civilian': ['平民胜利！', 'text-green-400', '🎉'],
+        'undercover': ['卧底胜利！', 'text-red-400', '🕵️'],
+        'blank': ['白板胜利！', 'text-purple-400', '🃏']
+    };
+    
+    const [title, colorClass, emoji] = titleMap[winner];
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultTitle').className = `text-4xl font-black mb-2 ${colorClass}`;
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultDesc').textContent = reason;
+    
+    document.getElementById('resultCivilianWord').textContent = gameState.words.civilian;
+    document.getElementById('resultUndercoverWord').textContent = gameState.words.undercover;
+    
+    // 显示所有玩家身份
+    const list = document.getElementById('resultList');
+    list.innerHTML = '';
+    gameState.players.forEach(p => {
+        const roleColor = p.role === 'civilian' ? 'text-green-400' : p.role === 'undercover' ? 'text-red-400' : 'text-purple-400';
+        const roleText = p.role === 'civilian' ? '平民' : p.role === 'undercover' ? '卧底' : '白板';
+        
+        list.innerHTML += `
             <div class="flex items-center justify-between p-3 rounded-xl bg-white/5">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full ${p.alive?'bg-gradient-to-br from-blue-500 to-purple-500':'bg-gray-700 grayscale'} flex items-center justify-center font-bold">${p.id}</div>
-                    <div class="${p.alive?'':'opacity-50 line-through'}">
+                    <div class="w-10 h-10 rounded-full ${p.alive ? 'bg-gradient-to-br from-blue-500 to-purple-500' : 'bg-gray-700 grayscale'} flex items-center justify-center font-bold text-sm">
+                        ${p.id}
+                    </div>
+                    <div class="${p.alive ? '' : 'opacity-50 line-through'}">
                         <div class="font-bold">${p.name}</div>
-                        <div class="text-xs text-gray-500">${p.word||'白板'}</div>
+                        <div class="text-xs text-gray-500">${p.word || '白板'}</div>
                     </div>
                 </div>
-                <div class="${rc} font-bold text-sm">${rt}</div>
+                <div class="${roleColor} font-bold text-sm">${roleText}</div>
             </div>
         `;
     });
     
     // 保存历史
-    let h=JSON.parse(localStorage.getItem('gameHistory')||'[]');
-    h.unshift({date:new Date().toLocaleString(),winner:winner,words:gameState.words,playerCount:gameState.players.length,round:gameState.round});
-    if(h.length>20)h=h.slice(0,20);
-    localStorage.setItem('gameHistory',JSON.stringify(h));
-    localStorage.setItem('totalGames',(parseInt(localStorage.getItem('totalGames')||0)+1).toString());
+    let h = JSON.parse(localStorage.getItem('gameHistory') || '[]');
+    h.unshift({
+        date: new Date().toLocaleString(),
+        winner: winner,
+        words: gameState.words,
+        playerCount: gameState.players.length,
+        round: gameState.round
+    });
+    if(h.length > 20) h = h.slice(0, 20);
+    localStorage.setItem('gameHistory', JSON.stringify(h));
+    localStorage.setItem('totalGames', (parseInt(localStorage.getItem('totalGames') || '0') + 1).toString());
 }
 
-// 词库管理
-function showWordBank(){showScreen('wordBankScreen');renderWordList('all');}
-function renderWordList(cat){
-    const list=document.getElementById('wordList');
-    list.innerHTML='';
-    let words=[];
-    if(cat==='all') words=[...wordBank.food,...wordBank.daily,...wordBank.ent,...wordBank.custom];
-    else words=wordBank[cat];
+// ============ 词库管理 ============
+function showWordBank() {
+    showScreen('wordBankScreen');
+    renderWordList('all');
+}
+
+function renderWordList(cat) {
+    const list = document.getElementById('wordList');
+    list.innerHTML = '';
     
-    words.forEach((p,i)=>{
-        list.innerHTML+=`
-            <div class="glass-panel rounded-xl p-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="text-xl">🆚</div>
-                    <div>
-                        <div class="text-green-400 font-bold">${p.civilian}</div>
-                        <div class="text-red-400 font-bold">${p.undercover}</div>
-                    </div>
+    let words = [];
+    if(cat === 'all') {
+        words = [...wordBank.food, ...wordBank.daily, ...wordBank.ent, ...wordBank.custom];
+    } else {
+        words = wordBank[cat];
+    }
+    
+    words.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'glass-panel rounded-xl p-4 flex items-center justify-between';
+        div.innerHTML = `
+            <div class="flex items-center gap-3">
+                <div class="text-xl">🆚</div>
+                <div>
+                    <div class="text-green-400 font-bold">${p.c}</div>
+                    <div class="text-red-400 font-bold">${p.u}</div>
                 </div>
-                ${cat==='custom'?`<button onclick="deleteWord(${i})" class="text-red-400 text-sm">删除</button>`:''}
             </div>
         `;
+        if(cat === 'custom') {
+            div.innerHTML += `<button onclick="deleteWord(${i})" class="text-red-400 text-sm font-bold btn-press">删除</button>`;
+        }
+        list.appendChild(div);
     });
-    if(words.length===0) list.innerHTML='<div class="text-center text-gray-500 py-8">暂无词语</div>';
+    
+    if(words.length === 0) {
+        list.innerHTML = '<div class="text-center text-gray-500 py-8">暂无词语</div>';
+    }
 }
-function filterWords(cat,btn){
-    document.querySelectorAll('#categoryTabs button').forEach(b=>{
-        b.classList.remove('bg-blue-600','font-bold');
+
+function filterWords(cat, btn) {
+    document.querySelectorAll('#categoryTabs button').forEach(b => {
+        b.classList.remove('bg-blue-600', 'font-bold');
         b.classList.add('bg-white/10');
     });
     btn.classList.remove('bg-white/10');
-    btn.classList.add('bg-blue-600','font-bold');
+    btn.classList.add('bg-blue-600', 'font-bold');
     renderWordList(cat);
 }
-function showAddWordModal(){document.getElementById('addWordModal').classList.remove('hidden');}
-function closeAddWordModal(){document.getElementById('addWordModal').classList.add('hidden');}
-function confirmAddWord(){
-    const c=document.getElementById('newCivilianWord').value.trim();
-    const u=document.getElementById('newUndercoverWord').value.trim();
-    if(!c||!u){alert('请填写两个词');return;}
-    wordBank.custom.push({civilian:c,undercover:u});
-    localStorage.setItem('customWords',JSON.stringify(wordBank.custom));
-    updateWordCount();
-    closeAddWordModal();
-    renderWordList('custom');
-    document.getElementById('newCivilianWord').value='';
-    document.getElementById('newUndercoverWord').value='';
+
+function showAddWord() {
+    document.getElementById('addWordModal').classList.remove('hidden');
+    document.getElementById('newCivilianWord').value = '';
+    document.getElementById('newUndercoverWord').value = '';
+    document.getElementById('newCivilianWord').focus();
 }
-function deleteWord(i){
-    if(confirm('删除？')){
-        wordBank.custom.splice(i,1);
-        localStorage.setItem('customWords',JSON.stringify(wordBank.custom));
+
+function closeAddWord() {
+    document.getElementById('addWordModal').classList.add('hidden');
+}
+
+function confirmAddWord() {
+    const c = document.getElementById('newCivilianWord').value.trim();
+    const u = document.getElementById('newUndercoverWord').value.trim();
+    
+    if(!c || !u) {
+        alert('请填写两个词');
+        return;
+    }
+    
+    wordBank.custom.push({c: c, u: u});
+    localStorage.setItem('customWords', JSON.stringify(wordBank.custom));
+    updateWordCount();
+    closeAddWord();
+    renderWordList('custom');
+    
+    // 切换标签到自定义
+    document.querySelectorAll('#categoryTabs button').forEach(b => {
+        b.classList.remove('bg-blue-600', 'font-bold');
+        b.classList.add('bg-white/10');
+    });
+    document.querySelectorAll('#categoryTabs button')[4].classList.add('bg-blue-600', 'font-bold');
+    document.querySelectorAll('#categoryTabs button')[4].classList.remove('bg-white/10');
+}
+
+function deleteWord(i) {
+    if(confirm('确定删除？')) {
+        wordBank.custom.splice(i, 1);
+        localStorage.setItem('customWords', JSON.stringify(wordBank.custom));
         renderWordList('custom');
         updateWordCount();
     }
 }
 
-// 惩罚转盘
-function showPunishmentWheel(){showScreen('wheelScreen');renderWheel();}
-function renderWheel(){
-    const w=document.getElementById('rouletteWheel');
-    w.innerHTML='';
-    const count=punishments.length,angle=360/count;
-    const colors=['#ef4444','#dc2626','#b91c1c','#f87171'];
-    punishments.forEach((p,i)=>{
-        const s=document.createElement('div');
-        s.className='roulette-segment';
-        s.style.transform=`rotate(${i*angle}deg)`;
-        s.style.backgroundColor=colors[i%4];
-        s.style.clipPath='polygon(0 0, 100% 0, 100% 100%)';
-        s.innerHTML=`<span style="transform:rotate(${angle/2}deg);position:absolute;right:10px;top:10px;font-size:10px;">${p.substring(0,3)}</span>`;
+// ============ 惩罚转盘 ============
+function showPunishmentWheel() {
+    showScreen('wheelScreen');
+    renderWheel();
+}
+
+function renderWheel() {
+    const w = document.getElementById('rouletteWheel');
+    w.innerHTML = '';
+    w.style.transform = 'rotate(0deg)';
+    
+    const count = punishments.length;
+    const angle = 360 / count;
+    const colors = ['#ef4444', '#dc2626', '#b91c1c', '#f87171', '#991b1b'];
+    
+    punishments.forEach((p, i) => {
+        const s = document.createElement('div');
+        s.className = 'roulette-segment';
+        s.style.transform = `rotate(${i * angle}deg)`;
+        s.style.background = `conic-gradient(from 0deg, ${colors[i % colors.length]} 0deg, ${colors[(i+1) % colors.length]} ${angle}deg)`;
+        s.style.clipPath = `polygon(100% 0, 100% 100%, 0 100%)`;
+        s.innerHTML = `<span style="transform: rotate(${angle/2}deg) translateY(-20px); display: block;">${p.substring(0, 4)}</span>`;
         w.appendChild(s);
     });
 }
-function spinWheel(){
-    const w=document.getElementById('rouletteWheel');
-    document.getElementById('punishmentResult').classList.add('hidden');
-    const rot=1800+Math.random()*1800;
-    w.style.transform=`rotate(${rot}deg)`;
-    if(navigator.vibrate){
-        let c=0;
-        const iv=setInterval(()=>{navigator.vibrate(50);c++;if(c>15)clearInterval(iv);},150);
+
+function spinWheel() {
+    const w = document.getElementById('rouletteWheel');
+    const resultDiv = document.getElementById('punishmentResult');
+    resultDiv.classList.add('hidden');
+    
+    const rot = 1800 + Math.random() * 1800;
+    w.style.transform = `rotate(${rot}deg)`;
+    
+    if(navigator.vibrate) {
+        let c = 0;
+        const iv = setInterval(() => {
+            navigator.vibrate(50);
+            c++;
+            if(c > 20) clearInterval(iv);
+        }, 100);
     }
-    setTimeout(()=>{
-        const f=rot%360,seg=360/punishments.length,idx=Math.floor((360-f)/seg)%punishments.length;
-        document.getElementById('punishmentText').textContent=punishments[idx];
-        document.getElementById('punishmentResult').classList.remove('hidden');
-        if(navigator.vibrate) navigator.vibrate([100,50,200]);
-    },4000);
+    
+    setTimeout(() => {
+        const finalRot = rot % 360;
+        const segAngle = 360 / punishments.length;
+        const index = Math.floor((360 - finalRot) / segAngle) % punishments.length;
+        
+        document.getElementById('punishmentText').textContent = punishments[index];
+        resultDiv.classList.remove('hidden');
+        
+        if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    }, 4000);
 }
-function customizePunishments(){
-    const np=prompt('自定义惩罚（用逗号分隔）：',punishments.join('，'));
-    if(np){
-        punishments=np.split(/[,，]/).map(p=>p.trim()).filter(p=>p);
-        localStorage.setItem('punishments',JSON.stringify(punishments));
-        document.getElementById('punishCount').textContent=punishments.length;
-        renderWheel();
+
+function editPunishments() {
+    const np = prompt('自定义惩罚（用逗号分隔）：\n\n当前：' + punishments.join('、'), punishments.join('，'));
+    if(np) {
+        const newList = np.split(/[,，]/).map(p => p.trim()).filter(p => p);
+        if(newList.length >= 4) {
+            punishments = newList;
+            localStorage.setItem('punishments', JSON.stringify(punishments));
+            updateWordCount();
+            renderWheel();
+        } else {
+            alert('至少需要4个惩罚项目');
+        }
     }
 }
 
-// 历史记录
-function showHistory(){
+// ============ 历史记录 ============
+function showHistory() {
     showScreen('historyScreen');
-    const list=document.getElementById('historyList');
-    const h=JSON.parse(localStorage.getItem('gameHistory')||'[]');
-    if(h.length===0){list.innerHTML='<div class="text-center text-gray-500 py-12">暂无记录</div>';return;}
-    list.innerHTML=h.map(item=>{
-        const wc=item.winner==='civilian'?'text-green-400':item.winner==='undercover'?'text-red-400':'text-purple-400';
-        const wt=item.winner==='civilian'?'平民胜':item.winner==='undercover'?'卧底胜':'白板胜';
-        return`
-            <div class="glass-panel rounded-xl p-4 border-l-4 ${item.winner==='civilian'?'border-green-500':item.winner==='undercover'?'border-red-500':'border-purple-500'}">
-                <div class="flex justify-between text-xs text-gray-500 mb-1"><span>${item.date}</span><span class="${wc} font-bold">${wt}</span></div>
-                <div class="flex justify-between text-sm"><span class="text-green-400">${item.words.civilian}</span> vs <span class="text-red-400">${item.words.undercover}</span></div>
-                <div class="text-xs text-gray-600 mt-1">${item.playerCount}人 · ${item.round}轮</div>
+    const list = document.getElementById('historyList');
+    const h = JSON.parse(localStorage.getItem('gameHistory') || '[]');
+    
+    if(h.length === 0) {
+        list.innerHTML = '<div class="text-center text-gray-500 py-12">暂无记录</div>';
+        return;
+    }
+    
+    list.innerHTML = h.map(item => {
+        const wc = item.winner === 'civilian' ? 'text-green-400 border-green-500' : 
+                   item.winner === 'undercover' ? 'text-red-400 border-red-500' : 'text-purple-400 border-purple-500';
+        const wt = item.winner === 'civilian' ? '平民胜' : item.winner === 'undercover' ? '卧底胜' : '白板胜';
+        
+        return `
+            <div class="glass-panel rounded-xl p-4 border-l-4 ${wc}">
+                <div class="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>${item.date}</span>
+                    <span class="${wc.split(' ')[0]} font-bold">${wt}</span>
+                </div>
+                <div class="flex justify-between text-sm font-bold">
+                    <span class="text-green-400">${item.words.civilian}</span>
+                    <span class="text-gray-600">vs</span>
+                    <span class="text-red-400">${item.words.undercover}</span>
+                </div>
+                <div class="text-xs text-gray-600 mt-1">${item.playerCount}人 · 第${item.round}轮结束</div>
             </div>
         `;
     }).join('');
 }
 
-function toggleNightMode(){
-    gameState.nightMode=!gameState.nightMode;
-    document.body.style.filter=gameState.nightMode?'brightness(0.7) sepia(0.2)':'';
+// ============ 其他功能 ============
+function toggleNightMode() {
+    gameState.nightMode = !gameState.nightMode;
+    document.body.style.filter = gameState.nightMode ? 'brightness(0.7) sepia(0.2)' : '';
 }
 
-function showMenu(){
-    if(gameState.phase==='home'){
-        const c=prompt('选择功能：\n1.惩罚转盘\n2.词库管理\n3.历史记录\n4.关于\n\n输入数字：');
-        if(c==='1') showPunishmentWheel();
-        else if(c==='2') showWordBank();
-        else if(c==='3') showHistory();
-        else if(c==='4') alert('谁是卧底PRO MAX\n\n特色：\n✓ 防窥屏隐私保护\n✓ 47组精选词库\n✓ 统一视觉无颜色泄露\n✓ 白板猜词机制\n✓ 发言计时+记录板\n✓ 惩罚转盘\n✓ 本地数据保存');
-    }else{
-        if(confirm('结束当前游戏？')) location.reload();
+function showMenu() {
+    if(gameState.phase === 'home') {
+        const c = prompt('选择功能：\n1.惩罚转盘\n2.词库管理\n3.历史记录\n4.关于\n\n输入数字：');
+        if(c === '1') showPunishmentWheel();
+        else if(c === '2') showWordBank();
+        else if(c === '3') showHistory();
+        else if(c === '4') alert('谁是卧底PRO MAX v1.0\n\n防窥屏设计 · 47组词库 · 20种惩罚');
+    } else {
+        if(confirm('确定要结束当前游戏吗？')) {
+            location.reload();
+        }
     }
 }
 
-window.onbeforeunload=e=>{
-    if(gameState.phase!=='home'&&gameState.phase!=='result') return'游戏进行中，确定离开？';
+// 防止意外刷新
+window.onbeforeunload = function(e) {
+    if(gameState.phase !== 'home' && gameState.phase !== 'result') {
+        return '游戏正在进行中，确定要离开吗？';
+    }
 };
 </script>
 
