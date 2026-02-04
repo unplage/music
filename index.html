@@ -959,7 +959,7 @@
                 rows: 13,
                 cols: 13,
                 validCells: [], // 有效位置数组
-                // 为2、3、4人游戏分别定义起始位置
+                // 为2、3、4人游戏分别定义起始位置 - 修复三人模式问题
                 startPositions: {
                     2: {
                         1: [[0, 4], [0, 5], [0, 6], [0, 7], [0, 8],
@@ -968,22 +968,22 @@
                             [11, 4], [11, 5], [11, 6], [11, 7], [11, 8]]
                     },
                     3: {
-                        1: [[0, 6], [1, 5], [1, 6], [1, 7], [2, 4], 
-                            [2, 5], [2, 6], [2, 7], [2, 8], [3, 6]],
-                        2: [[12, 0], [12, 1], [12, 2], [12, 3], [12, 4],
-                            [11, 1], [11, 2], [11, 3], [11, 4], [11, 5]],
-                        3: [[0, 12], [1, 11], [1, 12], [2, 10], [2, 11],
-                            [2, 12], [3, 9], [3, 10], [3, 11], [3, 12]]
+                        1: [[0, 4], [0, 5], [0, 6], [0, 7], [0, 8],
+                            [1, 4], [1, 5], [1, 6], [1, 7], [1, 8]], // 顶部
+                        2: [[8, 0], [9, 0], [10, 0], [11, 0], [12, 0],
+                            [8, 1], [9, 1], [10, 1], [11, 1], [12, 1]], // 左侧
+                        3: [[8, 11], [9, 11], [10, 11], [11, 11], [12, 11],
+                            [8, 12], [9, 12], [10, 12], [11, 12], [12, 12]] // 右侧
                     },
                     4: {
                         1: [[0, 6], [1, 5], [1, 6], [1, 7], [2, 4], 
-                            [2, 5], [2, 6], [2, 7], [2, 8], [3, 6]],
+                            [2, 5], [2, 6], [2, 7], [2, 8], [3, 6]], // 顶部
                         2: [[12, 6], [11, 5], [11, 6], [11, 7], [10, 4],
-                            [10, 5], [10, 6], [10, 7], [10, 8], [9, 6]],
+                            [10, 5], [10, 6], [10, 7], [10, 8], [9, 6]], // 底部
                         3: [[6, 0], [5, 1], [6, 1], [7, 1], [4, 2],
-                            [5, 2], [6, 2], [7, 2], [8, 2], [6, 3]],
+                            [5, 2], [6, 2], [7, 2], [8, 2], [6, 3]], // 左侧
                         4: [[6, 12], [5, 11], [6, 11], [7, 11], [4, 10],
-                            [5, 10], [6, 10], [7, 10], [8, 10], [6, 9]]
+                            [5, 10], [6, 10], [7, 10], [8, 10], [6, 9]] // 右侧
                     }
                 },
                 // 目标区域定义（针对经典布局2人游戏）
@@ -1638,35 +1638,6 @@
                             gameState.scores[winner - 1]++;
                             showGameMessage(`玩家${winner}胜利!`, 
                                 `恭喜! 玩家${winner}赢得了游戏!<br>当前比分: ${gameState.scores.slice(0, gameState.playerCount).join(' : ')}`);
-                            gameState.gameActive = false;
-                            playSound('winSound');
-                            return;
-                        }
-                    }
-                }
-                
-                // 方法2：检查玩家是否将所有棋子移动到目标区域（针对经典布局2人游戏）
-                if (gameState.boardLayout === 'classic' && gameState.playerCount === 2) {
-                    if (layout.targetAreas && layout.targetAreas[gameState.playerCount] && layout.targetAreas[gameState.playerCount][player]) {
-                        const targetArea = layout.targetAreas[gameState.playerCount][player];
-                        
-                        // 统计在目标区域的棋子数量
-                        let inTargetCount = 0;
-                        for (let row = 0; row < layout.rows; row++) {
-                            for (let col = 0; col < layout.cols; col++) {
-                                if (gameState.board[row][col] === player) {
-                                    if (targetArea.rows.includes(row)) {
-                                        inTargetCount++;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // 如果所有棋子都在目标区域，该玩家获胜
-                        if (inTargetCount === gameState.playerMarbles[player - 1] && inTargetCount > 0) {
-                            gameState.scores[player - 1]++;
-                            showGameMessage(`玩家${player}胜利!`, 
-                                `恭喜! 玩家${player}成功将所有棋子移动到目标区域!<br>当前比分: ${gameState.scores.slice(0, gameState.playerCount).join(' : ')}`);
                             gameState.gameActive = false;
                             playSound('winSound');
                             return;
