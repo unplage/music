@@ -2,1425 +2,1160 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>谁是卧底PRO MAX</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>云音乐播放器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Noto Sans SC', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: white;
-            overflow: hidden;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-            position: fixed;
-            width: 100%;
-            height: 100%;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
-        
-        .uniform-card {
-            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%) !important;
-        }
-        
-        .card-container {
-            perspective: 1000px;
-            transform-style: preserve-3d;
-            width: 100%;
-            height: 100%;
-        }
-        
-        .game-card {
+
+        body {
+            font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+            overflow-x: hidden;
+            max-width: 500px;
+            margin: 0 auto;
+            background: linear-gradient(180deg, #ec4141 0%, #f5f5f5 100%);
+            min-height: 100vh;
             position: relative;
-            width: 100%;
-            height: 100%;
-            transform-style: preserve-3d;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
-        .game-card.flipped {
-            transform: rotateY(180deg);
-        }
-        
-        .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            border-radius: 1.5rem;
+
+        /* 顶部栏 */
+        .header {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            padding: 2rem;
+            padding: 15px 20px;
+            color: white;
+            position: relative;
+            z-index: 10;
         }
-        
-        .card-front {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border: 2px solid rgba(255,255,255,0.1);
-            z-index: 2;
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
         }
-        
-        .card-back {
-            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
-            transform: rotateY(180deg);
-            border: 2px solid rgba(255,255,255,0.2);
-        }
-        
-        .privacy-shield {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 9999;
+
+        .header-icons {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.3s;
+            gap: 20px;
+        }
+
+        .header-icons i {
+            font-size: 18px;
             cursor: pointer;
         }
-        
-        .privacy-shield.hidden {
-            display: none;
-        }
-        
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-        
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .btn-press:active {
-            transform: scale(0.95);
-            opacity: 0.9;
-        }
-        
-        .animate-float {
-            animation: float 3s ease-in-out infinite;
-        }
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        .roulette-container {
+
+        /* 播放器主体 */
+        .player-container {
+            padding: 0 20px;
+            margin-top: 10px;
             position: relative;
-            width: 280px;
-            height: 280px;
-            margin: 0 auto;
+            z-index: 5;
         }
-        
-        .roulette-wheel {
+
+        /* 唱片区域 */
+        .disc-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            margin-top: 20px;
+        }
+
+        .disc {
             width: 100%;
             height: 100%;
             border-radius: 50%;
+            background: linear-gradient(135deg, #333 0%, #111 100%);
             position: relative;
-            overflow: hidden;
-            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: rotate 20s linear infinite;
+            animation-play-state: paused;
         }
-        
-        .roulette-segment {
+
+        .disc.playing {
+            animation-play-state: running;
+        }
+
+        .disc-center {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: white;
             position: absolute;
-            width: 50%;
-            height: 50%;
-            transform-origin: right bottom;
-            left: 0;
-            top: 0;
+            z-index: 2;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .album-cover {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            object-fit: cover;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 歌曲信息 */
+        .song-info {
+            text-align: center;
+            margin-top: 30px;
+            color: white;
+        }
+
+        .song-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding: 0 10px;
+        }
+
+        .song-artist {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* 进度条 */
+        .progress-container {
+            margin-top: 40px;
+            padding: 0 10px;
+        }
+
+        .progress-time {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: white;
+            border-radius: 2px;
+            width: 0%;
+            position: relative;
+        }
+
+        .progress-handle {
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: white;
+            display: none;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .progress-bar:hover .progress-handle,
+        .progress-bar.dragging .progress-handle {
+            display: block;
+        }
+
+        /* 播放控制 */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 50px;
+            padding: 0 30px;
+        }
+
+        .control-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .control-btn.play-pause {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: white;
+            color: #ec4141;
+            font-size: 28px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 播放列表 */
+        .playlist-container {
+            background-color: white;
+            border-radius: 20px 20px 0 0;
+            margin-top: 60px;
+            padding: 25px 20px 100px 20px;
+            min-height: 300px;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .playlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .playlist-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .playlist-count {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .song-list {
+            list-style: none;
+        }
+
+        .song-item {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: bold;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .song-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .song-item.active {
+            color: #ec4141;
+        }
+
+        .song-index {
+            width: 30px;
             text-align: center;
-            padding-right: 20%;
-            padding-bottom: 20%;
-            box-sizing: border-box;
-            color: white;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-            writing-mode: vertical-rl;
-            text-orientation: upright;
-            letter-spacing: 2px;
+            font-size: 16px;
+            color: #999;
         }
-        
-        .roulette-pointer {
-            position: absolute;
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-top: 40px solid #ef4444;
-            z-index: 10;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+
+        .song-item.active .song-index {
+            color: #ec4141;
         }
-        
-        .speech-bubble {
-            animation: slideIn 0.3s ease-out;
+
+        .song-info-small {
+            flex: 1;
+            overflow: hidden;
         }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-10px); }
-            to { opacity: 1; transform: translateX(0); }
+
+        .song-title-small {
+            font-size: 16px;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        
-        .screen {
+
+        .song-artist-small {
+            font-size: 12px;
+            color: #999;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .song-duration {
+            font-size: 14px;
+            color: #999;
+            margin-right: 10px;
+        }
+
+        /* 搜索区域 */
+        .search-container {
+            padding: 15px 20px;
+            background-color: white;
+            border-radius: 10px;
+            margin: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
             display: none;
-            height: 100%;
-            overflow-y: auto;
         }
-        .screen.active {
-            display: block;
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background-color: #f5f5f5;
+            border-radius: 20px;
+            padding: 10px 15px;
+        }
+
+        .search-box i {
+            color: #999;
+            margin-right: 10px;
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: none;
+            outline: none;
+            font-size: 16px;
+        }
+
+        .search-results {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        /* 底部播放栏 */
+        .mini-player {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            padding: 10px 20px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            max-width: 500px;
+            margin: 0 auto;
+            z-index: 100;
+        }
+
+        .mini-player-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .mini-player-title {
+            font-size: 16px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-bottom: 2px;
+        }
+
+        .mini-player-artist {
+            font-size: 12px;
+            color: #999;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mini-player-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .mini-player-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #ec4141;
+            cursor: pointer;
+        }
+
+        /* 动画 */
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 380px) {
+            .disc-container {
+                width: 260px;
+                height: 260px;
+            }
+            
+            .album-cover {
+                width: 170px;
+                height: 170px;
+            }
+            
+            .song-title {
+                font-size: 20px;
+            }
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 错误提示 */
+        .error-message {
+            background-color: rgba(255, 0, 0, 0.1);
+            color: #d32f2f;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        /* 歌词面板 */
+        .lyrics-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 80px 20px 120px 20px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .lyrics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .lyrics-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .lyrics-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .lyrics-content {
+            text-align: center;
+            font-size: 18px;
+            line-height: 2.5;
+        }
+
+        .lyric-line {
+            margin-bottom: 15px;
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+
+        .lyric-line.active {
+            opacity: 1;
+            font-size: 22px;
+            color: #ec4141;
         }
     </style>
 </head>
-<body class="antialiased">
-
-<div id="app" class="h-full flex flex-col relative bg-slate-900">
-    
-    <!-- 隐私遮罩层 -->
-    <div id="privacyShield" class="privacy-shield" onclick="hidePrivacyShield()">
-        <div class="text-6xl mb-4 animate-pulse">👆</div>
-        <div class="text-2xl font-bold mb-2">PRIVATE MODE</div>
-        <div class="text-gray-400 text-sm mb-8">点击确认只有你一人观看</div>
-        <div class="text-xs text-gray-600 bg-gray-900 px-4 py-2 rounded-full">防窥屏保护中</div>
-    </div>
-
+<body>
     <!-- 顶部栏 -->
-    <header class="glass-panel sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-white/10 shrink-0 h-16">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xl shadow-lg">
-                🎭
-            </div>
-            <div>
-                <h1 class="font-bold text-lg leading-tight">卧底<span class="text-blue-400">PRO</span><span class="text-purple-400 text-xs">MAX</span></h1>
-                <p class="text-xs text-gray-400" id="gameStatus">准备开始</p>
-            </div>
+    <div class="header">
+        <h1>云音乐</h1>
+        <div class="header-icons">
+            <i class="fas fa-search" id="searchToggle"></i>
+            <i class="fas fa-list" id="playlistToggle"></i>
         </div>
-        <div class="flex gap-2">
-            <button onclick="toggleSound()" id="soundBtn" class="p-2 rounded-lg hover:bg-white/10 text-gray-400 transition-colors text-lg">
-                🔊
-            </button>
-            <button onclick="showMenu()" class="p-2 rounded-lg hover:bg-white/10 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-            </button>
-        </div>
-    </header>
+    </div>
 
-    <main id="mainContent" class="flex-1 overflow-hidden relative">
+    <!-- 搜索区域 -->
+    <div class="search-container" id="searchContainer">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="搜索歌曲、歌手">
+        </div>
+        <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <!-- 错误提示 -->
+    <div class="error-message" id="errorMessage"></div>
+
+    <!-- 播放器主体 -->
+    <div class="player-container" id="playerContainer">
+        <!-- 唱片区域 -->
+        <div class="disc-container">
+            <div class="disc" id="disc">
+                <img src="https://picsum.photos/200/200?random=1" alt="专辑封面" class="album-cover" id="albumCover">
+                <div class="disc-center"></div>
+            </div>
+        </div>
+
+        <!-- 歌曲信息 -->
+        <div class="song-info">
+            <h2 class="song-title" id="songTitle">歌曲名称</h2>
+            <p class="song-artist" id="songArtist">歌手名</p>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="progress-container">
+            <div class="progress-time">
+                <span id="currentTime">0:00</span>
+                <span id="totalTime">0:00</span>
+            </div>
+            <div class="progress-bar" id="progressBar">
+                <div class="progress" id="progress">
+                    <div class="progress-handle"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 播放控制 -->
+        <div class="controls">
+            <button class="control-btn" id="prevBtn">
+                <i class="fas fa-step-backward"></i>
+            </button>
+            <button class="control-btn play-pause" id="playBtn">
+                <i class="fas fa-play" id="playIcon"></i>
+            </button>
+            <button class="control-btn" id="nextBtn">
+                <i class="fas fa-step-forward"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 播放列表 -->
+    <div class="playlist-container" id="playlistContainer">
+        <div class="playlist-header">
+            <div class="playlist-title">播放列表</div>
+            <div class="playlist-count">共 <span id="songCount">0</span> 首</div>
+        </div>
+        <ul class="song-list" id="songList">
+            <!-- 歌曲列表将通过JavaScript动态生成 -->
+        </ul>
+    </div>
+
+    <!-- 歌词面板 -->
+    <div class="lyrics-container" id="lyricsContainer">
+        <div class="lyrics-header">
+            <div class="lyrics-title">歌词</div>
+            <button class="lyrics-close" id="lyricsClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="lyrics-content" id="lyricsContent">
+            <!-- 歌词将通过JavaScript动态生成 -->
+        </div>
+    </div>
+
+    <!-- 底部播放栏 -->
+    <div class="mini-player" id="miniPlayer">
+        <div class="mini-player-info">
+            <div class="mini-player-title" id="miniPlayerTitle">歌曲名称</div>
+            <div class="mini-player-artist" id="miniPlayerArtist">歌手名</div>
+        </div>
+        <div class="mini-player-controls">
+            <button class="mini-player-btn" id="miniPlayBtn">
+                <i class="fas fa-play" id="miniPlayIcon"></i>
+            </button>
+            <button class="mini-player-btn" id="lyricsBtn">
+                <i class="fas fa-microphone"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 音频元素 -->
+    <audio id="audioPlayer" preload="metadata"></audio>
+
+    <script>
+        // 音乐API配置
+        // 注意：由于浏览器安全限制，这里使用一个公开的音乐API示例
+        // 在实际部署中，你可能需要设置一个代理服务器或使用支持CORS的API
+        const API_BASE_URL = 'https://api.deezer.com';
         
-        <!-- 首页 -->
-        <div id="homeScreen" class="screen active h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
-            <div class="max-w-md mx-auto h-full flex flex-col justify-center space-y-6">
-                <div class="text-center space-y-4 mb-8">
-                    <div class="text-7xl mb-4 animate-float inline-block">🕵️</div>
-                    <h2 class="text-4xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">谁是卧底</h2>
-                    <p class="text-gray-400 text-sm">防窥屏 · 惩罚转盘 · 智能词库</p>
-                </div>
+        // 默认播放列表 - 如果API不可用，将使用此列表作为备选
+        const defaultPlaylist = [
+            {
+                id: 1,
+                title: "Blinding Lights",
+                artist: "The Weeknd",
+                duration: 200,
+                cover: "https://picsum.photos/200/200?random=1",
+                preview: "https://cdns-preview-6.dzcdn.net/stream/c-6e7a5f8a3e86d5b1c5e4d9c7b8a9f6e5-3.mp3"
+            },
+            {
+                id: 2,
+                title: "Stay",
+                artist: "The Kid LAROI, Justin Bieber",
+                duration: 141,
+                cover: "https://picsum.photos/200/200?random=2",
+                preview: "https://cdns-preview-5.dzcdn.net/stream/c-5e8c9f7d6b4a3e2d1c0b9a8b7c6d5e4f-3.mp3"
+            },
+            {
+                id: 3,
+                title: "Good 4 U",
+                artist: "Olivia Rodrigo",
+                duration: 178,
+                cover: "https://picsum.photos/200/200?random=3",
+                preview: "https://cdns-preview-7.dzcdn.net/stream/c-7d9e8f7c6b5a4e3d2c1b0a9f8e7d6c5b-3.mp3"
+            },
+            {
+                id: 4,
+                title: "Levitating",
+                artist: "Dua Lipa",
+                duration: 203,
+                cover: "https://picsum.photos/200/200?random=4",
+                preview: "https://cdns-preview-8.dzcdn.net/stream/c-8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c-3.mp3"
+            },
+            {
+                id: 5,
+                title: "Save Your Tears",
+                artist: "The Weeknd",
+                duration: 215,
+                cover: "https://picsum.photos/200/200?random=5",
+                preview: "https://cdns-preview-9.dzcdn.net/stream/c-9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d-3.mp3"
+            }
+        ];
 
-                <div class="space-y-3">
-                    <button onclick="showSetup()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 font-bold text-lg shadow-xl shadow-blue-500/25 btn-press transition-all flex items-center justify-center gap-2">
-                        <span>🚀</span> 开始游戏
-                    </button>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="showWordBank()" class="py-3 rounded-2xl glass-panel hover:bg-white/10 font-medium text-gray-300 transition-all btn-press flex items-center justify-center gap-2">
-                            <span>📚</span> 词库
-                        </button>
-                        <button onclick="showPunishmentWheel()" class="py-3 rounded-2xl glass-panel hover:bg-white/10 font-medium text-gray-300 transition-all btn-press flex items-center justify-center gap-2">
-                            <span>🎯</span> 惩罚
-                        </button>
-                    </div>
-                    <button onclick="showHistory()" class="w-full py-3 rounded-2xl glass-panel hover:bg-white/10 font-medium text-gray-300 transition-all btn-press flex items-center justify-center gap-2">
-                        <span>📊</span> 历史记录
-                    </button>
-                </div>
+        // 应用状态
+        const state = {
+            playlist: [],
+            currentSongIndex: 0,
+            isPlaying: false,
+            currentTime: 0,
+            duration: 0,
+            isSearchVisible: false
+        };
 
-                <div class="grid grid-cols-3 gap-3 text-center mt-8">
-                    <div class="glass-panel rounded-xl p-3">
-                        <div class="text-2xl font-bold text-blue-400" id="totalGames">0</div>
-                        <div class="text-xs text-gray-500">总场次</div>
-                    </div>
-                    <div class="glass-panel rounded-xl p-3">
-                        <div class="text-2xl font-bold text-purple-400" id="wordCount">47</div>
-                        <div class="text-xs text-gray-500">词库数量</div>
-                    </div>
-                    <div class="glass-panel rounded-xl p-3">
-                        <div class="text-2xl font-bold text-pink-400" id="punishCount">20</div>
-                        <div class="text-xs text-gray-500">惩罚项目</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        // DOM元素
+        const elements = {
+            audioPlayer: document.getElementById('audioPlayer'),
+            disc: document.getElementById('disc'),
+            albumCover: document.getElementById('albumCover'),
+            songTitle: document.getElementById('songTitle'),
+            songArtist: document.getElementById('songArtist'),
+            playBtn: document.getElementById('playBtn'),
+            playIcon: document.getElementById('playIcon'),
+            prevBtn: document.getElementById('prevBtn'),
+            nextBtn: document.getElementById('nextBtn'),
+            progressBar: document.getElementById('progressBar'),
+            progress: document.getElementById('progress'),
+            currentTime: document.getElementById('currentTime'),
+            totalTime: document.getElementById('totalTime'),
+            songList: document.getElementById('songList'),
+            songCount: document.getElementById('songCount'),
+            searchToggle: document.getElementById('searchToggle'),
+            searchContainer: document.getElementById('searchContainer'),
+            searchInput: document.getElementById('searchInput'),
+            searchResults: document.getElementById('searchResults'),
+            playerContainer: document.getElementById('playerContainer'),
+            playlistContainer: document.getElementById('playlistContainer'),
+            playlistToggle: document.getElementById('playlistToggle'),
+            miniPlayer: document.getElementById('miniPlayer'),
+            miniPlayerTitle: document.getElementById('miniPlayerTitle'),
+            miniPlayerArtist: document.getElementById('miniPlayerArtist'),
+            miniPlayBtn: document.getElementById('miniPlayBtn'),
+            miniPlayIcon: document.getElementById('miniPlayIcon'),
+            errorMessage: document.getElementById('errorMessage'),
+            lyricsContainer: document.getElementById('lyricsContainer'),
+            lyricsContent: document.getElementById('lyricsContent'),
+            lyricsClose: document.getElementById('lyricsClose'),
+            lyricsBtn: document.getElementById('lyricsBtn')
+        };
 
-        <!-- 设置页面 -->
-        <div id="setupScreen" class="screen h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
-            <div class="max-w-md mx-auto space-y-6 py-4">
-                <div class="flex items-center gap-4 mb-6">
-                    <button onclick="showScreen('homeScreen')" class="p-2 rounded-lg hover:bg-white/10">←</button>
-                    <h2 class="text-2xl font-bold">游戏设置</h2>
-                </div>
-                
-                <div class="glass-panel rounded-2xl p-5 space-y-6">
-                    <div>
-                        <label class="flex justify-between text-sm font-medium mb-2 text-gray-300">
-                            <span>玩家人数</span>
-                            <span class="text-blue-400 font-bold" id="playerCountDisplay">6人</span>
-                        </label>
-                        <input type="range" id="playerCount" min="4" max="16" value="6" 
-                               class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                               oninput="updateSetup()">
-                    </div>
-
-                    <div>
-                        <label class="flex justify-between text-sm font-medium mb-2 text-gray-300">
-                            <span>卧底数量</span>
-                            <span class="text-purple-400 font-bold" id="undercoverCountDisplay">1人</span>
-                        </label>
-                        <input type="range" id="undercoverCount" min="1" max="4" value="1" 
-                               class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
-                               oninput="updateSetup()">
-                    </div>
-
-                    <div class="flex items-center justify-between py-2 border-t border-white/10">
-                        <div>
-                            <div class="font-medium text-gray-200">启用白板</div>
-                            <div class="text-xs text-gray-500">白板猜对双词即获胜</div>
-                        </div>
-                        <button id="blankToggle" onclick="toggleBlank()" class="w-14 h-8 rounded-full bg-gray-700 relative transition-colors duration-300">
-                            <div class="w-6 h-6 bg-white rounded-full absolute top-1 left-1 transition-transform duration-300 shadow-md"></div>
-                        </button>
-                    </div>
-
-                    <div class="flex items-center justify-between py-2 border-t border-white/10">
-                        <div>
-                            <div class="font-medium text-gray-200">发言计时</div>
-                            <div class="text-xs text-gray-500">每人限时60秒</div>
-                        </div>
-                        <button id="timerToggle" onclick="toggleTimer()" class="w-14 h-8 rounded-full bg-blue-600 relative transition-colors duration-300">
-                            <div class="w-6 h-6 bg-white rounded-full absolute top-1 left-1 transition-transform duration-300 shadow-md transform translate-x-6"></div>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="glass-panel rounded-2xl p-4">
-                    <h3 class="font-bold mb-3 text-sm text-gray-300">角色分配预览</h3>
-                    <div class="flex gap-2 flex-wrap justify-center" id="rolePreview"></div>
-                    <div class="text-center text-xs text-gray-500 mt-2" id="roleSummary">5平民 vs 1卧底</div>
-                </div>
-
-                <!-- 关键修复：onclick调用正确的函数名 -->
-                <button onclick="startDealing()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 font-bold text-lg shadow-xl btn-press transition-all flex items-center justify-center gap-2">
-                    <span>🎲</span> 开始发牌
-                </button>
-            </div>
-        </div>
-
-        <!-- 发牌页面 -->
-        <div id="dealingScreen" class="screen h-full p-4 pb-24 overflow-hidden flex flex-col">
-            <div class="max-w-md mx-auto w-full h-full flex flex-col">
-                <div class="text-center mb-4 shrink-0">
-                    <div class="text-sm text-gray-400 mb-1">当前玩家</div>
-                    <div class="text-3xl font-black text-white" id="currentPlayerName">玩家 1</div>
-                    <div class="text-xs text-gray-500 mt-1">点击卡片 → 查看 → 确认传递</div>
-                </div>
-
-                <div class="flex-1 flex items-center justify-center min-h-0 py-4">
-                    <div class="w-full max-w-sm h-full max-h-[500px] relative card-container">
-                        <div id="identityCard" class="game-card w-full h-full cursor-pointer" onclick="flipCard(this)">
-                            <!-- 正面 -->
-                            <div class="card-face card-front">
-                                <div class="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center text-5xl mb-6 backdrop-blur-sm border-2 border-white/20 animate-pulse">
-                                    🎴
-                                </div>
-                                <div class="text-2xl font-bold text-white mb-2">点击翻开</div>
-                                <div class="text-sm text-gray-400 mb-8">查看你的身份牌</div>
-                                <div class="text-xs text-gray-600 text-center leading-relaxed px-4">
-                                    请确保周围无人窥屏<br>
-                                    只有你能看到内容
-                                </div>
-                            </div>
-                            
-                            <!-- 背面：统一蓝紫色 -->
-                            <div class="card-face card-back uniform-card">
-                                <div class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-3xl mb-4 backdrop-blur-sm border-2 border-white/30 shadow-inner" id="roleIcon">
-                                    👥
-                                </div>
-                                <div class="text-xs text-white/80 mb-1 uppercase tracking-widest">你的身份</div>
-                                <div class="text-3xl font-black text-white mb-6 drop-shadow-lg" id="roleTitle">平民</div>
-                                
-                                <div class="bg-black/20 rounded-2xl p-4 w-full backdrop-blur-sm border border-white/10 mb-4">
-                                    <div class="text-xs text-white/60 mb-1 uppercase tracking-wider">提示词</div>
-                                    <div class="text-4xl font-bold text-white tracking-wider" id="roleWord">苹果</div>
-                                    <div class="text-xs text-white/70 mt-2 font-medium" id="wordHint">请记住这个词</div>
-                                </div>
-                                
-                                <div class="text-xs text-white/80 text-center leading-relaxed px-2" id="roleHint">
-                                    描述这个词，但不要直接说出来
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-3 shrink-0">
-                    <button id="nextPlayerBtn" onclick="nextPlayer()" class="hidden w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 font-bold text-lg shadow-xl btn-press transition-all flex items-center justify-center gap-2">
-                        <span>确认并传递给下一位</span>
-                        <span>→</span>
-                    </button>
-                    
-                    <button id="startGameBtn" onclick="startPlaying()" class="hidden w-full py-4 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 font-bold text-lg shadow-xl btn-press transition-all animate-pulse flex items-center justify-center gap-2">
-                        <span>🎮</span> 所有人就绪，开始游戏！
-                    </button>
-                    
-                    <div class="text-center text-sm text-gray-500 font-mono" id="dealingProgress">
-                        第 1 / 6 位玩家
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 游戏进行页面 -->
-        <div id="gameScreen" class="screen h-full p-4 pb-32 overflow-y-auto hide-scrollbar">
-            <div class="max-w-2xl mx-auto space-y-4">
-                <div class="glass-panel rounded-2xl p-4 flex items-center justify-between sticky top-0 z-10">
-                    <div>
-                        <div class="text-xs text-gray-400 mb-1">第 <span id="roundNumber" class="text-white font-bold text-lg">1</span> 轮</div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                            <span class="text-sm font-bold" id="phaseText">发言阶段</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <div class="text-right hidden sm:block">
-                            <div class="text-xs text-gray-400">当前发言</div>
-                            <div class="font-bold" id="speakerName">玩家1</div>
-                        </div>
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-lg font-bold shadow-lg" id="speakerAvatar">1</div>
-                    </div>
-                </div>
-
-                <div id="timerSection" class="glass-panel rounded-2xl p-4">
-                    <div class="flex justify-between text-xs text-gray-400 mb-2">
-                        <span>剩余时间</span>
-                        <span id="timerText" class="text-xl font-bold text-white font-mono">60</span>
-                    </div>
-                    <div class="h-3 bg-gray-700 rounded-full overflow-hidden relative">
-                        <div id="timerBar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000 w-full"></div>
-                    </div>
-                </div>
-
-                <div id="blankGuessSection" class="hidden glass-panel rounded-2xl p-4 border-2 border-purple-500/50 bg-purple-500/10">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="font-bold text-purple-300 text-lg">你是白板！</div>
-                            <div class="text-xs text-gray-400">听取描述后猜两个词</div>
-                        </div>
-                        <button onclick="showBlankGuess()" class="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-colors shadow-lg btn-press">
-                            猜词
-                        </button>
-                    </div>
-                </div>
-
-                <div class="glass-panel rounded-2xl p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="font-bold text-sm text-gray-300">📝 发言记录板</h3>
-                        <button onclick="clearRecords()" class="text-xs text-gray-500 hover:text-white btn-press">清空</button>
-                    </div>
-                    <div id="speechRecords" class="space-y-2 max-h-32 overflow-y-auto hide-scrollbar">
-                        <div class="text-center text-sm text-gray-500 py-4">暂无记录，点击下方添加</div>
-                    </div>
-                    <button onclick="addRecord()" class="w-full mt-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-sm text-gray-400 transition-colors border border-dashed border-white/20 btn-press">
-                        + 记录当前发言要点
-                    </button>
-                </div>
-
-                <div class="glass-panel rounded-2xl p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="font-bold text-sm text-gray-300">玩家状态</h3>
-                        <span class="text-xs text-gray-500" id="aliveCount">存活 6/6</span>
-                    </div>
-                    <div class="grid grid-cols-4 sm:grid-cols-6 gap-3" id="playerGrid"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 投票页面 -->
-        <div id="voteScreen" class="screen h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
-            <div class="max-w-md mx-auto py-4">
-                <div class="text-center py-4 mb-6">
-                    <h2 class="text-3xl font-black mb-2 text-red-400">投票时刻</h2>
-                    <p class="text-gray-400 text-sm">选出最像卧底的人</p>
-                </div>
-                <div id="voteGrid" class="grid grid-cols-2 gap-3"></div>
-            </div>
-        </div>
-
-        <!-- 结果页面 -->
-        <div id="resultScreen" class="screen h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
-            <div class="max-w-md mx-auto py-8 text-center space-y-6">
-                <div class="text-6xl mb-4 animate-bounce" id="resultEmoji">🎉</div>
-                <h2 class="text-4xl font-black mb-2" id="resultTitle">平民胜利！</h2>
-                <p class="text-gray-400" id="resultDesc"></p>
-
-                <div class="glass-panel rounded-2xl p-6 space-y-3 text-left max-h-64 overflow-y-auto hide-scrollbar">
-                    <h3 class="font-bold text-lg mb-4 text-center border-b border-white/10 pb-2">身份揭晓</h3>
-                    <div id="resultList" class="space-y-2"></div>
-                </div>
-
-                <div class="glass-panel rounded-2xl p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-white/20">
-                    <div class="text-sm text-gray-400 mb-1">本局词语</div>
-                    <div class="flex items-center justify-center gap-4 text-lg font-bold flex-wrap">
-                        <div class="text-green-400">「<span id="resultCivilianWord">?</span>」</div>
-                        <span class="text-gray-600">vs</span>
-                        <div class="text-red-400">「<span id="resultUndercoverWord">?</span>」</div>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <button onclick="showPunishmentWheel()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 font-bold text-lg shadow-xl btn-press">
-                        <span>🎯</span> 惩罚转盘
-                    </button>
-                    <button onclick="location.reload()" class="w-full py-3 rounded-2xl glass-panel hover:bg-white/10 font-bold btn-press">
-                        再来一局 ↺
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 词库页面 -->
-        <div id="wordBankScreen" class="screen h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
-            <div class="max-w-md mx-auto py-4">
-                <div class="flex items-center justify-between mb-4">
-                    <button onclick="showScreen('homeScreen')" class="p-2 rounded-lg hover:bg-white/10">←</button>
-                    <h2 class="text-xl font-bold">词库管理</h2>
-                    <button onclick="showAddWord()" class="px-4 py-2 rounded-lg bg-blue-600 text-sm font-bold btn-press">+ 添加</button>
-                </div>
-                <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-2 mb-4" id="categoryTabs">
-                    <button class="px-4 py-2 rounded-full bg-blue-600 text-sm font-bold whitespace-nowrap" onclick="filterWords('all', this)">全部</button>
-                    <button class="px-4 py-2 rounded-full bg-white/10 text-sm whitespace-nowrap" onclick="filterWords('food', this)">美食</button>
-                    <button class="px-4 py-2 rounded-full bg-white/10 text-sm whitespace-nowrap" onclick="filterWords('daily', this)">生活</button>
-                    <button class="px-4 py-2 rounded-full bg-white/10 text-sm whitespace-nowrap" onclick="filterWords('ent', this)">娱乐</button>
-                    <button class="px-4 py-2 rounded-full bg-white/10 text-sm whitespace-nowrap" onclick="filterWords('custom', this)">自定义</button>
-                </div>
-                <div id="wordList" class="space-y-2"></div>
-            </div>
-        </div>
-
-        <!-- 惩罚转盘页面 -->
-        <div id="wheelScreen" class="screen h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
-            <div class="max-w-md mx-auto py-4 h-full flex flex-col">
-                <div class="flex items-center justify-between mb-4">
-                    <button onclick="showScreen('homeScreen')" class="p-2 rounded-lg hover:bg-white/10">←</button>
-                    <h2 class="text-xl font-bold">惩罚转盘</h2>
-                    <button onclick="editPunishments()" class="text-sm text-blue-400 btn-press">编辑</button>
-                </div>
-                <div class="flex-1 flex flex-col items-center justify-center min-h-0 py-8">
-                    <div class="roulette-container mb-8 shrink-0">
-                        <div class="roulette-pointer"></div>
-                        <div id="rouletteWheel" class="roulette-wheel"></div>
-                    </div>
-                    <button onclick="spinWheel()" class="px-8 py-4 rounded-full bg-gradient-to-r from-red-600 to-pink-600 font-bold text-xl shadow-xl btn-press animate-pulse shrink-0">
-                        开始旋转！
-                    </button>
-                    <div id="punishmentResult" class="mt-8 text-center hidden w-full px-4">
-                        <div class="text-sm text-gray-400 mb-2">惩罚结果</div>
-                        <div class="text-2xl font-bold text-red-400 px-6 py-4 bg-red-500/10 rounded-xl border border-red-500/30 break-words" id="punishmentText">--</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 历史记录页面 -->
-        <div id="historyScreen" class="screen h-full p-4 pb-24 overflow-y-auto hide-scrollbar">
-            <div class="max-w-md mx-auto py-4">
-                <div class="flex items-center gap-4 mb-6">
-                    <button onclick="showScreen('homeScreen')" class="p-2 rounded-lg hover:bg-white/10">←</button>
-                    <h2 class="text-xl font-bold">历史记录</h2>
-                </div>
-                <div id="historyList" class="space-y-3"></div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- 底部操作栏（游戏时显示） -->
-    <div id="gameControls" class="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-slate-900 via-slate-900/95 to-transparent z-50 hidden">
-        <div class="max-w-md mx-auto space-y-2">
-            <button id="nextBtn" onclick="nextSpeaker()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 font-bold text-lg shadow-xl btn-press transition-all flex items-center justify-center gap-2">
-                <span>下一位发言</span>
-                <span>→</span>
-            </button>
-            <div class="flex gap-2">
-                <button onclick="startVoting()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 font-bold text-sm shadow-lg btn-press">
-                    发起投票
-                </button>
-                <button onclick="toggleNightMode()" class="px-4 py-3 rounded-xl glass-panel hover:bg-white/10 font-bold text-sm btn-press">
-                    🌙
-                </button>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<!-- 模态框 -->
-<div id="addWordModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="glass-panel rounded-2xl p-6 w-full max-w-md space-y-4">
-        <h3 class="text-xl font-bold">添加自定义词语</h3>
-        <div class="space-y-3">
-            <input type="text" id="newCivilianWord" placeholder="平民词（如：苹果）" class="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
-            <input type="text" id="newUndercoverWord" placeholder="卧底词（如：梨子）" class="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500">
-        </div>
-        <div class="flex gap-3 mt-6">
-            <button onclick="closeAddWord()" class="flex-1 py-3 rounded-xl bg-gray-700 font-bold btn-press">取消</button>
-            <button onclick="confirmAddWord()" class="flex-1 py-3 rounded-xl bg-blue-600 font-bold btn-press">添加</button>
-        </div>
-    </div>
-</div>
-
-<div id="recordModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="glass-panel rounded-2xl p-6 w-full max-w-md space-y-4">
-        <h3 class="text-lg font-bold">记录发言</h3>
-        <textarea id="recordContent" rows="3" placeholder="记录关键线索..." class="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white resize-none focus:outline-none focus:border-blue-500"></textarea>
-        <div class="flex gap-3">
-            <button onclick="closeRecord()" class="flex-1 py-3 rounded-xl bg-gray-700 font-bold btn-press">取消</button>
-            <button onclick="saveRecord()" class="flex-1 py-3 rounded-xl bg-blue-600 font-bold btn-press">保存</button>
-        </div>
-    </div>
-</div>
-
-<div id="blankGuessModal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="glass-panel rounded-2xl p-6 w-full max-w-md space-y-4 border-2 border-purple-500/50">
-        <h3 class="text-xl font-bold text-purple-400">白板猜词</h3>
-        <p class="text-sm text-gray-400">猜对两个词即可获胜</p>
-        <div class="space-y-3">
-            <input type="text" id="guessWord1" placeholder="第一个词" class="w-full bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-purple-500">
-            <input type="text" id="guessWord2" placeholder="第二个词" class="w-full bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 text-white focus:outline-none focus:border-purple-500">
-        </div>
-        <div class="flex gap-3">
-            <button onclick="closeBlankGuess()" class="flex-1 py-3 rounded-xl bg-gray-700 font-bold btn-press">取消</button>
-            <button onclick="confirmBlankGuess()" class="flex-1 py-3 rounded-xl bg-purple-600 font-bold btn-press">提交</button>
-        </div>
-    </div>
-</div>
-
-<script>
-// ============ 数据 ============
-const wordBank = {
-    food: [
-        {c:"苹果",u:"梨子"},{c:"麦当劳",u:"肯德基"},{c:"火锅",u:"烧烤"},{c:"咖啡",u:"奶茶"},
-        {c:"蛋糕",u:"面包"},{c:"泡面",u:"螺蛳粉"},{c:"饺子",u:"馄饨"},{c:"面条",u:"米粉"},
-        {c:"冰淇淋",u:"雪糕"},{c:"豆浆",u:"牛奶"},{c:"巧克力",u:"糖果"},{c:"汉堡",u:"三明治"}
-    ],
-    daily: [
-        {c:"地铁",u:"公交车"},{c:"微信",u:"QQ"},{c:"口红",u:"唇膏"},{c:"毛衣",u:"卫衣"},
-        {c:"眼镜",u:"墨镜"},{c:"手机",u:"平板"},{c:"洗发水",u:"沐浴露"},{c:"牙膏",u:"洗面奶"},
-        {c:"雨伞",u:"遮阳伞"},{c:"手表",u:"手环"},{c:"钱包",u:"卡包"},{c:"拖鞋",u:"凉鞋"},
-        {c:"枕头",u:"靠垫"},{c:"毛巾",u:"浴巾"},{c:"镜子",u:"玻璃"}
-    ],
-    ent: [
-        {c:"王者荣耀",u:"英雄联盟"},{c:"抖音",u:"快手"},{c:"电影",u:"电视剧"},{c:"小说",u:"漫画"},
-        {c:"演唱会",u:"音乐节"},{c:"密室逃脱",u:"剧本杀"},{c:"麻将",u:"扑克"},{c:"KTV",u:"酒吧"},
-        {c:"篮球",u:"足球"},{c:"吉他",u:"尤克里里"},{c:"猫",u:"狗"},{c:"太阳",u:"月亮"},
-        {c:"爬山",u:"游泳"},{c:"画画",u:"书法"},{c:"钢琴",u:"小提琴"}
-    ],
-    custom: []
-};
-
-if(localStorage.getItem('customWords')) {
-    wordBank.custom = JSON.parse(localStorage.getItem('customWords'));
-}
-
-let punishments = ["唱一首情歌","学三种动物叫","做10个俯卧撑","讲一个冷笑话","模仿一位明星",
-    "说出三个秘密","给通讯录第3位发语音","原地转5圈","用屁股写字","表白墙壁10秒",
-    "喝一口醋","做鬼脸30秒","背一首古诗","跳一段舞","大声喊'我是猪'三次",
-    "吃一口柠檬","蒙眼踏步20秒","与左边的人对视10秒","学母鸡下蛋","赞美自己一分钟"];
-if(localStorage.getItem('punishments')) {
-    punishments = JSON.parse(localStorage.getItem('punishments'));
-}
-
-// ============ 游戏状态 ============
-let gameState = {
-    phase:'home',
-    players:[],
-    currentPlayerIndex:0,
-    round:1,
-    words:{},
-    useBlank:false,
-    useTimer:true,
-    timer:null,
-    votes:{},
-    eliminated:[],
-    speechRecords:[],
-    soundEnabled:true,
-    nightMode:false
-};
-
-// ============ 初始化 ============
-document.addEventListener('DOMContentLoaded', () => {
-    updateWordCount();
-    document.getElementById('totalGames').textContent = localStorage.getItem('totalGames') || '0';
-    updateSetup();
-    
-    // 确保所有屏幕隐藏，只显示首页
-    showScreen('homeScreen');
-});
-
-// ============ 核心导航 ============
-function showScreen(screenId) {
-    // 隐藏所有屏幕
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    // 显示目标屏幕
-    const target = document.getElementById(screenId);
-    if(target) target.classList.add('active');
-    
-    // 控制底部栏显示
-    const gameControls = document.getElementById('gameControls');
-    if(screenId === 'gameScreen') {
-        gameControls.classList.remove('hidden');
-    } else {
-        gameControls.classList.add('hidden');
-    }
-    
-    // 更新游戏状态
-    if(screenId === 'homeScreen') gameState.phase = 'home';
-    else if(screenId === 'setupScreen') gameState.phase = 'setup';
-    else if(screenId === 'dealingScreen') gameState.phase = 'dealing';
-    else if(screenId === 'gameScreen') gameState.phase = 'playing';
-    else if(screenId === 'voteScreen') gameState.phase = 'voting';
-    else if(screenId === 'resultScreen') gameState.phase = 'result';
-}
-
-// ============ 首页功能 ============
-function showSetup() {
-    showScreen('setupScreen');
-}
-
-function toggleSound() {
-    gameState.soundEnabled = !gameState.soundEnabled;
-    document.getElementById('soundBtn').textContent = gameState.soundEnabled ? '🔊' : '🔇';
-}
-
-function updateWordCount() {
-    const total = wordBank.food.length + wordBank.daily.length + wordBank.ent.length + wordBank.custom.length;
-    document.getElementById('wordCount').textContent = total;
-    document.getElementById('punishCount').textContent = punishments.length;
-}
-
-// ============ 设置页面 ============
-function updateSetup() {
-    const pc = parseInt(document.getElementById('playerCount').value);
-    const uc = parseInt(document.getElementById('undercoverCount').value);
-    
-    document.getElementById('playerCountDisplay').textContent = pc + '人';
-    document.getElementById('undercoverCountDisplay').textContent = uc + '人';
-    
-    // 限制卧底数量
-    const maxU = Math.floor((pc - (gameState.useBlank ? 1 : 0)) / 2);
-    if(uc > maxU) {
-        document.getElementById('undercoverCount').value = maxU;
-    }
-    
-    const actualUC = parseInt(document.getElementById('undercoverCount').value);
-    const cc = pc - actualUC - (gameState.useBlank ? 1 : 0);
-    document.getElementById('roleSummary').textContent = `${cc}平民 vs ${actualUC}卧底${gameState.useBlank ? ' vs 1白板' : ''}`;
-    
-    const preview = document.getElementById('rolePreview');
-    preview.innerHTML = '';
-    for(let i = 0; i < cc; i++) preview.innerHTML += `<span class="px-2 py-1 rounded bg-blue-500/20 text-blue-400 text-xs border border-blue-500/30">平</span>`;
-    for(let i = 0; i < actualUC; i++) preview.innerHTML += `<span class="px-2 py-1 rounded bg-purple-500/20 text-purple-400 text-xs border border-purple-500/30">卧</span>`;
-    if(gameState.useBlank) preview.innerHTML += `<span class="px-2 py-1 rounded bg-gray-500/20 text-gray-400 text-xs border border-gray-500/30">白</span>`;
-}
-
-function toggleBlank() {
-    gameState.useBlank = !gameState.useBlank;
-    const btn = document.getElementById('blankToggle');
-    const dot = btn.querySelector('div');
-    
-    if(gameState.useBlank) {
-        btn.classList.remove('bg-gray-700');
-        btn.classList.add('bg-purple-600');
-        dot.style.transform = 'translateX(24px)';
-    } else {
-        btn.classList.add('bg-gray-700');
-        btn.classList.remove('bg-purple-600');
-        dot.style.transform = 'translateX(0)';
-    }
-    updateSetup();
-}
-
-function toggleTimer() {
-    gameState.useTimer = !gameState.useTimer;
-    const btn = document.getElementById('timerToggle');
-    const dot = btn.querySelector('div');
-    
-    if(gameState.useTimer) {
-        btn.classList.remove('bg-gray-700');
-        btn.classList.add('bg-blue-600');
-        dot.style.transform = 'translateX(24px)';
-    } else {
-        btn.classList.add('bg-gray-700');
-        btn.classList.remove('bg-blue-600');
-        dot.style.transform = 'translateX(0)';
-    }
-}
-
-// ============ 发牌系统（关键修复） ============
-function startDealing() {
-    const pc = parseInt(document.getElementById('playerCount').value);
-    const uc = parseInt(document.getElementById('undercoverCount').value);
-    
-    // 初始化玩家
-    gameState.players = [];
-    for(let i = 1; i <= pc; i++) {
-        gameState.players.push({
-            id: i,
-            name: `玩家${i}`,
-            role: 'civilian',
-            word: '',
-            alive: true
-        });
-    }
-    
-    // 分配角色
-    const roles = [];
-    for(let i = 0; i < pc - uc - (gameState.useBlank ? 1 : 0); i++) roles.push('civilian');
-    for(let i = 0; i < uc; i++) roles.push('undercover');
-    if(gameState.useBlank) roles.push('blank');
-    
-    // 洗牌
-    for(let i = roles.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [roles[i], roles[j]] = [roles[j], roles[i]];
-    }
-    
-    // 选词
-    const allWords = [...wordBank.food, ...wordBank.daily, ...wordBank.ent, ...wordBank.custom];
-    gameState.words = allWords[Math.floor(Math.random() * allWords.length)];
-    
-    // 分配词语
-    gameState.players.forEach((p, i) => {
-        p.role = roles[i];
-        p.word = p.role === 'civilian' ? gameState.words.civilian : 
-                 p.role === 'undercover' ? gameState.words.undercover : null;
-    });
-    
-    // 重置索引并切换屏幕
-    gameState.currentPlayerIndex = 0;
-    gameState.speechRecords = [];
-    gameState.eliminated = [];
-    
-    showScreen('dealingScreen');
-    
-    // 延迟初始化视图，确保DOM切换完成
-    setTimeout(() => {
-        updateDealingView();
-    }, 100);
-}
-
-function updateDealingView() {
-    const card = document.getElementById('identityCard');
-    card.classList.remove('flipped');
-    
-    const p = gameState.players[gameState.currentPlayerIndex];
-    document.getElementById('currentPlayerName').textContent = p.name;
-    document.getElementById('dealingProgress').textContent = `第 ${gameState.currentPlayerIndex + 1} / ${gameState.players.length} 位`;
-    
-    // 更新卡片内容（统一颜色）
-    document.getElementById('roleIcon').textContent = p.role === 'civilian' ? '👥' : p.role === 'undercover' ? '🕵️' : '🃏';
-    document.getElementById('roleTitle').textContent = p.role === 'civilian' ? '平民' : p.role === 'undercover' ? '卧底' : '白板';
-    document.getElementById('roleWord').textContent = p.word || '?';
-    document.getElementById('roleWord').style.opacity = p.word ? '1' : '0.3';
-    document.getElementById('wordHint').textContent = p.role === 'blank' ? '靠听描述猜词' : '请记住这个词';
-    document.getElementById('roleHint').textContent = p.role === 'undercover' ? '你的词和别人不同，小心隐藏' : 
-                                                      p.role === 'blank' ? '你没有词！听别人的描述' : 
-                                                      '描述这个词，但不要直接说出来';
-    
-    document.getElementById('nextPlayerBtn').classList.add('hidden');
-    document.getElementById('startGameBtn').classList.add('hidden');
-    
-    // 显示隐私遮罩
-    document.getElementById('privacyShield').classList.remove('hidden');
-}
-
-function hidePrivacyShield() {
-    document.getElementById('privacyShield').classList.add('hidden');
-}
-
-function flipCard(el) {
-    if(el.classList.contains('flipped')) return;
-    el.classList.add('flipped');
-    if(navigator.vibrate) navigator.vibrate(50);
-    
-    const isLast = gameState.currentPlayerIndex === gameState.players.length - 1;
-    if(isLast) {
-        document.getElementById('startGameBtn').classList.remove('hidden');
-    } else {
-        document.getElementById('nextPlayerBtn').classList.remove('hidden');
-    }
-}
-
-function nextPlayer() {
-    // 先翻回
-    document.getElementById('identityCard').classList.remove('flipped');
-    document.getElementById('privacyShield').classList.remove('hidden');
-    
-    setTimeout(() => {
-        gameState.currentPlayerIndex++;
-        if(gameState.currentPlayerIndex < gameState.players.length) {
-            updateDealingView();
+        // 初始化应用
+        function init() {
+            // 加载默认播放列表
+            loadDefaultPlaylist();
+            
+            // 设置事件监听器
+            setupEventListeners();
+            
+            // 更新UI
+            updatePlaylistUI();
+            
+            // 加载第一首歌
+            loadSong(state.currentSongIndex);
         }
-    }, 400);
-}
 
-function startPlaying() {
-    showScreen('gameScreen');
-    gameState.phase = 'playing';
-    gameState.round = 1;
-    gameState.currentPlayerIndex = 0;
-    updateGameView();
-    if(gameState.useTimer) startTimer(60);
-}
-
-// ============ 游戏进行 ============
-function updateGameView() {
-    const alive = gameState.players.filter(p => p.alive);
-    const curr = alive[gameState.currentPlayerIndex % alive.length];
-    
-    if(!curr) return;
-    
-    document.getElementById('roundNumber').textContent = gameState.round;
-    document.getElementById('speakerName').textContent = curr.name;
-    document.getElementById('speakerAvatar').textContent = curr.id;
-    document.getElementById('aliveCount').textContent = `存活 ${alive.length}/${gameState.players.length}`;
-    
-    // 白板按钮
-    document.getElementById('blankGuessSection').classList.toggle('hidden', curr.role !== 'blank');
-    
-    // 玩家网格
-    const grid = document.getElementById('playerGrid');
-    grid.innerHTML = '';
-    gameState.players.forEach(p => {
-        if(!p.alive) return;
-        const div = document.createElement('div');
-        div.className = 'flex flex-col items-center gap-1 p-2 rounded-xl transition-all cursor-pointer hover:bg-white/5';
-        div.onclick = () => { if(gameState.phase === 'voting') castVote(p.id); };
-        div.innerHTML = `
-            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center font-bold shadow-lg transition-all ${gameState.votes[p.id] ? 'ring-4 ring-yellow-400 scale-110' : ''}">
-                ${p.id}
-            </div>
-            <div class="text-xs text-gray-400 truncate w-full text-center">${p.name}</div>
-        `;
-        grid.appendChild(div);
-    });
-    
-    updateSpeechRecords();
-}
-
-function startTimer(s) {
-    if(!gameState.useTimer) {
-        document.getElementById('timerSection').classList.add('hidden');
-        return;
-    }
-    document.getElementById('timerSection').classList.remove('hidden');
-    
-    let r = s;
-    const bar = document.getElementById('timerBar');
-    const txt = document.getElementById('timerText');
-    
-    if(gameState.timer) clearInterval(gameState.timer);
-    
-    bar.style.width = '100%';
-    bar.className = 'h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000';
-    
-    gameState.timer = setInterval(() => {
-        r--;
-        bar.style.width = (r/s*100) + '%';
-        txt.textContent = r;
-        
-        if(r <= 10) {
-            bar.className = 'h-full bg-red-500 transition-all duration-1000';
-            if(navigator.vibrate && r % 2 === 0) navigator.vibrate(30);
+        // 加载默认播放列表
+        function loadDefaultPlaylist() {
+            state.playlist = [...defaultPlaylist];
         }
-        if(r <= 0) {
-            clearInterval(gameState.timer);
-            if(navigator.vibrate) navigator.vibrate([100,50,100]);
-        }
-    }, 1000);
-}
 
-function nextSpeaker() {
-    if(gameState.timer) clearInterval(gameState.timer);
-    
-    const alive = gameState.players.filter(p => p.alive);
-    gameState.currentPlayerIndex++;
-    
-    if(gameState.currentPlayerIndex >= alive.length) {
-        gameState.currentPlayerIndex = 0;
-        startVoting();
-    } else {
-        updateGameView();
-        if(gameState.useTimer) startTimer(60);
-    }
-}
-
-// ============ 记录系统 ============
-function addRecord() {
-    document.getElementById('recordModal').classList.remove('hidden');
-    document.getElementById('recordContent').value = '';
-    document.getElementById('recordContent').focus();
-}
-
-function closeRecord() {
-    document.getElementById('recordModal').classList.add('hidden');
-}
-
-function saveRecord() {
-    const c = document.getElementById('recordContent').value.trim();
-    if(!c) return;
-    
-    gameState.speechRecords.push({
-        round: gameState.round,
-        speaker: document.getElementById('speakerName').textContent,
-        content: c,
-        time: new Date().toLocaleTimeString()
-    });
-    updateSpeechRecords();
-    closeRecord();
-}
-
-function updateSpeechRecords() {
-    const c = document.getElementById('speechRecords');
-    if(gameState.speechRecords.length === 0) {
-        c.innerHTML = '<div class="text-center text-sm text-gray-500 py-4">暂无记录，点击下方添加线索</div>';
-        return;
-    }
-    c.innerHTML = gameState.speechRecords.map(r => `
-        <div class="speech-bubble glass-panel rounded-lg p-3 text-sm border-l-4 border-blue-500 mb-2">
-            <div class="flex justify-between text-xs text-gray-500 mb-1">
-                <span class="font-bold text-blue-400">第${r.round}轮 ${r.speaker}</span>
-            </div>
-            <div class="text-gray-200 break-words">${r.content}</div>
-        </div>
-    `).join('');
-    c.scrollTop = c.scrollHeight;
-}
-
-function clearRecords() {
-    if(confirm('清空所有记录？')) {
-        gameState.speechRecords = [];
-        updateSpeechRecords();
-    }
-}
-
-// ============ 白板猜词 ============
-function showBlankGuess() {
-    document.getElementById('blankGuessModal').classList.remove('hidden');
-}
-
-function closeBlankGuess() {
-    document.getElementById('blankGuessModal').classList.add('hidden');
-}
-
-function confirmBlankGuess() {
-    const w1 = document.getElementById('guessWord1').value.trim();
-    const w2 = document.getElementById('guessWord2').value.trim();
-    
-    if(!w1 || !w2) {
-        alert('请填写两个词');
-        return;
-    }
-    
-    const words = [gameState.words.civilian, gameState.words.undercover].sort();
-    const guesses = [w1, w2].sort();
-    
-    if(guesses[0] === words[0] && guesses[1] === words[1]) {
-        alert('🎉 白板猜对了！白板获胜！');
-        showResult('blank', '白板猜出双词');
-    } else {
-        alert(`❌ 错误！正确答案是：${gameState.words.civilian} 和 ${gameState.words.undercover}`);
-        closeBlankGuess();
-    }
-}
-
-// ============ 投票系统 ============
-function startVoting() {
-    if(gameState.timer) clearInterval(gameState.timer);
-    gameState.phase = 'voting';
-    gameState.votes = {};
-    showScreen('voteScreen');
-    
-    const alive = gameState.players.filter(p => p.alive);
-    const grid = document.getElementById('voteGrid');
-    grid.innerHTML = '';
-    
-    alive.forEach(p => {
-        const btn = document.createElement('button');
-        btn.className = 'flex flex-col items-center gap-2 p-6 rounded-2xl glass-panel hover:bg-white/10 active:scale-95 transition-all btn-press';
-        btn.onclick = () => castVote(p.id);
-        btn.innerHTML = `
-            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-3xl font-bold shadow-lg">${p.id}</div>
-            <div class="font-bold text-lg">${p.name}</div>
-            <div class="text-xs text-gray-500">点击投票</div>
-        `;
-        grid.appendChild(btn);
-    });
-}
-
-function castVote(targetId) {
-    // 模拟投票：目标得票高
-    const alive = gameState.players.filter(p => p.alive);
-    const votes = {};
-    alive.forEach(p => votes[p.id] = 0);
-    
-    // 给目标投票
-    alive.forEach(p => {
-        if(p.id !== targetId) {
-            if(Math.random() > 0.3) {
-                votes[targetId]++;
-            } else {
-                const others = alive.filter(x => x.id !== p.id && x.id !== targetId);
-                if(others.length > 0) {
-                    const rand = others[Math.floor(Math.random() * others.length)];
-                    votes[rand.id]++;
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 播放/暂停按钮
+            elements.playBtn.addEventListener('click', togglePlay);
+            elements.miniPlayBtn.addEventListener('click', togglePlay);
+            
+            // 上一首/下一首按钮
+            elements.prevBtn.addEventListener('click', playPrev);
+            elements.nextBtn.addEventListener('click', playNext);
+            
+            // 音频事件
+            elements.audioPlayer.addEventListener('timeupdate', updateProgress);
+            elements.audioPlayer.addEventListener('loadedmetadata', updateDuration);
+            elements.audioPlayer.addEventListener('ended', playNext);
+            elements.audioPlayer.addEventListener('error', handleAudioError);
+            
+            // 进度条点击事件
+            elements.progressBar.addEventListener('click', seekToPosition);
+            
+            // 搜索功能
+            elements.searchToggle.addEventListener('click', toggleSearch);
+            elements.searchInput.addEventListener('input', debounce(handleSearch, 500));
+            
+            // 播放列表切换
+            elements.playlistToggle.addEventListener('click', togglePlaylist);
+            
+            // 歌词功能
+            elements.lyricsBtn.addEventListener('click', showLyrics);
+            elements.lyricsClose.addEventListener('click', hideLyrics);
+            
+            // 触摸事件处理进度条拖动
+            let isDragging = false;
+            
+            elements.progressBar.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                elements.progressBar.classList.add('dragging');
+                handleProgressDrag(e);
+            });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (isDragging) {
+                    handleProgressDrag(e);
+                    e.preventDefault();
                 }
+            });
+            
+            document.addEventListener('touchend', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    elements.progressBar.classList.remove('dragging');
+                    // 当拖动结束时，跳转到相应位置
+                    const progressRect = elements.progressBar.getBoundingClientRect();
+                    const progressWidth = progressRect.width;
+                    const clickX = lastTouchX - progressRect.left;
+                    const percentage = clickX / progressWidth;
+                    seekToPercentage(percentage);
+                }
+            });
+            
+            let lastTouchX = 0;
+            
+            function handleProgressDrag(e) {
+                const touch = e.touches[0];
+                lastTouchX = touch.clientX;
+                const progressRect = elements.progressBar.getBoundingClientRect();
+                const progressWidth = progressRect.width;
+                const clickX = lastTouchX - progressRect.left;
+                const percentage = Math.max(0, Math.min(1, clickX / progressWidth));
+                
+                // 更新进度条UI但不实际跳转
+                updateProgressUI(percentage * state.duration, state.duration);
+            }
+            
+            // 点击播放列表中的歌曲
+            elements.songList.addEventListener('click', (e) => {
+                const songItem = e.target.closest('.song-item');
+                if (songItem) {
+                    const index = parseInt(songItem.dataset.index);
+                    loadSong(index);
+                    play();
+                }
+            });
+        }
+
+        // 加载歌曲
+        function loadSong(index) {
+            if (index < 0 || index >= state.playlist.length) return;
+            
+            state.currentSongIndex = index;
+            const song = state.playlist[index];
+            
+            // 更新音频源
+            elements.audioPlayer.src = song.preview;
+            
+            // 更新UI
+            updateSongUI(song);
+            updateActiveSongInPlaylist();
+            
+            // 预加载下一首
+            preloadNextSong();
+            
+            // 显示底部迷你播放器
+            elements.miniPlayer.style.display = 'flex';
+        }
+
+        // 更新歌曲UI
+        function updateSongUI(song) {
+            elements.albumCover.src = song.cover;
+            elements.songTitle.textContent = song.title;
+            elements.songArtist.textContent = song.artist;
+            elements.miniPlayerTitle.textContent = song.title;
+            elements.miniPlayerArtist.textContent = song.artist;
+            
+            // 更新总时长
+            updateDuration();
+        }
+
+        // 更新播放列表UI
+        function updatePlaylistUI() {
+            elements.songList.innerHTML = '';
+            elements.songCount.textContent = state.playlist.length;
+            
+            state.playlist.forEach((song, index) => {
+                const li = document.createElement('li');
+                li.className = 'song-item';
+                li.dataset.index = index;
+                
+                const durationFormatted = formatTime(song.duration);
+                
+                li.innerHTML = `
+                    <div class="song-index">${index + 1}</div>
+                    <div class="song-info-small">
+                        <div class="song-title-small">${song.title}</div>
+                        <div class="song-artist-small">${song.artist}</div>
+                    </div>
+                    <div class="song-duration">${durationFormatted}</div>
+                `;
+                
+                elements.songList.appendChild(li);
+            });
+            
+            updateActiveSongInPlaylist();
+        }
+
+        // 更新活动歌曲在播放列表中的状态
+        function updateActiveSongInPlaylist() {
+            document.querySelectorAll('.song-item').forEach((item, index) => {
+                if (index === state.currentSongIndex) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        // 播放/暂停切换
+        function togglePlay() {
+            if (state.isPlaying) {
+                pause();
+            } else {
+                play();
             }
         }
-    });
-    
-    // 找最高票
-    let max = 0, outId = null;
-    for(let id in votes) {
-        if(votes[id] > max) {
-            max = votes[id];
-            outId = parseInt(id);
-        }
-    }
-    
-    const out = gameState.players.find(p => p.id === outId);
-    if(out) {
-        out.alive = false;
-        gameState.eliminated.push(out);
-        
-        const roleText = out.role === 'civilian' ? '平民' : out.role === 'undercover' ? '卧底' : '白板';
-        const icon = out.role === 'civilian' ? '👥' : out.role === 'undercover' ? '🕵️' : '🃏';
-        
-        alert(`${out.name} 被淘汰！\n\n${icon} 身份：${roleText}\n📝 词语：${out.word || '白板无词'}`);
-        
-        if(!checkWin()) {
-            gameState.round++;
-            gameState.phase = 'playing';
-            gameState.currentPlayerIndex = 0;
-            showScreen('gameScreen');
-            updateGameView();
-            if(gameState.useTimer) startTimer(60);
-        }
-    }
-}
 
-function checkWin() {
-    const alive = gameState.players.filter(p => p.alive);
-    const civ = alive.filter(p => p.role === 'civilian').length;
-    const und = alive.filter(p => p.role === 'undercover').length;
-    
-    if(und === 0) {
-        showResult('civilian', '卧底全部被淘汰');
-        return true;
-    }
-    if(und >= civ) {
-        showResult('undercover', '卧底人数不少于平民');
-        return true;
-    }
-    return false;
-}
+        // 播放
+        function play() {
+            elements.audioPlayer.play()
+                .then(() => {
+                    state.isPlaying = true;
+                    elements.playIcon.className = 'fas fa-pause';
+                    elements.miniPlayIcon.className = 'fas fa-pause';
+                    elements.disc.classList.add('playing');
+                })
+                .catch(error => {
+                    showError('无法播放音频：' + error.message);
+                });
+        }
 
-function showResult(winner, reason) {
-    showScreen('resultScreen');
-    
-    const titleMap = {
-        'civilian': ['平民胜利！', 'text-green-400', '🎉'],
-        'undercover': ['卧底胜利！', 'text-red-400', '🕵️'],
-        'blank': ['白板胜利！', 'text-purple-400', '🃏']
-    };
-    
-    const [title, colorClass, emoji] = titleMap[winner];
-    document.getElementById('resultTitle').textContent = title;
-    document.getElementById('resultTitle').className = `text-4xl font-black mb-2 ${colorClass}`;
-    document.getElementById('resultEmoji').textContent = emoji;
-    document.getElementById('resultDesc').textContent = reason;
-    
-    document.getElementById('resultCivilianWord').textContent = gameState.words.civilian;
-    document.getElementById('resultUndercoverWord').textContent = gameState.words.undercover;
-    
-    // 显示所有玩家身份
-    const list = document.getElementById('resultList');
-    list.innerHTML = '';
-    gameState.players.forEach(p => {
-        const roleColor = p.role === 'civilian' ? 'text-green-400' : p.role === 'undercover' ? 'text-red-400' : 'text-purple-400';
-        const roleText = p.role === 'civilian' ? '平民' : p.role === 'undercover' ? '卧底' : '白板';
-        
-        list.innerHTML += `
-            <div class="flex items-center justify-between p-3 rounded-xl bg-white/5">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full ${p.alive ? 'bg-gradient-to-br from-blue-500 to-purple-500' : 'bg-gray-700 grayscale'} flex items-center justify-center font-bold text-sm">
-                        ${p.id}
+        // 暂停
+        function pause() {
+            elements.audioPlayer.pause();
+            state.isPlaying = false;
+            elements.playIcon.className = 'fas fa-play';
+            elements.miniPlayIcon.className = 'fas fa-play';
+            elements.disc.classList.remove('playing');
+        }
+
+        // 播放上一首
+        function playPrev() {
+            let newIndex = state.currentSongIndex - 1;
+            if (newIndex < 0) {
+                newIndex = state.playlist.length - 1;
+            }
+            loadSong(newIndex);
+            play();
+        }
+
+        // 播放下一首
+        function playNext() {
+            let newIndex = state.currentSongIndex + 1;
+            if (newIndex >= state.playlist.length) {
+                newIndex = 0;
+            }
+            loadSong(newIndex);
+            play();
+        }
+
+        // 更新进度
+        function updateProgress() {
+            state.currentTime = elements.audioPlayer.currentTime;
+            state.duration = elements.audioPlayer.duration || state.playlist[state.currentSongIndex].duration;
+            
+            updateProgressUI(state.currentTime, state.duration);
+        }
+
+        // 更新进度UI
+        function updateProgressUI(currentTime, duration) {
+            if (duration) {
+                const percentage = (currentTime / duration) * 100;
+                elements.progress.style.width = `${percentage}%`;
+                elements.currentTime.textContent = formatTime(currentTime);
+                elements.totalTime.textContent = formatTime(duration);
+            }
+        }
+
+        // 更新时长
+        function updateDuration() {
+            state.duration = elements.audioPlayer.duration || state.playlist[state.currentSongIndex].duration;
+            elements.totalTime.textContent = formatTime(state.duration);
+        }
+
+        // 跳转到指定位置
+        function seekToPosition(e) {
+            const progressRect = elements.progressBar.getBoundingClientRect();
+            const progressWidth = progressRect.width;
+            const clickX = e.clientX - progressRect.left;
+            const percentage = clickX / progressWidth;
+            
+            seekToPercentage(percentage);
+        }
+
+        // 按百分比跳转
+        function seekToPercentage(percentage) {
+            const time = percentage * state.duration;
+            elements.audioPlayer.currentTime = time;
+        }
+
+        // 切换搜索显示
+        function toggleSearch() {
+            state.isSearchVisible = !state.isSearchVisible;
+            
+            if (state.isSearchVisible) {
+                elements.searchContainer.style.display = 'block';
+                elements.playerContainer.style.display = 'none';
+                elements.playlistContainer.style.display = 'none';
+                elements.searchInput.focus();
+            } else {
+                elements.searchContainer.style.display = 'none';
+                elements.playerContainer.style.display = 'block';
+                elements.playlistContainer.style.display = 'block';
+            }
+        }
+
+        // 切换播放列表显示
+        function togglePlaylist() {
+            const isVisible = elements.playlistContainer.style.display !== 'none';
+            
+            if (isVisible) {
+                elements.playlistContainer.style.display = 'none';
+                elements.playerContainer.style.display = 'block';
+            } else {
+                elements.playlistContainer.style.display = 'block';
+                elements.playerContainer.style.display = 'none';
+            }
+        }
+
+        // 搜索处理
+        function handleSearch() {
+            const query = elements.searchInput.value.trim();
+            
+            if (query.length === 0) {
+                elements.searchResults.innerHTML = '';
+                elements.searchResults.style.display = 'none';
+                return;
+            }
+            
+            // 显示加载状态
+            elements.searchResults.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">搜索中...</div>';
+            elements.searchResults.style.display = 'block';
+            
+            // 在实际应用中，这里应该调用音乐API
+            // 由于CORS限制，这里使用模拟数据
+            setTimeout(() => {
+                const mockResults = [
+                    {
+                        id: 101,
+                        title: `搜索结果: ${query}`,
+                        artist: "示例歌手",
+                        duration: 180,
+                        cover: "https://picsum.photos/200/200?random=101",
+                        preview: "https://cdns-preview-0.dzcdn.net/stream/c-0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d-3.mp3"
+                    },
+                    {
+                        id: 102,
+                        title: `另一首关于 ${query} 的歌`,
+                        artist: "另一位歌手",
+                        duration: 210,
+                        cover: "https://picsum.photos/200/200?random=102",
+                        preview: "https://cdns-preview-1.dzcdn.net/stream/c-1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e-3.mp3"
+                    }
+                ];
+                
+                displaySearchResults(mockResults);
+            }, 800);
+        }
+
+        // 显示搜索结果
+        function displaySearchResults(results) {
+            if (results.length === 0) {
+                elements.searchResults.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">未找到相关歌曲</div>';
+                return;
+            }
+            
+            let html = '';
+            results.forEach((song, index) => {
+                html += `
+                    <div class="song-item" data-search-index="${index}">
+                        <div class="song-index">${index + 1}</div>
+                        <div class="song-info-small">
+                            <div class="song-title-small">${song.title}</div>
+                            <div class="song-artist-small">${song.artist}</div>
+                        </div>
+                        <div class="song-duration">${formatTime(song.duration)}</div>
                     </div>
-                    <div class="${p.alive ? '' : 'opacity-50 line-through'}">
-                        <div class="font-bold">${p.name}</div>
-                        <div class="text-xs text-gray-500">${p.word || '白板'}</div>
-                    </div>
-                </div>
-                <div class="${roleColor} font-bold text-sm">${roleText}</div>
-            </div>
-        `;
-    });
-    
-    // 保存历史
-    let h = JSON.parse(localStorage.getItem('gameHistory') || '[]');
-    h.unshift({
-        date: new Date().toLocaleString(),
-        winner: winner,
-        words: gameState.words,
-        playerCount: gameState.players.length,
-        round: gameState.round
-    });
-    if(h.length > 20) h = h.slice(0, 20);
-    localStorage.setItem('gameHistory', JSON.stringify(h));
-    localStorage.setItem('totalGames', (parseInt(localStorage.getItem('totalGames') || '0') + 1).toString());
-}
-
-// ============ 词库管理 ============
-function showWordBank() {
-    showScreen('wordBankScreen');
-    renderWordList('all');
-}
-
-function renderWordList(cat) {
-    const list = document.getElementById('wordList');
-    list.innerHTML = '';
-    
-    let words = [];
-    if(cat === 'all') {
-        words = [...wordBank.food, ...wordBank.daily, ...wordBank.ent, ...wordBank.custom];
-    } else {
-        words = wordBank[cat];
-    }
-    
-    words.forEach((p, i) => {
-        const div = document.createElement('div');
-        div.className = 'glass-panel rounded-xl p-4 flex items-center justify-between';
-        div.innerHTML = `
-            <div class="flex items-center gap-3">
-                <div class="text-xl">🆚</div>
-                <div>
-                    <div class="text-green-400 font-bold">${p.c}</div>
-                    <div class="text-red-400 font-bold">${p.u}</div>
-                </div>
-            </div>
-        `;
-        if(cat === 'custom') {
-            div.innerHTML += `<button onclick="deleteWord(${i})" class="text-red-400 text-sm font-bold btn-press">删除</button>`;
+                `;
+            });
+            
+            elements.searchResults.innerHTML = html;
+            
+            // 为搜索结果添加点击事件
+            document.querySelectorAll('.search-results .song-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const index = parseInt(item.dataset.searchIndex);
+                    const song = results[index];
+                    
+                    // 添加到播放列表并播放
+                    state.playlist.unshift(song);
+                    updatePlaylistUI();
+                    loadSong(0);
+                    play();
+                    
+                    // 关闭搜索
+                    toggleSearch();
+                    elements.searchInput.value = '';
+                });
+            });
         }
-        list.appendChild(div);
-    });
-    
-    if(words.length === 0) {
-        list.innerHTML = '<div class="text-center text-gray-500 py-8">暂无词语</div>';
-    }
-}
 
-function filterWords(cat, btn) {
-    document.querySelectorAll('#categoryTabs button').forEach(b => {
-        b.classList.remove('bg-blue-600', 'font-bold');
-        b.classList.add('bg-white/10');
-    });
-    btn.classList.remove('bg-white/10');
-    btn.classList.add('bg-blue-600', 'font-bold');
-    renderWordList(cat);
-}
-
-function showAddWord() {
-    document.getElementById('addWordModal').classList.remove('hidden');
-    document.getElementById('newCivilianWord').value = '';
-    document.getElementById('newUndercoverWord').value = '';
-    document.getElementById('newCivilianWord').focus();
-}
-
-function closeAddWord() {
-    document.getElementById('addWordModal').classList.add('hidden');
-}
-
-function confirmAddWord() {
-    const c = document.getElementById('newCivilianWord').value.trim();
-    const u = document.getElementById('newUndercoverWord').value.trim();
-    
-    if(!c || !u) {
-        alert('请填写两个词');
-        return;
-    }
-    
-    wordBank.custom.push({c: c, u: u});
-    localStorage.setItem('customWords', JSON.stringify(wordBank.custom));
-    updateWordCount();
-    closeAddWord();
-    renderWordList('custom');
-    
-    // 切换标签到自定义
-    document.querySelectorAll('#categoryTabs button').forEach(b => {
-        b.classList.remove('bg-blue-600', 'font-bold');
-        b.classList.add('bg-white/10');
-    });
-    document.querySelectorAll('#categoryTabs button')[4].classList.add('bg-blue-600', 'font-bold');
-    document.querySelectorAll('#categoryTabs button')[4].classList.remove('bg-white/10');
-}
-
-function deleteWord(i) {
-    if(confirm('确定删除？')) {
-        wordBank.custom.splice(i, 1);
-        localStorage.setItem('customWords', JSON.stringify(wordBank.custom));
-        renderWordList('custom');
-        updateWordCount();
-    }
-}
-
-// ============ 惩罚转盘 ============
-function showPunishmentWheel() {
-    showScreen('wheelScreen');
-    renderWheel();
-}
-
-function renderWheel() {
-    const w = document.getElementById('rouletteWheel');
-    w.innerHTML = '';
-    w.style.transform = 'rotate(0deg)';
-    
-    const count = punishments.length;
-    const angle = 360 / count;
-    const colors = ['#ef4444', '#dc2626', '#b91c1c', '#f87171', '#991b1b'];
-    
-    punishments.forEach((p, i) => {
-        const s = document.createElement('div');
-        s.className = 'roulette-segment';
-        s.style.transform = `rotate(${i * angle}deg)`;
-        s.style.background = `conic-gradient(from 0deg, ${colors[i % colors.length]} 0deg, ${colors[(i+1) % colors.length]} ${angle}deg)`;
-        s.style.clipPath = `polygon(100% 0, 100% 100%, 0 100%)`;
-        s.innerHTML = `<span style="transform: rotate(${angle/2}deg) translateY(-20px); display: block;">${p.substring(0, 4)}</span>`;
-        w.appendChild(s);
-    });
-}
-
-function spinWheel() {
-    const w = document.getElementById('rouletteWheel');
-    const resultDiv = document.getElementById('punishmentResult');
-    resultDiv.classList.add('hidden');
-    
-    const rot = 1800 + Math.random() * 1800;
-    w.style.transform = `rotate(${rot}deg)`;
-    
-    if(navigator.vibrate) {
-        let c = 0;
-        const iv = setInterval(() => {
-            navigator.vibrate(50);
-            c++;
-            if(c > 20) clearInterval(iv);
-        }, 100);
-    }
-    
-    setTimeout(() => {
-        const finalRot = rot % 360;
-        const segAngle = 360 / punishments.length;
-        const index = Math.floor((360 - finalRot) / segAngle) % punishments.length;
-        
-        document.getElementById('punishmentText').textContent = punishments[index];
-        resultDiv.classList.remove('hidden');
-        
-        if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
-    }, 4000);
-}
-
-function editPunishments() {
-    const np = prompt('自定义惩罚（用逗号分隔）：\n\n当前：' + punishments.join('、'), punishments.join('，'));
-    if(np) {
-        const newList = np.split(/[,，]/).map(p => p.trim()).filter(p => p);
-        if(newList.length >= 4) {
-            punishments = newList;
-            localStorage.setItem('punishments', JSON.stringify(punishments));
-            updateWordCount();
-            renderWheel();
-        } else {
-            alert('至少需要4个惩罚项目');
+        // 防抖函数
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func.apply(this, args), delay);
+            };
         }
-    }
-}
 
-// ============ 历史记录 ============
-function showHistory() {
-    showScreen('historyScreen');
-    const list = document.getElementById('historyList');
-    const h = JSON.parse(localStorage.getItem('gameHistory') || '[]');
-    
-    if(h.length === 0) {
-        list.innerHTML = '<div class="text-center text-gray-500 py-12">暂无记录</div>';
-        return;
-    }
-    
-    list.innerHTML = h.map(item => {
-        const wc = item.winner === 'civilian' ? 'text-green-400 border-green-500' : 
-                   item.winner === 'undercover' ? 'text-red-400 border-red-500' : 'text-purple-400 border-purple-500';
-        const wt = item.winner === 'civilian' ? '平民胜' : item.winner === 'undercover' ? '卧底胜' : '白板胜';
-        
-        return `
-            <div class="glass-panel rounded-xl p-4 border-l-4 ${wc}">
-                <div class="flex justify-between text-xs text-gray-500 mb-1">
-                    <span>${item.date}</span>
-                    <span class="${wc.split(' ')[0]} font-bold">${wt}</span>
-                </div>
-                <div class="flex justify-between text-sm font-bold">
-                    <span class="text-green-400">${item.words.civilian}</span>
-                    <span class="text-gray-600">vs</span>
-                    <span class="text-red-400">${item.words.undercover}</span>
-                </div>
-                <div class="text-xs text-gray-600 mt-1">${item.playerCount}人 · 第${item.round}轮结束</div>
-            </div>
-        `;
-    }).join('');
-}
-
-// ============ 其他功能 ============
-function toggleNightMode() {
-    gameState.nightMode = !gameState.nightMode;
-    document.body.style.filter = gameState.nightMode ? 'brightness(0.7) sepia(0.2)' : '';
-}
-
-function showMenu() {
-    if(gameState.phase === 'home') {
-        const c = prompt('选择功能：\n1.惩罚转盘\n2.词库管理\n3.历史记录\n4.关于\n\n输入数字：');
-        if(c === '1') showPunishmentWheel();
-        else if(c === '2') showWordBank();
-        else if(c === '3') showHistory();
-        else if(c === '4') alert('谁是卧底PRO MAX v1.0\n\n防窥屏设计 · 47组词库 · 20种惩罚');
-    } else {
-        if(confirm('确定要结束当前游戏吗？')) {
-            location.reload();
+        // 预加载下一首歌曲
+        function preloadNextSong() {
+            const nextIndex = (state.currentSongIndex + 1) % state.playlist.length;
+            const nextSong = state.playlist[nextIndex];
+            
+            if (nextSong && nextSong.preview) {
+                // 创建临时音频元素预加载
+                const tempAudio = new Audio();
+                tempAudio.src = nextSong.preview;
+                tempAudio.preload = 'metadata';
+            }
         }
-    }
-}
 
-// 防止意外刷新
-window.onbeforeunload = function(e) {
-    if(gameState.phase !== 'home' && gameState.phase !== 'result') {
-        return '游戏正在进行中，确定要离开吗？';
-    }
-};
-</script>
+        // 显示歌词
+        function showLyrics() {
+            // 在实际应用中，这里应该从API获取歌词
+            // 这里使用模拟歌词
+            const lyrics = [
+                "这是第一句歌词",
+                "这是第二句歌词",
+                "这是当前播放的歌词",
+                "这是第四句歌词",
+                "这是第五句歌词",
+                "这是第六句歌词",
+                "这是第七句歌词",
+                "这是第八句歌词"
+            ];
+            
+            let lyricsHTML = '';
+            lyrics.forEach((line, index) => {
+                const activeClass = index === 2 ? 'active' : '';
+                lyricsHTML += `<div class="lyric-line ${activeClass}">${line}</div>`;
+            });
+            
+            elements.lyricsContent.innerHTML = lyricsHTML;
+            elements.lyricsContainer.style.display = 'block';
+        }
 
+        // 隐藏歌词
+        function hideLyrics() {
+            elements.lyricsContainer.style.display = 'none';
+        }
+
+        // 处理音频错误
+        function handleAudioError() {
+            showError('无法加载音频。可能的原因：网络问题、音频文件损坏或浏览器不支持该格式。');
+            pause();
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            elements.errorMessage.textContent = message;
+            elements.errorMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                elements.errorMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // 格式化时间 (秒 -> 分:秒)
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
