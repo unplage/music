@@ -2,1160 +2,654 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>云音乐播放器</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大鱼吃小鱼·珊瑚礁奇遇</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Zcool+KuaiLe&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
         body {
-            font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-            line-height: 1.5;
-            overflow-x: hidden;
-            max-width: 500px;
-            margin: 0 auto;
-            background: linear-gradient(180deg, #ec4141 0%, #f5f5f5 100%);
-            min-height: 100vh;
-            position: relative;
-        }
-
-        /* 顶部栏 */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            color: white;
-            position: relative;
-            z-index: 10;
-        }
-
-        .header h1 {
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .header-icons {
-            display: flex;
-            gap: 20px;
-        }
-
-        .header-icons i {
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        /* 播放器主体 */
-        .player-container {
-            padding: 0 20px;
-            margin-top: 10px;
-            position: relative;
-            z-index: 5;
-        }
-
-        /* 唱片区域 */
-        .disc-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 0 auto;
-            margin-top: 20px;
-        }
-
-        .disc {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #333 0%, #111 100%);
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            animation: rotate 20s linear infinite;
-            animation-play-state: paused;
-        }
-
-        .disc.playing {
-            animation-play-state: running;
-        }
-
-        .disc-center {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: white;
-            position: absolute;
-            z-index: 2;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .album-cover {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            object-fit: cover;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* 歌曲信息 */
-        .song-info {
-            text-align: center;
-            margin-top: 30px;
-            color: white;
-        }
-
-        .song-title {
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 8px;
+            margin: 0;
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            padding: 0 10px;
+            background: linear-gradient(180deg, #006994 0%, #001e36 100%);
+            font-family: 'Zcool KuaiLe', cursive, sans-serif;
+            touch-action: none;
         }
-
-        .song-artist {
-            font-size: 16px;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        /* 进度条 */
-        .progress-container {
-            margin-top: 40px;
-            padding: 0 10px;
-        }
-
-        .progress-time {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: white;
-            margin-bottom: 8px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 3px;
-            background-color: rgba(255, 255, 255, 0.3);
-            border-radius: 2px;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .progress {
-            height: 100%;
-            background-color: white;
-            border-radius: 2px;
-            width: 0%;
-            position: relative;
-        }
-
-        .progress-handle {
-            position: absolute;
-            right: -8px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background-color: white;
-            display: none;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-        }
-
-        .progress-bar:hover .progress-handle,
-        .progress-bar.dragging .progress-handle {
+        #gameCanvas {
             display: block;
+            width: 100vw;
+            height: 100vh;
         }
-
-        /* 播放控制 */
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 50px;
-            padding: 0 30px;
-        }
-
-        .control-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .control-btn.play-pause {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background-color: white;
-            color: #ec4141;
-            font-size: 28px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        /* 播放列表 */
-        .playlist-container {
-            background-color: white;
-            border-radius: 20px 20px 0 0;
-            margin-top: 60px;
-            padding: 25px 20px 100px 20px;
-            min-height: 300px;
-            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.05);
-        }
-
-        .playlist-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .playlist-title {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .playlist-count {
-            font-size: 14px;
-            color: #999;
-        }
-
-        .song-list {
-            list-style: none;
-        }
-
-        .song-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #f0f0f0;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .song-item:hover {
-            background-color: #f9f9f9;
-        }
-
-        .song-item.active {
-            color: #ec4141;
-        }
-
-        .song-index {
-            width: 30px;
-            text-align: center;
-            font-size: 16px;
-            color: #999;
-        }
-
-        .song-item.active .song-index {
-            color: #ec4141;
-        }
-
-        .song-info-small {
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .song-title-small {
-            font-size: 16px;
-            margin-bottom: 4px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .song-artist-small {
-            font-size: 12px;
-            color: #999;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .song-duration {
-            font-size: 14px;
-            color: #999;
-            margin-right: 10px;
-        }
-
-        /* 搜索区域 */
-        .search-container {
-            padding: 15px 20px;
-            background-color: white;
-            border-radius: 10px;
-            margin: 20px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-            display: none;
-        }
-
-        .search-box {
-            display: flex;
-            align-items: center;
-            background-color: #f5f5f5;
-            border-radius: 20px;
-            padding: 10px 15px;
-        }
-
-        .search-box i {
-            color: #999;
-            margin-right: 10px;
-        }
-
-        .search-box input {
-            flex: 1;
-            border: none;
-            background: none;
-            outline: none;
-            font-size: 16px;
-        }
-
-        .search-results {
-            margin-top: 20px;
-            max-height: 300px;
-            overflow-y: auto;
-            display: none;
-        }
-
-        /* 底部播放栏 */
-        .mini-player {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: white;
-            padding: 10px 20px;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            max-width: 500px;
-            margin: 0 auto;
-            z-index: 100;
-        }
-
-        .mini-player-info {
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .mini-player-title {
-            font-size: 16px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            margin-bottom: 2px;
-        }
-
-        .mini-player-artist {
-            font-size: 12px;
-            color: #999;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .mini-player-controls {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .mini-player-btn {
-            background: none;
-            border: none;
-            font-size: 18px;
-            color: #ec4141;
-            cursor: pointer;
-        }
-
-        /* 动画 */
-        @keyframes rotate {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* 响应式调整 */
-        @media (max-width: 380px) {
-            .disc-container {
-                width: 260px;
-                height: 260px;
-            }
-            
-            .album-cover {
-                width: 170px;
-                height: 170px;
-            }
-            
-            .song-title {
-                font-size: 20px;
-            }
-        }
-
-        /* 加载动画 */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* 错误提示 */
-        .error-message {
-            background-color: rgba(255, 0, 0, 0.1);
-            color: #d32f2f;
-            padding: 10px 15px;
-            border-radius: 5px;
-            margin: 20px;
-            text-align: center;
-            display: none;
-        }
-
-        /* 歌词面板 */
-        .lyrics-container {
-            position: fixed;
+        .ui-layer {
+            position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 80px 20px 120px 20px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .lyrics-header {
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
+            padding: 20px;
+            box-sizing: border-box;
         }
-
-        .lyrics-title {
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .lyrics-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
+        .interactive-btn {
+            pointer-events: auto;
+            transition: transform 0.1s, filter 0.2s;
             cursor: pointer;
+            user-select: none;
         }
-
-        .lyrics-content {
-            text-align: center;
-            font-size: 18px;
-            line-height: 2.5;
+        .interactive-btn:active {
+            transform: scale(0.95);
         }
-
-        .lyric-line {
-            margin-bottom: 15px;
-            opacity: 0.5;
-            transition: all 0.3s;
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
-
-        .lyric-line.active {
-            opacity: 1;
-            font-size: 22px;
-            color: #ec4141;
+        .menu-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 30, 54, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            transition: opacity 0.3s;
+        }
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        /* Skill cooldown animation */
+        .cooldown-overlay {
+            transition: height 0.1s linear;
         }
     </style>
 </head>
 <body>
-    <!-- 顶部栏 -->
-    <div class="header">
-        <h1>云音乐</h1>
-        <div class="header-icons">
-            <i class="fas fa-search" id="searchToggle"></i>
-            <i class="fas fa-list" id="playlistToggle"></i>
+
+    <!-- Game Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- In-Game HUD (Heads Up Display) -->
+    <div id="gameUI" class="ui-layer hidden">
+        <div class="flex justify-between items-start w-full">
+            <div class="glass-panel px-6 py-3 text-white">
+                <div class="text-sm opacity-80">当前得分</div>
+                <div class="text-3xl" id="scoreDisplay">0</div>
+            </div>
+            <button id="menuBtn" class="interactive-btn glass-panel p-3 text-white hover:bg-white/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Skill Button -->
+        <div class="flex justify-end items-end w-full pb-8 pr-4">
+            <div class="relative">
+                <div id="skillBtn" class="interactive-btn w-20 h-20 rounded-full glass-panel flex items-center justify-center text-white border-2 border-yellow-400/50 overflow-hidden relative">
+                    <span class="text-2xl z-10">⚡</span>
+                    <div id="cooldownOverlay" class="absolute bottom-0 left-0 w-full bg-black/60 h-0 cooldown-overlay"></div>
+                </div>
+                <div class="text-center text-white text-xs mt-2 opacity-80">冲刺 (空格)</div>
+            </div>
         </div>
     </div>
 
-    <!-- 搜索区域 -->
-    <div class="search-container" id="searchContainer">
-        <div class="search-box">
-            <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="搜索歌曲、歌手">
+    <!-- Main Menu Screen -->
+    <div id="mainMenu" class="menu-screen">
+        <h1 class="text-6xl text-transparent bg-clip-text bg-gradient-to-b from-cyan-300 to-blue-500 mb-2 filter drop-shadow-lg">珊瑚礁奇遇</h1>
+        <p class="text-blue-200 mb-10 text-xl tracking-widest">BIG FISH EAT SMALL FISH</p>
+        
+        <div class="glass-panel p-8 flex flex-col gap-4 w-80 max-w-[90%]">
+            <button onclick="game.selectMode('single')" class="interactive-btn bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-4 rounded-xl text-xl shadow-lg hover:brightness-110">
+                🎮 单人模式
+            </button>
+            <button onclick="game.selectMode('team')" class="interactive-btn bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-4 rounded-xl text-xl shadow-lg hover:brightness-110">
+                👥 三人AI组队
+            </button>
         </div>
-        <div class="search-results" id="searchResults"></div>
     </div>
 
-    <!-- 错误提示 -->
-    <div class="error-message" id="errorMessage"></div>
-
-    <!-- 播放器主体 -->
-    <div class="player-container" id="playerContainer">
-        <!-- 唱片区域 -->
-        <div class="disc-container">
-            <div class="disc" id="disc">
-                <img src="https://picsum.photos/200/200?random=1" alt="专辑封面" class="album-cover" id="albumCover">
-                <div class="disc-center"></div>
+    <!-- Character Select Screen -->
+    <div id="charSelect" class="menu-screen hidden">
+        <h2 class="text-4xl text-white mb-8">选择你的鱼类</h2>
+        <div class="flex gap-6 flex-wrap justify-center max-w-4xl">
+            <!-- Card 1 -->
+            <div onclick="game.startGame('speed')" class="interactive-btn glass-panel p-6 w-64 flex flex-col items-center hover:bg-white/20 group">
+                <div class="w-24 h-24 bg-yellow-400 rounded-full mb-4 shadow-[0_0_20px_rgba(250,204,21,0.6)] flex items-center justify-center text-5xl group-hover:scale-110 transition-transform">⚡</div>
+                <h3 class="text-2xl text-yellow-300 mb-2">剑鱼突刺</h3>
+                <p class="text-blue-100 text-center text-sm">速度极快，体型小巧灵活，适合快速突袭。</p>
+                <div class="mt-4 flex gap-2 text-xs text-white/70">
+                    <span>⚡⚡⚡</span> <span>🛡️</span>
+                </div>
             </div>
-        </div>
-
-        <!-- 歌曲信息 -->
-        <div class="song-info">
-            <h2 class="song-title" id="songTitle">歌曲名称</h2>
-            <p class="song-artist" id="songArtist">歌手名</p>
-        </div>
-
-        <!-- 进度条 -->
-        <div class="progress-container">
-            <div class="progress-time">
-                <span id="currentTime">0:00</span>
-                <span id="totalTime">0:00</span>
+            <!-- Card 2 -->
+            <div onclick="game.startGame('balanced')" class="interactive-btn glass-panel p-6 w-64 flex flex-col items-center hover:bg-white/20 group border-blue-400 border-2">
+                <div class="w-24 h-24 bg-blue-500 rounded-full mb-4 shadow-[0_0_20px_rgba(59,130,246,0.6)] flex items-center justify-center text-5xl group-hover:scale-110 transition-transform">🐬</div>
+                <h3 class="text-2xl text-blue-300 mb-2">海豚游侠</h3>
+                <p class="text-blue-100 text-center text-sm">各项属性均衡，拥有不错的冲刺冷却恢复。</p>
+                <div class="mt-4 flex gap-2 text-xs text-white/70">
+                    <span>⚡⚡</span> <span>🛡️🛡️</span>
+                </div>
             </div>
-            <div class="progress-bar" id="progressBar">
-                <div class="progress" id="progress">
-                    <div class="progress-handle"></div>
+            <!-- Card 3 -->
+            <div onclick="game.startGame('power')" class="interactive-btn glass-panel p-6 w-64 flex flex-col items-center hover:bg-white/20 group">
+                <div class="w-24 h-24 bg-red-500 rounded-full mb-4 shadow-[0_0_20px_rgba(239,68,68,0.6)] flex items-center justify-center text-5xl group-hover:scale-110 transition-transform">🦈</div>
+                <h3 class="text-2xl text-red-300 mb-2">深海巨鲨</h3>
+                <p class="text-blue-100 text-center text-sm">初始体型巨大，速度较慢，但可以吞噬更多鱼类。</p>
+                <div class="mt-4 flex gap-2 text-xs text-white/70">
+                    <span>⚡</span> <span>🛡️🛡️🛡️</span>
                 </div>
             </div>
         </div>
-
-        <!-- 播放控制 -->
-        <div class="controls">
-            <button class="control-btn" id="prevBtn">
-                <i class="fas fa-step-backward"></i>
-            </button>
-            <button class="control-btn play-pause" id="playBtn">
-                <i class="fas fa-play" id="playIcon"></i>
-            </button>
-            <button class="control-btn" id="nextBtn">
-                <i class="fas fa-step-forward"></i>
-            </button>
-        </div>
+        <button onclick="game.showScreen('mainMenu')" class="mt-10 text-white/60 hover:text-white underline">返回上级</button>
     </div>
 
-    <!-- 播放列表 -->
-    <div class="playlist-container" id="playlistContainer">
-        <div class="playlist-header">
-            <div class="playlist-title">播放列表</div>
-            <div class="playlist-count">共 <span id="songCount">0</span> 首</div>
+    <!-- Game Over Screen -->
+    <div id="gameOver" class="menu-screen hidden">
+        <h2 class="text-5xl text-white mb-4">游戏结束</h2>
+        <div class="glass-panel px-12 py-8 flex flex-col items-center mb-8">
+            <span class="text-blue-200 text-lg">最终得分</span>
+            <span id="finalScore" class="text-6xl text-yellow-400 font-bold my-2">0</span>
         </div>
-        <ul class="song-list" id="songList">
-            <!-- 歌曲列表将通过JavaScript动态生成 -->
-        </ul>
+        <button onclick="game.resetGame()" class="interactive-btn bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-12 rounded-full text-2xl shadow-lg hover:brightness-110 animate-bounce">
+            重新开始
+        </button>
     </div>
-
-    <!-- 歌词面板 -->
-    <div class="lyrics-container" id="lyricsContainer">
-        <div class="lyrics-header">
-            <div class="lyrics-title">歌词</div>
-            <button class="lyrics-close" id="lyricsClose">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="lyrics-content" id="lyricsContent">
-            <!-- 歌词将通过JavaScript动态生成 -->
-        </div>
-    </div>
-
-    <!-- 底部播放栏 -->
-    <div class="mini-player" id="miniPlayer">
-        <div class="mini-player-info">
-            <div class="mini-player-title" id="miniPlayerTitle">歌曲名称</div>
-            <div class="mini-player-artist" id="miniPlayerArtist">歌手名</div>
-        </div>
-        <div class="mini-player-controls">
-            <button class="mini-player-btn" id="miniPlayBtn">
-                <i class="fas fa-play" id="miniPlayIcon"></i>
-            </button>
-            <button class="mini-player-btn" id="lyricsBtn">
-                <i class="fas fa-microphone"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- 音频元素 -->
-    <audio id="audioPlayer" preload="metadata"></audio>
 
     <script>
-        // 音乐API配置
-        // 注意：由于浏览器安全限制，这里使用一个公开的音乐API示例
-        // 在实际部署中，你可能需要设置一个代理服务器或使用支持CORS的API
-        const API_BASE_URL = 'https://api.deezer.com';
-        
-        // 默认播放列表 - 如果API不可用，将使用此列表作为备选
-        const defaultPlaylist = [
-            {
-                id: 1,
-                title: "Blinding Lights",
-                artist: "The Weeknd",
-                duration: 200,
-                cover: "https://picsum.photos/200/200?random=1",
-                preview: "https://cdns-preview-6.dzcdn.net/stream/c-6e7a5f8a3e86d5b1c5e4d9c7b8a9f6e5-3.mp3"
-            },
-            {
-                id: 2,
-                title: "Stay",
-                artist: "The Kid LAROI, Justin Bieber",
-                duration: 141,
-                cover: "https://picsum.photos/200/200?random=2",
-                preview: "https://cdns-preview-5.dzcdn.net/stream/c-5e8c9f7d6b4a3e2d1c0b9a8b7c6d5e4f-3.mp3"
-            },
-            {
-                id: 3,
-                title: "Good 4 U",
-                artist: "Olivia Rodrigo",
-                duration: 178,
-                cover: "https://picsum.photos/200/200?random=3",
-                preview: "https://cdns-preview-7.dzcdn.net/stream/c-7d9e8f7c6b5a4e3d2c1b0a9f8e7d6c5b-3.mp3"
-            },
-            {
-                id: 4,
-                title: "Levitating",
-                artist: "Dua Lipa",
-                duration: 203,
-                cover: "https://picsum.photos/200/200?random=4",
-                preview: "https://cdns-preview-8.dzcdn.net/stream/c-8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c-3.mp3"
-            },
-            {
-                id: 5,
-                title: "Save Your Tears",
-                artist: "The Weeknd",
-                duration: 215,
-                cover: "https://picsum.photos/200/200?random=5",
-                preview: "https://cdns-preview-9.dzcdn.net/stream/c-9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d-3.mp3"
-            }
-        ];
+        /**
+         * Game Logic
+         */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
-        // 应用状态
-        const state = {
-            playlist: [],
-            currentSongIndex: 0,
-            isPlaying: false,
-            currentTime: 0,
-            duration: 0,
-            isSearchVisible: false
+        // UI Elements
+        const screens = {
+            main: document.getElementById('mainMenu'),
+            char: document.getElementById('charSelect'),
+            game: document.getElementById('gameUI'),
+            over: document.getElementById('gameOver')
+        };
+        const scoreEl = document.getElementById('scoreDisplay');
+        const finalScoreEl = document.getElementById('finalScore');
+        const skillBtn = document.getElementById('skillBtn');
+        const cooldownOverlay = document.getElementById('cooldownOverlay');
+        const menuBtn = document.getElementById('menuBtn');
+
+        // Game State
+        let animationId;
+        let lastTime = 0;
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+
+        // Configuration
+        const CONFIG = {
+            fishTypes: {
+                speed: { color: '#FACC15', radius: 8, speed: 5, cd: 120, name: '剑鱼' },
+                balanced: { color: '#3B82F6', radius: 12, speed: 4, cd: 90, name: '海豚' },
+                power: { color: '#EF4444', radius: 18, speed: 3, cd: 150, name: '巨鲨' }
+            }
         };
 
-        // DOM元素
-        const elements = {
-            audioPlayer: document.getElementById('audioPlayer'),
-            disc: document.getElementById('disc'),
-            albumCover: document.getElementById('albumCover'),
-            songTitle: document.getElementById('songTitle'),
-            songArtist: document.getElementById('songArtist'),
-            playBtn: document.getElementById('playBtn'),
-            playIcon: document.getElementById('playIcon'),
-            prevBtn: document.getElementById('prevBtn'),
-            nextBtn: document.getElementById('nextBtn'),
-            progressBar: document.getElementById('progressBar'),
-            progress: document.getElementById('progress'),
-            currentTime: document.getElementById('currentTime'),
-            totalTime: document.getElementById('totalTime'),
-            songList: document.getElementById('songList'),
-            songCount: document.getElementById('songCount'),
-            searchToggle: document.getElementById('searchToggle'),
-            searchContainer: document.getElementById('searchContainer'),
-            searchInput: document.getElementById('searchInput'),
-            searchResults: document.getElementById('searchResults'),
-            playerContainer: document.getElementById('playerContainer'),
-            playlistContainer: document.getElementById('playlistContainer'),
-            playlistToggle: document.getElementById('playlistToggle'),
-            miniPlayer: document.getElementById('miniPlayer'),
-            miniPlayerTitle: document.getElementById('miniPlayerTitle'),
-            miniPlayerArtist: document.getElementById('miniPlayerArtist'),
-            miniPlayBtn: document.getElementById('miniPlayBtn'),
-            miniPlayIcon: document.getElementById('miniPlayIcon'),
-            errorMessage: document.getElementById('errorMessage'),
-            lyricsContainer: document.getElementById('lyricsContainer'),
-            lyricsContent: document.getElementById('lyricsContent'),
-            lyricsClose: document.getElementById('lyricsClose'),
-            lyricsBtn: document.getElementById('lyricsBtn')
-        };
-
-        // 初始化应用
-        function init() {
-            // 加载默认播放列表
-            loadDefaultPlaylist();
-            
-            // 设置事件监听器
-            setupEventListeners();
-            
-            // 更新UI
-            updatePlaylistUI();
-            
-            // 加载第一首歌
-            loadSong(state.currentSongIndex);
-        }
-
-        // 加载默认播放列表
-        function loadDefaultPlaylist() {
-            state.playlist = [...defaultPlaylist];
-        }
-
-        // 设置事件监听器
-        function setupEventListeners() {
-            // 播放/暂停按钮
-            elements.playBtn.addEventListener('click', togglePlay);
-            elements.miniPlayBtn.addEventListener('click', togglePlay);
-            
-            // 上一首/下一首按钮
-            elements.prevBtn.addEventListener('click', playPrev);
-            elements.nextBtn.addEventListener('click', playNext);
-            
-            // 音频事件
-            elements.audioPlayer.addEventListener('timeupdate', updateProgress);
-            elements.audioPlayer.addEventListener('loadedmetadata', updateDuration);
-            elements.audioPlayer.addEventListener('ended', playNext);
-            elements.audioPlayer.addEventListener('error', handleAudioError);
-            
-            // 进度条点击事件
-            elements.progressBar.addEventListener('click', seekToPosition);
-            
-            // 搜索功能
-            elements.searchToggle.addEventListener('click', toggleSearch);
-            elements.searchInput.addEventListener('input', debounce(handleSearch, 500));
-            
-            // 播放列表切换
-            elements.playlistToggle.addEventListener('click', togglePlaylist);
-            
-            // 歌词功能
-            elements.lyricsBtn.addEventListener('click', showLyrics);
-            elements.lyricsClose.addEventListener('click', hideLyrics);
-            
-            // 触摸事件处理进度条拖动
-            let isDragging = false;
-            
-            elements.progressBar.addEventListener('touchstart', (e) => {
-                isDragging = true;
-                elements.progressBar.classList.add('dragging');
-                handleProgressDrag(e);
-            });
-            
-            document.addEventListener('touchmove', (e) => {
-                if (isDragging) {
-                    handleProgressDrag(e);
-                    e.preventDefault();
-                }
-            });
-            
-            document.addEventListener('touchend', () => {
-                if (isDragging) {
-                    isDragging = false;
-                    elements.progressBar.classList.remove('dragging');
-                    // 当拖动结束时，跳转到相应位置
-                    const progressRect = elements.progressBar.getBoundingClientRect();
-                    const progressWidth = progressRect.width;
-                    const clickX = lastTouchX - progressRect.left;
-                    const percentage = clickX / progressWidth;
-                    seekToPercentage(percentage);
-                }
-            });
-            
-            let lastTouchX = 0;
-            
-            function handleProgressDrag(e) {
-                const touch = e.touches[0];
-                lastTouchX = touch.clientX;
-                const progressRect = elements.progressBar.getBoundingClientRect();
-                const progressWidth = progressRect.width;
-                const clickX = lastTouchX - progressRect.left;
-                const percentage = Math.max(0, Math.min(1, clickX / progressWidth));
+        class Game {
+            constructor() {
+                this.state = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER
+                this.mode = 'single'; // single, team
+                this.score = 0;
+                this.player = null;
+                this.teammates = [];
+                this.enemies = [];
+                this.particles = [];
+                this.bubbles = [];
+                this.frameCount = 0;
                 
-                // 更新进度条UI但不实际跳转
-                updateProgressUI(percentage * state.duration, state.duration);
-            }
-            
-            // 点击播放列表中的歌曲
-            elements.songList.addEventListener('click', (e) => {
-                const songItem = e.target.closest('.song-item');
-                if (songItem) {
-                    const index = parseInt(songItem.dataset.index);
-                    loadSong(index);
-                    play();
-                }
-            });
-        }
-
-        // 加载歌曲
-        function loadSong(index) {
-            if (index < 0 || index >= state.playlist.length) return;
-            
-            state.currentSongIndex = index;
-            const song = state.playlist[index];
-            
-            // 更新音频源
-            elements.audioPlayer.src = song.preview;
-            
-            // 更新UI
-            updateSongUI(song);
-            updateActiveSongInPlaylist();
-            
-            // 预加载下一首
-            preloadNextSong();
-            
-            // 显示底部迷你播放器
-            elements.miniPlayer.style.display = 'flex';
-        }
-
-        // 更新歌曲UI
-        function updateSongUI(song) {
-            elements.albumCover.src = song.cover;
-            elements.songTitle.textContent = song.title;
-            elements.songArtist.textContent = song.artist;
-            elements.miniPlayerTitle.textContent = song.title;
-            elements.miniPlayerArtist.textContent = song.artist;
-            
-            // 更新总时长
-            updateDuration();
-        }
-
-        // 更新播放列表UI
-        function updatePlaylistUI() {
-            elements.songList.innerHTML = '';
-            elements.songCount.textContent = state.playlist.length;
-            
-            state.playlist.forEach((song, index) => {
-                const li = document.createElement('li');
-                li.className = 'song-item';
-                li.dataset.index = index;
-                
-                const durationFormatted = formatTime(song.duration);
-                
-                li.innerHTML = `
-                    <div class="song-index">${index + 1}</div>
-                    <div class="song-info-small">
-                        <div class="song-title-small">${song.title}</div>
-                        <div class="song-artist-small">${song.artist}</div>
-                    </div>
-                    <div class="song-duration">${durationFormatted}</div>
-                `;
-                
-                elements.songList.appendChild(li);
-            });
-            
-            updateActiveSongInPlaylist();
-        }
-
-        // 更新活动歌曲在播放列表中的状态
-        function updateActiveSongInPlaylist() {
-            document.querySelectorAll('.song-item').forEach((item, index) => {
-                if (index === state.currentSongIndex) {
-                    item.classList.add('active');
-                } else {
-                    item.classList.remove('active');
-                }
-            });
-        }
-
-        // 播放/暂停切换
-        function togglePlay() {
-            if (state.isPlaying) {
-                pause();
-            } else {
-                play();
-            }
-        }
-
-        // 播放
-        function play() {
-            elements.audioPlayer.play()
-                .then(() => {
-                    state.isPlaying = true;
-                    elements.playIcon.className = 'fas fa-pause';
-                    elements.miniPlayIcon.className = 'fas fa-pause';
-                    elements.disc.classList.add('playing');
-                })
-                .catch(error => {
-                    showError('无法播放音频：' + error.message);
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                window.addEventListener('mousemove', (e) => {
+                    mouseX = e.clientX;
+                    mouseY = e.clientY;
                 });
-        }
-
-        // 暂停
-        function pause() {
-            elements.audioPlayer.pause();
-            state.isPlaying = false;
-            elements.playIcon.className = 'fas fa-play';
-            elements.miniPlayIcon.className = 'fas fa-play';
-            elements.disc.classList.remove('playing');
-        }
-
-        // 播放上一首
-        function playPrev() {
-            let newIndex = state.currentSongIndex - 1;
-            if (newIndex < 0) {
-                newIndex = state.playlist.length - 1;
-            }
-            loadSong(newIndex);
-            play();
-        }
-
-        // 播放下一首
-        function playNext() {
-            let newIndex = state.currentSongIndex + 1;
-            if (newIndex >= state.playlist.length) {
-                newIndex = 0;
-            }
-            loadSong(newIndex);
-            play();
-        }
-
-        // 更新进度
-        function updateProgress() {
-            state.currentTime = elements.audioPlayer.currentTime;
-            state.duration = elements.audioPlayer.duration || state.playlist[state.currentSongIndex].duration;
-            
-            updateProgressUI(state.currentTime, state.duration);
-        }
-
-        // 更新进度UI
-        function updateProgressUI(currentTime, duration) {
-            if (duration) {
-                const percentage = (currentTime / duration) * 100;
-                elements.progress.style.width = `${percentage}%`;
-                elements.currentTime.textContent = formatTime(currentTime);
-                elements.totalTime.textContent = formatTime(duration);
-            }
-        }
-
-        // 更新时长
-        function updateDuration() {
-            state.duration = elements.audioPlayer.duration || state.playlist[state.currentSongIndex].duration;
-            elements.totalTime.textContent = formatTime(state.duration);
-        }
-
-        // 跳转到指定位置
-        function seekToPosition(e) {
-            const progressRect = elements.progressBar.getBoundingClientRect();
-            const progressWidth = progressRect.width;
-            const clickX = e.clientX - progressRect.left;
-            const percentage = clickX / progressWidth;
-            
-            seekToPercentage(percentage);
-        }
-
-        // 按百分比跳转
-        function seekToPercentage(percentage) {
-            const time = percentage * state.duration;
-            elements.audioPlayer.currentTime = time;
-        }
-
-        // 切换搜索显示
-        function toggleSearch() {
-            state.isSearchVisible = !state.isSearchVisible;
-            
-            if (state.isSearchVisible) {
-                elements.searchContainer.style.display = 'block';
-                elements.playerContainer.style.display = 'none';
-                elements.playlistContainer.style.display = 'none';
-                elements.searchInput.focus();
-            } else {
-                elements.searchContainer.style.display = 'none';
-                elements.playerContainer.style.display = 'block';
-                elements.playlistContainer.style.display = 'block';
-            }
-        }
-
-        // 切换播放列表显示
-        function togglePlaylist() {
-            const isVisible = elements.playlistContainer.style.display !== 'none';
-            
-            if (isVisible) {
-                elements.playlistContainer.style.display = 'none';
-                elements.playerContainer.style.display = 'block';
-            } else {
-                elements.playlistContainer.style.display = 'block';
-                elements.playerContainer.style.display = 'none';
-            }
-        }
-
-        // 搜索处理
-        function handleSearch() {
-            const query = elements.searchInput.value.trim();
-            
-            if (query.length === 0) {
-                elements.searchResults.innerHTML = '';
-                elements.searchResults.style.display = 'none';
-                return;
-            }
-            
-            // 显示加载状态
-            elements.searchResults.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">搜索中...</div>';
-            elements.searchResults.style.display = 'block';
-            
-            // 在实际应用中，这里应该调用音乐API
-            // 由于CORS限制，这里使用模拟数据
-            setTimeout(() => {
-                const mockResults = [
-                    {
-                        id: 101,
-                        title: `搜索结果: ${query}`,
-                        artist: "示例歌手",
-                        duration: 180,
-                        cover: "https://picsum.photos/200/200?random=101",
-                        preview: "https://cdns-preview-0.dzcdn.net/stream/c-0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d-3.mp3"
-                    },
-                    {
-                        id: 102,
-                        title: `另一首关于 ${query} 的歌`,
-                        artist: "另一位歌手",
-                        duration: 210,
-                        cover: "https://picsum.photos/200/200?random=102",
-                        preview: "https://cdns-preview-1.dzcdn.net/stream/c-1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e-3.mp3"
+                window.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space') this.activateSkill();
+                });
+                
+                skillBtn.addEventListener('click', () => this.activateSkill());
+                menuBtn.addEventListener('click', () => {
+                    if (this.state === 'PLAYING') {
+                        this.state = 'PAUSED';
+                        this.showScreen('main');
                     }
-                ];
-                
-                displaySearchResults(mockResults);
-            }, 800);
-        }
-
-        // 显示搜索结果
-        function displaySearchResults(results) {
-            if (results.length === 0) {
-                elements.searchResults.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">未找到相关歌曲</div>';
-                return;
-            }
-            
-            let html = '';
-            results.forEach((song, index) => {
-                html += `
-                    <div class="song-item" data-search-index="${index}">
-                        <div class="song-index">${index + 1}</div>
-                        <div class="song-info-small">
-                            <div class="song-title-small">${song.title}</div>
-                            <div class="song-artist-small">${song.artist}</div>
-                        </div>
-                        <div class="song-duration">${formatTime(song.duration)}</div>
-                    </div>
-                `;
-            });
-            
-            elements.searchResults.innerHTML = html;
-            
-            // 为搜索结果添加点击事件
-            document.querySelectorAll('.search-results .song-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const index = parseInt(item.dataset.searchIndex);
-                    const song = results[index];
-                    
-                    // 添加到播放列表并播放
-                    state.playlist.unshift(song);
-                    updatePlaylistUI();
-                    loadSong(0);
-                    play();
-                    
-                    // 关闭搜索
-                    toggleSearch();
-                    elements.searchInput.value = '';
                 });
-            });
-        }
 
-        // 防抖函数
-        function debounce(func, delay) {
-            let timeoutId;
-            return function(...args) {
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(() => func.apply(this, args), delay);
-            };
-        }
+                // Initial render for background
+                this.loop(0);
+            }
 
-        // 预加载下一首歌曲
-        function preloadNextSong() {
-            const nextIndex = (state.currentSongIndex + 1) % state.playlist.length;
-            const nextSong = state.playlist[nextIndex];
-            
-            if (nextSong && nextSong.preview) {
-                // 创建临时音频元素预加载
-                const tempAudio = new Audio();
-                tempAudio.src = nextSong.preview;
-                tempAudio.preload = 'metadata';
+            resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+
+            showScreen(screenName) {
+                Object.values(screens).forEach(el => el.classList.add('hidden'));
+                if (screenName === 'main') screens.main.classList.remove('hidden');
+                if (screenName === 'char') screens.char.classList.remove('hidden');
+                if (screenName === 'game') screens.game.classList.remove('hidden');
+                if (screenName === 'over') screens.over.classList.remove('hidden');
+            }
+
+            selectMode(mode) {
+                this.mode = mode;
+                this.showScreen('char');
+            }
+
+            startGame(type) {
+                this.state = 'PLAYING';
+                this.score = 0;
+                this.showScreen('game');
+                scoreEl.innerText = '0';
+                
+                // Init Player
+                const stats = CONFIG.fishTypes[type];
+                this.player = new Fish(canvas.width/2, canvas.height/2, stats.radius, stats.color, stats.speed, true, stats.cd);
+                
+                // Init Teammates if team mode
+                this.teammates = [];
+                if (this.mode === 'team') {
+                    // Create 2 smaller allies
+                    this.teammates.push(new Fish(canvas.width/2 - 50, canvas.height/2, 10, '#A78BFA', stats.speed * 0.9, false, 0));
+                    this.teammates.push(new Fish(canvas.width/2 + 50, canvas.height/2, 10, '#A78BFA', stats.speed * 0.9, false, 0));
+                }
+
+                this.enemies = [];
+                this.particles = [];
+                // Init some bubbles
+                this.bubbles = Array.from({length: 20}, () => new Bubble());
+                
+                // Reset loops
+                if (animationId) cancelAnimationFrame(animationId);
+                this.loop(0);
+            }
+
+            resetGame() {
+                this.showScreen('main');
+                this.state = 'MENU';
+            }
+
+            activateSkill() {
+                if (this.state === 'PLAYING' && this.player && this.player.canDash) {
+                    this.player.dash();
+                }
+            }
+
+            spawnEnemy() {
+                // Difficulty scaling
+                const maxEnemies = 10 + Math.floor(this.score / 500);
+                if (this.enemies.length >= maxEnemies) return;
+
+                const edge = Math.floor(Math.random() * 4); // 0:top, 1:right, 2:bottom, 3:left
+                let x, y, vx, vy;
+                const speed = 1 + Math.random() * 2 + (this.score / 1000); // Get faster over time
+                const radius = 5 + Math.random() * 25; // Random sizes
+
+                if (edge === 0) { x = Math.random() * canvas.width; y = -50; vy = speed; vx = (Math.random() - 0.5) * speed; }
+                else if (edge === 1) { x = canvas.width + 50; y = Math.random() * canvas.height; vx = -speed; vy = (Math.random() - 0.5) * speed; }
+                else if (edge === 2) { x = Math.random() * canvas.width; y = canvas.height + 50; vy = -speed; vx = (Math.random() - 0.5) * speed; }
+                else { x = -50; y = Math.random() * canvas.height; vx = speed; vy = (Math.random() - 0.5) * speed; }
+
+                // Ensure they move into screen
+                this.enemies.push(new Fish(x, y, radius, this.getRandomColor(), speed, false, 0, vx, vy));
+            }
+
+            getRandomColor() {
+                const colors = ['#F87171', '#FB923C', '#F472B6', '#34D399', '#A78BFA'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            createExplosion(x, y, color) {
+                for (let i = 0; i < 8; i++) {
+                    this.particles.push(new Particle(x, y, color));
+                }
+            }
+
+            checkCollisions() {
+                // 1. Player vs Enemies
+                for (let i = this.enemies.length - 1; i >= 0; i--) {
+                    const enemy = this.enemies[i];
+                    const dist = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y);
+                    
+                    if (dist < this.player.radius + enemy.radius) {
+                        if (this.player.radius > enemy.radius * 1.1) {
+                            // Eat
+                            this.score += Math.floor(enemy.radius * 10);
+                            scoreEl.innerText = this.score;
+                            this.createExplosion(enemy.x, enemy.y, enemy.color);
+                            this.player.grow(enemy.radius * 0.05);
+                            this.enemies.splice(i, 1);
+                        } else if (enemy.radius > this.player.radius * 1.1) {
+                            // Die
+                            this.gameOver();
+                            return;
+                        }
+                    }
+                }
+
+                // 2. Teammates vs Enemies (AI Logic)
+                this.teammates.forEach(mate => {
+                    for (let i = this.enemies.length - 1; i >= 0; i--) {
+                        const enemy = this.enemies[i];
+                        const dist = Math.hypot(mate.x - enemy.x, mate.y - enemy.y);
+                        if (dist < mate.radius + enemy.radius && mate.radius > enemy.radius) {
+                            this.score += Math.floor(enemy.radius * 5); // Less score for AI kills
+                            scoreEl.innerText = this.score;
+                            mate.grow(enemy.radius * 0.02);
+                            this.enemies.splice(i, 1);
+                            break; 
+                        }
+                    }
+                });
+            }
+
+            gameOver() {
+                this.state = 'GAMEOVER';
+                finalScoreEl.innerText = this.score;
+                this.showScreen('over');
+            }
+
+            update(dt) {
+                if (this.state !== 'PLAYING') return;
+
+                this.frameCount++;
+                if (this.frameCount % 60 === 0) this.spawnEnemy();
+
+                // Update Bubbles
+                this.bubbles.forEach(b => b.update());
+                
+                // Update Player
+                this.player.update(mouseX, mouseY);
+
+                // Update Teammates (Simple AI: Follow Player + Separation)
+                this.teammates.forEach((mate, index) => {
+                    // Target position around player
+                    const angle = (index + 1) * (Math.PI * 2 / 3); // Spread them out
+                    const tx = this.player.x + Math.cos(angle + this.frameCount * 0.01) * 60;
+                    const ty = this.player.y + Math.sin(angle + this.frameCount * 0.01) * 60;
+                    mate.update(tx, ty, true); // true = is AI target
+                });
+
+                // Update Enemies
+                this.enemies.forEach(e => e.update(null, null));
+                // Remove off-screen enemies
+                this.enemies = this.enemies.filter(e => 
+                    e.x > -100 && e.x < canvas.width + 100 && 
+                    e.y > -100 && e.y < canvas.height + 100
+                );
+
+                // Update Particles
+                this.particles = this.particles.filter(p => p.life > 0);
+                this.particles.forEach(p => p.update());
+
+                // Cooldown UI
+                if (this.player) {
+                    const cdPercent = (this.player.dashCooldown / this.player.maxDashCooldown) * 100;
+                    cooldownOverlay.style.height = `${cdPercent}%`;
+                    if (this.player.canDash) {
+                        skillBtn.style.borderColor = '#FACC15';
+                        skillBtn.style.boxShadow = '0 0 15px #FACC15';
+                    } else {
+                        skillBtn.style.borderColor = 'rgba(255,255,255,0.3)';
+                        skillBtn.style.boxShadow = 'none';
+                    }
+                }
+
+                this.checkCollisions();
+            }
+
+            draw() {
+                // Clear
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Draw Background Decor
+                this.drawBackground();
+
+                if (this.state === 'PLAYING' || this.state === 'PAUSED') {
+                    // Draw Bubbles
+                    this.bubbles.forEach(b => b.draw(ctx));
+
+                    // Draw Teammates
+                    this.teammates.forEach(mate => mate.draw(ctx, '🐟'));
+
+                    // Draw Enemies
+                    this.enemies.forEach(e => e.draw(ctx, '🐠'));
+
+                    // Draw Player
+                    if (this.player) this.player.draw(ctx, '🐬');
+
+                    // Draw Particles
+                    this.particles.forEach(p => p.draw(ctx));
+                }
+            }
+
+            drawBackground() {
+                // Draw Coral Reefs (Static shapes at bottom)
+                ctx.fillStyle = 'rgba(0, 20, 40, 0.4)';
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height);
+                for(let i=0; i<=canvas.width; i+=50) {
+                    ctx.lineTo(i, canvas.height - 50 - Math.sin(i * 0.01) * 30 - Math.random()*10);
+                }
+                ctx.lineTo(canvas.width, canvas.height);
+                ctx.fill();
+            }
+
+            loop(timestamp) {
+                const dt = timestamp - lastTime;
+                lastTime = timestamp;
+
+                this.update(dt);
+                this.draw();
+
+                animationId = requestAnimationFrame((t) => this.loop(t));
             }
         }
 
-        // 显示歌词
-        function showLyrics() {
-            // 在实际应用中，这里应该从API获取歌词
-            // 这里使用模拟歌词
-            const lyrics = [
-                "这是第一句歌词",
-                "这是第二句歌词",
-                "这是当前播放的歌词",
-                "这是第四句歌词",
-                "这是第五句歌词",
-                "这是第六句歌词",
-                "这是第七句歌词",
-                "这是第八句歌词"
-            ];
-            
-            let lyricsHTML = '';
-            lyrics.forEach((line, index) => {
-                const activeClass = index === 2 ? 'active' : '';
-                lyricsHTML += `<div class="lyric-line ${activeClass}">${line}</div>`;
-            });
-            
-            elements.lyricsContent.innerHTML = lyricsHTML;
-            elements.lyricsContainer.style.display = 'block';
+        /**
+         * Entities
+         */
+        class Fish {
+            constructor(x, y, radius, color, speed, isPlayer, dashCDMax, vx, vy) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.color = color;
+                this.speed = speed;
+                this.isPlayer = isPlayer;
+                this.angle = 0;
+                
+                // Physics
+                this.vx = vx || 0;
+                this.vy = vy || 0;
+
+                // Dash Skill
+                this.maxDashCooldown = dashCDMax;
+                this.dashCooldown = 0;
+                this.isDashing = false;
+                this.dashTime = 0;
+            }
+
+            get canDash() {
+                return this.dashCooldown <= 0;
+            }
+
+            dash() {
+                this.isDashing = true;
+                this.dashTime = 15; // Frames
+                this.dashCooldown = this.maxDashCooldown;
+                // Burst of speed handled in update
+            }
+
+            grow(amount) {
+                this.radius = Math.min(this.radius + amount, 100); // Cap size
+            }
+
+            update(targetX, targetY, isAI = false) {
+                // Cooldowns
+                if (this.dashCooldown > 0) this.dashCooldown--;
+                if (this.dashTime > 0) this.dashTime--;
+                else this.isDashing = false;
+
+                // Movement Logic
+                if (this.isPlayer || isAI) {
+                    let dx, dy;
+                    
+                    if (this.isPlayer) {
+                        dx = targetX - this.x;
+                        dy = targetY - this.y;
+                    } else {
+                        // AI Follow logic
+                        dx = targetX - this.x;
+                        dy = targetY - this.y;
+                    }
+
+                    const dist = Math.hypot(dx, dy);
+                    
+                    // Only move if far enough (prevents jitter)
+                    if (dist > 5) {
+                        const currentSpeed = this.isDashing ? this.speed * 3 : this.speed;
+                        const moveX = (dx / dist) * currentSpeed;
+                        const moveY = (dy / dist) * currentSpeed;
+
+                        // Smooth turning
+                        this.vx += (moveX - this.vx) * 0.1;
+                        this.vy += (moveY - this.vy) * 0.1;
+                        
+                        this.angle = Math.atan2(this.vy, this.vx);
+                    }
+                } else {
+                    // Enemy linear movement (could add wobble here)
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.angle = Math.atan2(this.vy, this.vx);
+                }
+
+                if (this.isPlayer || isAI) {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    
+                    // Boundaries
+                    this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+                    this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+                }
+            }
+
+            draw(ctx, emoji) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                // Flip if moving left
+                if (Math.abs(this.angle) > Math.PI / 2) {
+                    ctx.scale(1, -1);
+                    ctx.rotate(-this.angle);
+                } else {
+                    ctx.rotate(this.angle);
+                }
+
+                // Glow if dashing
+                if (this.isDashing) {
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = '#FFF';
+                }
+
+                // Draw Body
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.radius * 1.5, this.radius, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw Tail
+                ctx.beginPath();
+                ctx.moveTo(-this.radius, 0);
+                ctx.lineTo(-this.radius * 2.2, -this.radius * 0.8);
+                ctx.lineTo(-this.radius * 2.2, this.radius * 0.8);
+                ctx.fill();
+
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(this.radius * 0.8, -this.radius * 0.3, this.radius * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(this.radius * 0.9, -this.radius * 0.3, this.radius * 0.15, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
         }
 
-        // 隐藏歌词
-        function hideLyrics() {
-            elements.lyricsContainer.style.display = 'none';
+        class Bubble {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * canvas.height; // Start randomly
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + 10;
+                this.size = Math.random() * 5 + 2;
+                this.speed = Math.random() * 1 + 0.5;
+                this.alpha = Math.random() * 0.5 + 0.1;
+            }
+            update() {
+                this.y -= this.speed;
+                if (this.y < -10) this.reset();
+            }
+            draw(ctx) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
 
-        // 处理音频错误
-        function handleAudioError() {
-            showError('无法加载音频。可能的原因：网络问题、音频文件损坏或浏览器不支持该格式。');
-            pause();
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 3 + 1;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.03 + 0.02;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+            }
+            draw(ctx) {
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
         }
 
-        // 显示错误信息
-        function showError(message) {
-            elements.errorMessage.textContent = message;
-            elements.errorMessage.style.display = 'block';
-            
-            setTimeout(() => {
-                elements.errorMessage.style.display = 'none';
-            }, 5000);
-        }
+        // Start Game Instance
+        const game = new Game();
 
-        // 格式化时间 (秒 -> 分:秒)
-        function formatTime(seconds) {
-            if (isNaN(seconds)) return '0:00';
-            
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        }
-
-        // 初始化应用
-        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
