@@ -1,1299 +1,1307 @@
-html_code = '''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中国跳棋 - 玻璃弹珠版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>VoiceScribe - 实时语音转写</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f8fafc;
+            --text-secondary: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --glass: rgba(30, 41, 59, 0.8);
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
         }
 
         body {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            color: white;
-            padding: 15px;
-            overflow-x: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            position: relative;
         }
 
-        h1 {
-            margin-bottom: 15px;
-            font-size: 2em;
-            background: linear-gradient(45deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%);
+        /* 动态背景 */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.15) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(-10%, -10%) rotate(0deg); }
+            50% { transform: translate(10%, 10%) rotate(180deg); }
+        }
+
+        /* 主容器 */
+        .app-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+        }
+
+        /* 头部 */
+        .header {
+            padding: 20px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: var(--gradient-1);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
-            letter-spacing: 2px;
+            letter-spacing: -0.5px;
         }
 
-        .game-panel {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
+        .header .subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
         }
 
-        .game-info {
+        .settings-btn {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--surface);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            color: var(--text);
+            cursor: pointer;
             display: flex;
-            flex-direction: column;
-            gap: 12px;
             align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
         }
 
-        .current-player {
-            font-size: 1.1em;
-            padding: 14px 28px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 30px;
-            border: 2px solid;
-            transition: all 0.3s;
-            backdrop-filter: blur(12px);
-            min-width: 180px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        .settings-btn:active {
+            transform: translateY(-50%) scale(0.95);
+            background: var(--surface-light);
         }
 
-        .mode-selector {
+        /* 语言选择器 */
+        .lang-selector {
             display: flex;
             gap: 8px;
-            background: rgba(255,255,255,0.06);
-            padding: 6px;
-            border-radius: 25px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 16px;
+            padding: 4px;
+            background: var(--surface);
+            border-radius: 16px;
+            position: relative;
         }
 
-        .controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 25px;
+        .lang-option {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 0.95em;
+            font-size: 14px;
             font-weight: 500;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            position: relative;
+            z-index: 1;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+        }
+
+        .lang-option.active {
+            color: var(--text);
+            background: var(--surface-light);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* 转写区域 */
+        .transcript-container {
+            flex: 1;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 20px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .transcript-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .transcript-container::-webkit-scrollbar-thumb {
+            background: var(--surface-light);
+            border-radius: 2px;
+        }
+
+        .empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--text-secondary);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .empty-state.show {
+            opacity: 1;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .transcript-content {
+            font-size: 18px;
+            line-height: 1.6;
+            min-height: 100%;
+        }
+
+        .transcript-line {
+            margin-bottom: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            animation: slideIn 0.3s ease;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .transcript-line.interim {
+            opacity: 0.7;
+            font-style: italic;
+            border-left: 3px solid var(--primary);
+        }
+
+        .timestamp {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .confidence-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .confidence-high { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .confidence-medium { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .confidence-low { background: rgba(239, 68, 68, 0.2); color: var(--error); }
+
+        /* 控制栏 */
+        .controls {
+            background: var(--surface);
+            border-radius: 24px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            height: 24px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            transition: all 0.3s;
+        }
+
+        .status-dot.recording {
+            background: var(--error);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .main-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .control-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: var(--surface-light);
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
         }
 
-        button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        button:hover::before {
-            left: 100%;
-        }
-
-        button:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-        }
-
-        button:active {
-            transform: translateY(0) scale(0.98);
-        }
-
-        button.active {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
-        }
-
-        button:disabled {
-            opacity: 0.4;
+        .control-btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
-            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
         }
 
-        #board {
-            position: relative;
-            background: 
-                radial-gradient(ellipse at 30% 20%, rgba(139, 92, 43, 0.4) 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 80%, rgba(139, 92, 43, 0.3) 0%, transparent 50%),
-                linear-gradient(165deg, #8b5a2b 0%, #6b4423 50%, #5d3a1a 100%);
-            border-radius: 20px;
-            box-shadow: 
-                0 30px 60px rgba(0, 0, 0, 0.6),
-                inset 0 1px 0 rgba(255,255,255,0.1),
-                0 0 0 8px #4a3728;
-            padding: 35px;
-            user-select: none;
-            border: 1px solid rgba(139, 92, 43, 0.5);
+        .control-btn:active:not(:disabled) {
+            transform: scale(0.92);
         }
 
-        .hole {
-            position: absolute;
-            width: 18px;
-            height: 18px;
-            background: 
-                radial-gradient(circle at 30% 30%, rgba(92, 64, 51, 0.8), rgba(45, 31, 22, 0.9));
-            border-radius: 50%;
-            box-shadow: 
-                inset 2px 2px 4px rgba(0, 0, 0, 0.9), 
-                inset -1px -1px 2px rgba(255, 255, 255, 0.05),
-                0 2px 4px rgba(0, 0, 0, 0.4);
+        .control-btn.record {
+            width: 72px;
+            height: 72px;
+            background: var(--gradient-1);
+            box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.5);
+        }
+
+        .control-btn.record.recording {
+            background: var(--gradient-2);
+            animation: recording-pulse 2s infinite;
+        }
+
+        @keyframes recording-pulse {
+            0%, 100% { box-shadow: 0 10px 30px -5px rgba(236, 72, 153, 0.5); }
+            50% { box-shadow: 0 10px 40px -5px rgba(236, 72, 153, 0.8); }
+        }
+
+        .control-btn svg {
+            width: 24px;
+            height: 24px;
+            transition: transform 0.3s;
+        }
+
+        .control-btn.record svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .secondary-controls {
+            display: flex;
+            justify-content: space-around;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
             cursor: pointer;
-            transition: all 0.2s;
-            z-index: 10;
+            transition: all 0.3s;
+            padding: 8px 16px;
+            border-radius: 12px;
         }
 
-        .hole:hover {
-            box-shadow: 
-                inset 2px 2px 4px rgba(0, 0, 0, 0.8), 
-                0 0 20px rgba(255, 255, 255, 0.3);
-            transform: scale(1.15);
+        .icon-btn:active {
+            background: rgba(255,255,255,0.1);
+            color: var(--text);
         }
 
-        .hole.valid-move {
-            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), rgba(200, 200, 200, 0.8));
-            box-shadow: 
-                0 0 20px rgba(255, 255, 255, 0.6), 
-                inset 0 0 10px rgba(255, 255, 255, 0.4),
-                0 0 40px rgba(255, 255, 255, 0.3);
-            animation: pulse-glow 2s infinite;
-            z-index: 15;
-            border: 2px solid rgba(255, 255, 255, 0.8);
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
         }
 
-        .hole.jump-move {
-            background: radial-gradient(circle at 30% 30%, rgba(147, 197, 253, 0.95), rgba(96, 165, 250, 0.9));
-            box-shadow: 
-                0 0 25px rgba(59, 130, 246, 0.8), 
-                inset 0 0 12px rgba(147, 197, 253, 0.6),
-                0 0 50px rgba(59, 130, 246, 0.5);
-            animation: pulse-blue 1.5s infinite;
-            border: 2px solid rgba(147, 197, 253, 0.9);
-            z-index: 16;
-        }
-
-        .hole.jump-continue {
-            background: radial-gradient(circle at 30% 30%, rgba(251, 191, 36, 0.95), rgba(245, 158, 11, 0.9));
-            box-shadow: 
-                0 0 25px rgba(251, 191, 36, 0.8), 
-                inset 0 0 12px rgba(251, 191, 36, 0.6),
-                0 0 50px rgba(251, 191, 36, 0.5);
-            animation: pulse-gold 1s infinite;
-            border: 2px solid rgba(251, 191, 36, 0.9);
-            z-index: 17;
-        }
-
-        @keyframes pulse-glow {
-            0%, 100% { transform: scale(1); opacity: 0.9; box-shadow: 0 0 20px rgba(255,255,255,0.6); }
-            50% { transform: scale(1.2); opacity: 0.7; box-shadow: 0 0 30px rgba(255,255,255,0.8); }
-        }
-
-        @keyframes pulse-blue {
-            0%, 100% { transform: scale(1); opacity: 0.9; }
-            50% { transform: scale(1.25); opacity: 0.75; }
-        }
-
-        @keyframes pulse-gold {
-            0%, 100% { transform: scale(1); opacity: 0.95; }
-            50% { transform: scale(1.3); opacity: 0.8; }
-        }
-
-        .piece {
+        /* 音频可视化 */
+        .visualizer {
             position: absolute;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            z-index: 20;
-            pointer-events: auto;
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            background: 
-                radial-gradient(circle at 25% 25%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 20%, transparent 50%),
-                radial-gradient(circle at 75% 75%, rgba(0,0,0,0.2) 0%, transparent 40%);
-            box-shadow: 
-                inset 2px 2px 4px rgba(255,255,255,0.5),
-                inset -2px -2px 4px rgba(0,0,0,0.3),
-                0 4px 8px rgba(0,0,0,0.4),
-                0 0 15px currentColor;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 60px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 3px;
+            padding-bottom: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
         }
 
-        .piece:hover {
-            transform: scale(1.15);
-            z-index: 30;
-            filter: brightness(1.2);
-            box-shadow: 
-                inset 2px 2px 6px rgba(255,255,255,0.7),
-                inset -2px -2px 6px rgba(0,0,0,0.4),
-                0 6px 20px rgba(0,0,0,0.5),
-                0 0 30px currentColor;
+        .visualizer.active {
+            opacity: 1;
         }
 
-        .piece.selected {
-            animation: selected-glow 1.5s ease-in-out infinite alternate;
-            transform: scale(1.2);
-            z-index: 40;
-            box-shadow: 
-                inset 2px 2px 6px rgba(255,255,255,0.9),
-                inset -2px -2px 6px rgba(0,0,0,0.5),
-                0 0 30px currentColor,
-                0 0 60px currentColor;
+        .bar {
+            width: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+            min-height: 4px;
         }
 
-        @keyframes selected-glow {
-            from { box-shadow: inset 2px 2px 6px rgba(255,255,255,0.7), 0 0 20px currentColor, 0 0 40px currentColor; }
-            to { box-shadow: inset 2px 2px 8px rgba(255,255,255,0.9), 0 0 40px currentColor, 0 0 80px rgba(255,255,255,0.6); }
-        }
-
-        /* 玻璃弹珠颜色 - 更鲜艳的配色 */
-        .piece.player-0 { 
-            background-color: #ef4444;
-            color: rgba(239, 68, 68, 0.8);
-        }
-        .piece.player-1 { 
-            background-color: #3b82f6;
-            color: rgba(59, 130, 246, 0.8);
-        }
-        .piece.player-2 { 
-            background-color: #22c55e;
-            color: rgba(34, 197, 94, 0.8);
-        }
-        .piece.player-3 { 
-            background-color: #eab308;
-            color: rgba(234, 179, 8, 0.8);
-        }
-        .piece.player-4 { 
-            background-color: #a855f7;
-            color: rgba(168, 85, 247, 0.8);
-        }
-        .piece.player-5 { 
-            background-color: #06b6d4;
-            color: rgba(6, 182, 212, 0.8);
-        }
-
-        @keyframes marble-drop {
-            0% { transform: translateY(-80px) scale(0.3); opacity: 0; }
-            60% { transform: translateY(10px) scale(1.1); opacity: 1; }
-            80% { transform: translateY(-5px) scale(0.95); }
-            100% { transform: translateY(0) scale(1); opacity: 1; }
-        }
-
-        .instructions {
-            margin-top: 20px;
-            max-width: 700px;
-            text-align: center;
-            line-height: 1.8;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px 25px;
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            font-size: 0.95em;
-        }
-
-        .instructions strong {
-            color: #fbbf24;
-        }
-
-        .win-message {
+        /* 提示消息 */
+        .toast {
             position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            padding: 50px 60px;
-            border-radius: 24px;
-            box-shadow: 
-                0 25px 80px rgba(0, 0, 0, 0.8),
-                0 0 0 1px rgba(255,255,255,0.1),
-                inset 0 1px 0 rgba(255,255,255,0.1);
+            transform: translate(-50%, -50%) scale(0.9);
+            background: var(--surface);
+            color: var(--text);
+            padding: 16px 24px;
+            border-radius: 16px;
+            font-size: 14px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
             z-index: 1000;
-            text-align: center;
-            display: none;
-            border: 2px solid rgba(251, 191, 36, 0.5);
-            animation: modal-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-
-        @keyframes modal-in {
-            to { transform: translate(-50%, -50%) scale(1); }
-        }
-
-        .win-message h2 {
-            font-size: 2.8em;
-            margin-bottom: 15px;
-            background: linear-gradient(45deg, #fbbf24, #f59e0b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(251, 191, 36, 0.3);
-        }
-
-        .last-move {
-            position: absolute;
-            width: 32px;
-            height: 32px;
-            border: 3px solid rgba(255, 255, 255, 0.9);
-            border-radius: 50%;
-            pointer-events: none;
-            animation: fade-ring 2s forwards;
-            z-index: 5;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
-        }
-
-        @keyframes fade-ring {
-            0%, 50% { opacity: 1; transform: scale(1); border-width: 3px; }
-            100% { opacity: 0; transform: scale(1.8); border-width: 0px; }
-        }
-
-        .player-indicator {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            margin-right: 10px;
-            vertical-align: middle;
-            box-shadow: 0 0 12px currentColor;
-            border: 2px solid rgba(255,255,255,0.8);
-        }
-
-        .move-path {
-            position: absolute;
-            pointer-events: none;
-            z-index: 18;
-        }
-
-        .move-info-panel {
-            background: rgba(15, 23, 42, 0.8);
-            border-radius: 12px;
-            padding: 12px 20px;
-            min-width: 220px;
-            text-align: center;
+            box-shadow: var(--shadow);
             border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
+            max-width: 80%;
+            text-align: center;
         }
 
-        .move-status {
-            font-size: 0.9em;
-            color: #94a3b8;
-            margin-bottom: 6px;
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
         }
 
-        .move-detail {
-            font-size: 1.1em;
-            font-weight: 600;
-            color: white;
+        /* 设置面板 */
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 100;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
+            overflow-y: auto;
         }
 
-        .jump-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            margin-left: 8px;
-            font-weight: 700;
+        .settings-panel.open {
+            right: 0;
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 0.8em;
-            margin-top: 6px;
-            font-weight: 600;
-        }
-
-        .status-badge.continue {
-            background: rgba(251, 191, 36, 0.2);
-            color: #fbbf24;
-            border: 1px solid rgba(251, 191, 36, 0.4);
-            animation: pulse-text 1.5s infinite;
-        }
-
-        @keyframes pulse-text {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        .hint-text {
-            color: #60a5fa;
-        }
-
-        .players-legend {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 10px;
-            font-size: 0.85em;
-        }
-
-        .legend-item {
+        .settings-header {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 20px;
+            justify-content: space-between;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
         }
 
-        .legend-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.5);
+        .settings-header h2 {
+            font-size: 20px;
+        }
+
+        .close-settings {
+            background: var(--surface);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .setting-item {
+            margin-bottom: 24px;
+        }
+
+        .setting-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .setting-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .option-btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--surface-light);
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .option-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* 遮罩 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 50;
+        }
+
+        .overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 复制提示 */
+        .copy-hint {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--success);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 100;
+            font-weight: 500;
+        }
+
+        .copy-hint.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 响应式优化 */
+        @media (min-width: 768px) {
+            .app-container {
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--surface-light);
+            border-radius: 3px;
         }
     </style>
 </head>
 <body>
-    <h1>🔮 玻璃弹珠跳棋</h1>
+    <div class="bg-animation"></div>
     
-    <div class="game-panel">
-        <div class="game-info">
-            <div class="current-player" id="currentPlayer">
-                <span class="player-indicator" id="playerIndicator"></span>
-                <span id="playerText">红方回合</span>
+    <div class="app-container">
+        <header class="header">
+            <h1>VoiceScribe</h1>
+            <div class="subtitle">实时语音转文字</div>
+            <button class="settings-btn" onclick="toggleSettings()" aria-label="设置">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </button>
+        </header>
+
+        <div class="lang-selector">
+            <button class="lang-option active" data-lang="zh-CN" onclick="setLanguage('zh-CN')">🇨🇳 普通话</button>
+            <button class="lang-option" data-lang="en-US" onclick="setLanguage('en-US')">🇺🇸 English</button>
+            <button class="lang-option" data-lang="zh-CN,en-US" onclick="setLanguage('zh-CN,en-US')">🌐 中英混合</button>
+        </div>
+
+        <div class="transcript-container" id="transcriptContainer">
+            <div class="empty-state show" id="emptyState">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"></path>
+                </svg>
+                <div>点击麦克风开始录音</div>
+                <div style="font-size: 12px; margin-top: 8px; opacity: 0.7;">支持普通话与英文实时转写</div>
+            </div>
+            <div class="transcript-content" id="transcriptContent"></div>
+        </div>
+
+        <div class="controls">
+            <div class="status-bar">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">准备就绪</span>
             </div>
             
-            <div class="mode-selector">
-                <button onclick="game.setMode(2)" id="mode2">2人</button>
-                <button onclick="game.setMode(4)" id="mode4">4人</button>
-                <button onclick="game.setMode(6)" id="mode6" class="active">6人</button>
+            <div class="main-controls">
+                <button class="control-btn" id="clearBtn" onclick="clearTranscript()" disabled aria-label="清空">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+
+                <button class="control-btn record" id="recordBtn" onclick="toggleRecording()" aria-label="开始录音">
+                    <svg id="micIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                    <svg id="stopIcon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                        <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                    </svg>
+                </button>
+
+                <button class="control-btn" id="copyBtn" onclick="copyTranscript()" disabled aria-label="复制">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                    </svg>
+                </button>
             </div>
-            
-            <div class="controls">
-                <button onclick="game.reset()">🔄 重新开始</button>
-                <button onclick="game.undo()" id="undoBtn" disabled>↩️ 撤销</button>
-                <button onclick="game.toggleMoveHint()" id="hintBtn">💡 隐藏提示</button>
+
+            <div class="visualizer" id="visualizer"></div>
+
+            <div class="secondary-controls">
+                <button class="icon-btn" onclick="exportTxt()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>导出</span>
+                </button>
+                <button class="icon-btn" onclick="insertPunctuation()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>标点</span>
+                </button>
+                <button class="icon-btn" onclick="toggleAutoScroll()" id="autoScrollBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                    <span>自动滚</span>
+                </button>
             </div>
         </div>
-        
-        <div class="move-info-panel">
-            <div class="move-status">当前状态</div>
-            <div class="move-detail" id="moveDetail">选择棋子开始游戏</div>
-            <div class="status-badge" id="statusBadge" style="display: none;"></div>
+    </div>
+
+    <!-- 设置面板 -->
+    <div class="overlay" id="overlay" onclick="toggleSettings()"></div>
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <h2>设置</h2>
+            <button class="close-settings" onclick="toggleSettings()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="setting-item">
+            <label class="setting-label">识别模式</label>
+            <div class="setting-options">
+                <button class="option-btn active" onclick="setRecognitionMode('continuous', this)">连续识别</button>
+                <button class="option-btn" onclick="setRecognitionMode('single', this)">单次识别</button>
+            </div>
+        </div>
+
+        <div class="setting-item">
+            <label class="setting-label">自动标点</label>
+            <div class="setting-options">
+                <button class="option-btn active" onclick="setAutoPunctuation(true, this)">开启</button>
+                <button class="option-btn" onclick="setAutoPunctuation(false, this)">关闭</button>
+            </div>
+        </div>
+
+        <div class="setting-item">
+            <label class="setting-label">显示置信度</label>
+            <div class="setting-options">
+                <button class="option-btn active" onclick="setShowConfidence(true, this)">显示</button>
+                <button class="option-btn" onclick="setShowConfidence(false, this)">隐藏</button>
+            </div>
+        </div>
+
+        <div class="setting-item">
+            <label class="setting-label">字体大小</label>
+            <div class="setting-options">
+                <button class="option-btn" onclick="setFontSize('14px', this)">小</button>
+                <button class="option-btn active" onclick="setFontSize('18px', this)">中</button>
+                <button class="option-btn" onclick="setFontSize('22px', this)">大</button>
+            </div>
         </div>
     </div>
 
-    <div id="board"></div>
-
-    <div class="instructions">
-        <p>🎮 <strong>游戏操作：</strong>点击己方棋子选中，<span class="hint-text">白色高亮</span>为单步移动，<span style="color: #60a5fa;">蓝色高亮</span>为跳跃，<span style="color: #fbbf24;">金色高亮</span>表示可继续连跳</p>
-        <p>🚀 <strong>连跳规则：</strong>跳跃后可继续寻找跳跃机会，点击"结束回合"按钮或按空格键结束连跳</p>
-        <p>🏆 <strong>胜利条件：</strong>最先将所有棋子移动到对角区域者获胜</p>
-        <div class="players-legend" id="playersLegend"></div>
-    </div>
-
-    <div class="win-message" id="winMessage">
-        <h2>🎉 恭喜获胜！</h2>
-        <p id="winnerText"></p>
-        <button onclick="game.reset()" style="margin-top: 20px; padding: 14px 35px; font-size: 1.1em;">再来一局</button>
-    </div>
+    <div class="toast" id="toast"></div>
+    <div class="copy-hint" id="copyHint">已复制到剪贴板</div>
 
     <script>
-        class ChineseCheckers {
-            constructor() {
-                this.board = document.getElementById('board');
-                this.playerCount = 6;
-                this.currentPlayer = 0;
-                this.selectedPiece = null;
-                this.validMoves = [];
-                this.moveHistory = [];
-                this.pieces = [];
-                this.holes = [];
-                this.boardState = new Map();
-                this.showMoveHint = true;
-                this.isMoving = false;
-                
-                // 连跳状态追踪
-                this.isInJumpChain = false;
-                this.jumpChainCount = 0;
-                this.originalPiece = null;
-                this.jumpStartPosition = null;
-                
-                this.playerColors = ['红', '蓝', '绿', '黄', '紫', '青'];
-                this.colorCodes = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#a855f7', '#06b6d4'];
-                this.colorNames = ['红色', '蓝色', '绿色', '黄色', '紫色', '青色'];
-                
-                this.rowCounts = [1, 2, 3, 4, 13, 12, 11, 10, 9, 10, 11, 12, 13, 4, 3, 2, 1];
-                this.totalRows = 17;
-                
-                this.init();
-                this.setupKeyboardControls();
-            }
+        // 全局状态
+        let recognition = null;
+        let isRecording = false;
+        let currentLang = 'zh-CN';
+        let recognitionMode = 'continuous';
+        let autoPunctuation = true;
+        let showConfidence = true;
+        let autoScroll = true;
+        let transcriptHistory = [];
+        let currentInterimId = null;
+        let audioContext = null;
+        let analyser = null;
+        let visualizerInterval = null;
 
-            setupKeyboardControls() {
-                document.addEventListener('keydown', (e) => {
-                    if (e.code === 'Space') {
-                        e.preventDefault();
-                        if (this.isInJumpChain) {
-                            this.endJumpChain();
-                        }
-                    }
-                    if (e.code === 'Escape') {
-                        if (this.selectedPiece && !this.isInJumpChain) {
-                            this.deselect();
-                        }
-                    }
-                });
-            }
+        // DOM 元素
+        const recordBtn = document.getElementById('recordBtn');
+        const micIcon = document.getElementById('micIcon');
+        const stopIcon = document.getElementById('stopIcon');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const transcriptContent = document.getElementById('transcriptContent');
+        const emptyState = document.getElementById('emptyState');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const visualizer = document.getElementById('visualizer');
+        const container = document.getElementById('transcriptContainer');
 
-            setMode(count) {
-                this.playerCount = count;
-                document.querySelectorAll('.mode-selector button').forEach(btn => btn.classList.remove('active'));
-                document.getElementById(`mode${count}`).classList.add('active');
-                this.updatePlayersLegend();
-                this.reset();
-            }
-
-            getPlayOrder() {
-                if (this.playerCount === 2) return [0, 1];
-                if (this.playerCount === 4) return [0, 1, 2, 5];
-                return [0, 1, 2, 3, 4, 5];
-            }
-
-            getActivePlayers() {
-                return this.getPlayOrder();
-            }
-
-            updatePlayersLegend() {
-                const container = document.getElementById('playersLegend');
-                const players = this.getActivePlayers();
-                container.innerHTML = players.map(p => 
-                    `<div class="legend-item">
-                        <div class="legend-dot" style="background: ${this.colorCodes[p]}; box-shadow: 0 0 8px ${this.colorCodes[p]}"></div>
-                        <span>${this.playerColors[p]}方</span>
-                    </div>`
-                ).join(' → ');
-            }
-
-            toggleMoveHint() {
-                this.showMoveHint = !this.showMoveHint;
-                const btn = document.getElementById('hintBtn');
-                btn.textContent = this.showMoveHint ? '💡 隐藏提示' : '💡 显示提示';
-                
-                if (!this.showMoveHint) {
-                    this.clearHighlights();
-                } else if (this.selectedPiece) {
-                    this.highlightValidMoves();
-                }
-            }
-
-            clearHighlights() {
-                document.querySelectorAll('.hole.valid-move, .hole.jump-move, .hole.jump-continue').forEach(h => {
-                    h.classList.remove('valid-move', 'jump-move', 'jump-continue');
-                });
-            }
-
-            init() {
-                this.calculatePositions();
-                this.createBoard();
-                this.updatePlayersLegend();
-                this.setupPieces();
-                this.updatePlayerDisplay();
-            }
-
-            calculatePositions() {
-                this.positions = [];
-                const spacingX = 30;
-                const spacingY = 26;
-                const centerX = 300;
-                
-                for (let row = 0; row < this.totalRows; row++) {
-                    const count = this.rowCounts[row];
-                    const rowPositions = [];
-                    const rowWidth = (count - 1) * spacingX;
-                    const startX = centerX - rowWidth / 2;
-                    
-                    for (let col = 0; col < count; col++) {
-                        rowPositions.push({
-                            x: startX + col * spacingX,
-                            y: 500 - row * spacingY,
-                            row: row,
-                            col: col,
-                            id: `${row}-${col}`
-                        });
-                    }
-                    this.positions.push(rowPositions);
-                }
-            }
-
-            createBoard() {
-                this.board.innerHTML = '';
-                this.board.style.width = '600px';
-                this.board.style.height = '540px';
-                
-                for (let row = 0; row < this.totalRows; row++) {
-                    for (let pos of this.positions[row]) {
-                        const hole = document.createElement('div');
-                        hole.className = 'hole';
-                        hole.style.left = (pos.x - 9) + 'px';
-                        hole.style.top = (pos.y - 9) + 'px';
-                        hole.dataset.row = row;
-                        hole.dataset.col = pos.col;
-                        
-                        hole.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            this.onHoleClick(pos);
-                        });
-                        
-                        this.board.appendChild(hole);
-                        this.holes.push(hole);
-                    }
-                }
-            }
-
-            setupPieces() {
-                document.querySelectorAll('.piece').forEach(p => p.remove());
-                this.pieces = [];
-                this.boardState.clear();
-                this.isInJumpChain = false;
-                this.jumpChainCount = 0;
-                
-                const activePlayers = this.getActivePlayers();
-                const allCornerPositions = this.getAllCornerPositions();
-                
-                for (let player of activePlayers) {
-                    const positions = allCornerPositions[player];
-                    for (let pos of positions) {
-                        if (this.isValidPosition(pos.row, pos.col)) {
-                            this.createPiece(player, pos);
-                        }
-                    }
-                }
-            }
-
-            getAllCornerPositions() {
-                return [
-                    // 玩家0（红）- 正下方
-                    [{row: 16, col: 0}, {row: 15, col: 0}, {row: 15, col: 1}, {row: 14, col: 0}, {row: 14, col: 1}, {row: 14, col: 2}, {row: 13, col: 0}, {row: 13, col: 1}, {row: 13, col: 2}, {row: 13, col: 3}],
-                    // 玩家1（蓝）- 正上方
-                    [{row: 0, col: 0}, {row: 1, col: 0}, {row: 1, col: 1}, {row: 2, col: 0}, {row: 2, col: 1}, {row: 2, col: 2}, {row: 3, col: 0}, {row: 3, col: 1}, {row: 3, col: 2}, {row: 3, col: 3}],
-                    // 玩家2（绿）- 左上方
-                    [{row: 4, col: 0}, {row: 4, col: 1}, {row: 5, col: 0}, {row: 4, col: 2}, {row: 5, col: 1}, {row: 6, col: 0}, {row: 4, col: 3}, {row: 5, col: 2}, {row: 6, col: 1}, {row: 7, col: 0}],
-                    // 玩家3（黄）- 右上方
-                    [{row: 4, col: 12}, {row: 4, col: 11}, {row: 5, col: 11}, {row: 4, col: 10}, {row: 5, col: 10}, {row: 6, col: 10}, {row: 4, col: 9}, {row: 5, col: 9}, {row: 6, col: 9}, {row: 7, col: 9}],
-                    // 玩家4（紫）- 左下方
-                    [{row: 12, col: 0}, {row: 11, col: 0}, {row: 12, col: 1}, {row: 10, col: 0}, {row: 11, col: 1}, {row: 12, col: 2}, {row: 9, col: 0}, {row: 10, col: 1}, {row: 11, col: 2}, {row: 12, col: 3}],
-                    // 玩家5（青）- 右下方
-                    [{row: 12, col: 12}, {row: 11, col: 11}, {row: 12, col: 11}, {row: 10, col: 10}, {row: 11, col: 10}, {row: 12, col: 10}, {row: 9, col: 9}, {row: 10, col: 9}, {row: 11, col: 9}, {row: 12, col: 9}]
-                ];
-            }
-
-            isValidPosition(row, col) {
-                return row >= 0 && row < this.totalRows && col >= 0 && col < this.rowCounts[row];
-            }
-
-            createPiece(player, pos) {
-                const piece = document.createElement('div');
-                piece.className = `piece player-${player}`;
-                const position = this.positions[pos.row][pos.col];
-                
-                piece.style.left = (position.x - 13) + 'px';
-                piece.style.top = (position.y - 13) + 'px';
-                piece.dataset.player = player;
-                piece.dataset.row = pos.row;
-                piece.dataset.col = pos.col;
-                
-                piece.style.animation = 'marble-drop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                setTimeout(() => piece.style.animation = '', 600);
-                
-                piece.addEventListener('click', (e) => {
+        // 初始化
+        function init() {
+            checkBrowserSupport();
+            initVisualizer();
+            
+            // 防止移动端橡皮筋效果
+            document.body.addEventListener('touchmove', function(e) {
+                if (e.target === document.body) {
                     e.preventDefault();
-                    e.stopPropagation();
-                    const currentPos = {
-                        row: parseInt(piece.dataset.row),
-                        col: parseInt(piece.dataset.col)
-                    };
-                    this.onPieceClick(piece, currentPos);
-                });
-                
-                this.board.appendChild(piece);
-                this.pieces.push({element: piece, player: player, pos: pos});
-                this.boardState.set(`${pos.row}-${pos.col}`, player);
-            }
+                }
+            }, { passive: false });
+        }
 
-            onPieceClick(pieceElement, pos) {
-                if (this.isMoving) return;
-                
-                const player = parseInt(pieceElement.dataset.player);
-                
-                // 在连跳过程中，只能继续移动当前正在连跳的棋子
-                if (this.isInJumpChain) {
-                    if (pieceElement !== this.selectedPiece) {
-                        this.showMessage('连跳中，请继续移动当前棋子或按空格结束回合');
-                        return;
+        // 检查浏览器支持
+        function checkBrowserSupport() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                showToast('您的浏览器不支持语音识别，请使用 Chrome 或 Safari');
+                recordBtn.disabled = true;
+                return false;
+            }
+            return true;
+        }
+
+        // 初始化语音识别
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            
+            recognition.continuous = recognitionMode === 'continuous';
+            recognition.interimResults = true;
+            recognition.lang = currentLang;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = () => {
+                isRecording = true;
+                updateUIState();
+                startVisualizer();
+            };
+
+            recognition.onend = () => {
+                if (isRecording && recognitionMode === 'continuous') {
+                    // 自动重启以保持连续识别
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.log('Restart failed:', e);
                     }
                 } else {
-                    if (player !== this.currentPlayer) {
-                        this.shakeElement(pieceElement);
-                        return;
-                    }
+                    isRecording = false;
+                    updateUIState();
+                    stopVisualizer();
+                    removeInterim();
                 }
-                
-                if (this.selectedPiece === pieceElement) {
-                    // 如果是连跳状态，不允许取消选择，必须先结束回合
-                    if (this.isInJumpChain) {
-                        this.showMessage('正在进行连跳，请点击"结束回合"按钮或按空格键结束');
-                        return;
-                    }
-                    this.deselect();
-                    return;
-                }
-                
-                this.deselect();
-                this.selectedPiece = pieceElement;
-                pieceElement.classList.add('selected');
-                
-                // 计算移动：如果是连跳，只计算跳跃移动
-                if (this.isInJumpChain) {
-                    this.validMoves = this.calculateJumpOnlyMoves(pos);
-                } else {
-                    this.validMoves = this.calculateValidMoves(pos);
-                }
-                
-                this.updateMoveInfo();
-                
-                if (this.showMoveHint) {
-                    this.highlightValidMoves();
-                }
+            };
+
+            recognition.onresult = (event) => {
+                handleResult(event);
+            };
+
+            recognition.onerror = (event) => {
+                handleError(event);
+            };
+        }
+
+        // 处理识别结果
+        function handleResult(event) {
+            const results = event.results;
+            const lastResult = results[results.length - 1];
+            const transcript = lastResult[0].transcript;
+            const confidence = lastResult[0].confidence;
+            const isFinal = lastResult.isFinal;
+
+            // 隐藏空状态
+            emptyState.classList.remove('show');
+
+            if (isFinal) {
+                // 最终结果
+                removeInterim();
+                addFinalTranscript(transcript, confidence);
+                if (autoScroll) scrollToBottom();
+            } else {
+                // 中间结果
+                updateInterim(transcript, confidence);
+                if (autoScroll) scrollToBottom();
             }
 
-            // 仅计算跳跃移动（用于连跳阶段）
-            calculateJumpOnlyMoves(startPos) {
-                const moves = [];
-                const visited = new Set();
-                const queue = [{pos: startPos, path: [startPos], jumpCount: 0}];
-                visited.add(`${startPos.row}-${startPos.col}`);
-                
-                const directions = [[-1, -1], [-1, 0], [0, -1], [0, 1], [1, -1], [1, 0]];
-                
-                while (queue.length > 0) {
-                    const {pos, path, jumpCount} = queue.shift();
-                    
-                    for (let [dr, dc] of directions) {
-                        const adjRow = pos.row + dr;
-                        const adjCol = pos.col + dc;
-                        
-                        if (!this.isValidPosition(adjRow, adjCol)) continue;
-                        if (!this.boardState.has(`${adjRow}-${adjCol}`)) continue;
-                        
-                        const jumpRow = adjRow + dr;
-                        const jumpCol = adjCol + dc;
-                        
-                        if (!this.isValidPosition(jumpRow, jumpCol)) continue;
-                        if (this.boardState.has(`${jumpRow}-${jumpCol}`)) continue;
-                        
-                        // 检查是否回到连跳起点（禁止）
-                        if (jumpRow === this.jumpStartPosition.row && jumpCol === this.jumpStartPosition.col) continue;
-                        
-                        const stateKey = `${jumpRow}-${jumpCol}-${path.length}`;
-                        if (visited.has(stateKey)) continue;
-                        visited.add(stateKey);
-                        
-                        const newPath = [...path, {row: jumpRow, col: jumpCol}];
-                        const newJumpCount = jumpCount + 1;
-                        
-                        moves.push({
-                            row: jumpRow,
-                            col: jumpCol,
-                            isJump: true,
-                            jumpCount: newJumpCount,
-                            path: newPath,
-                            canContinue: true
-                        });
-                        
-                        // 继续搜索更深层的跳跃
-                        queue.push({
-                            pos: {row: jumpRow, col: jumpCol},
-                            path: newPath,
-                            jumpCount: newJumpCount
-                        });
-                    }
-                }
-                
-                return moves;
+            updateButtons();
+        }
+
+        // 添加最终结果
+        function addFinalTranscript(text, confidence) {
+            const line = document.createElement('div');
+            line.className = 'transcript-line';
+            
+            const time = new Date().toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+
+            let confidenceClass = 'confidence-high';
+            let confidenceText = '高';
+            if (confidence < 0.7) {
+                confidenceClass = 'confidence-medium';
+                confidenceText = '中';
+            }
+            if (confidence < 0.4) {
+                confidenceClass = 'confidence-low';
+                confidenceText = '低';
             }
 
-            calculateValidMoves(startPos) {
-                const moves = [];
-                const visited = new Set();
-                const queue = [{pos: startPos, path: [startPos], isJump: false, jumpCount: 0}];
-                
-                const directions = [[-1, -1], [-1, 0], [0, -1], [0, 1], [1, -1], [1, 0]];
-                
-                // 第一步：收集所有单步移动
-                for (let [dr, dc] of directions) {
-                    const adjRow = startPos.row + dr;
-                    const adjCol = startPos.col + dc;
-                    
-                    if (this.isValidPosition(adjRow, adjCol) && !this.boardState.has(`${adjRow}-${adjCol}`)) {
-                        moves.push({
-                            row: adjRow,
-                            col: adjCol,
-                            isJump: false,
-                            jumpCount: 0,
-                            path: [startPos, {row: adjRow, col: adjCol}],
-                            canContinue: false
-                        });
-                    }
-                }
-                
-                // BFS搜索所有跳跃路径
-                visited.add(`${startPos.row}-${startPos.col}`);
-                
-                while (queue.length > 0) {
-                    const {pos, path, isJump, jumpCount} = queue.shift();
-                    
-                    for (let [dr, dc] of directions) {
-                        const adjRow = pos.row + dr;
-                        const adjCol = pos.col + dc;
-                        
-                        if (!this.isValidPosition(adjRow, adjCol)) continue;
-                        if (!this.boardState.has(`${adjRow}-${adjCol}`)) continue;
-                        
-                        const jumpRow = adjRow + dr;
-                        const jumpCol = adjCol + dc;
-                        
-                        if (!this.isValidPosition(jumpRow, jumpCol)) continue;
-                        if (this.boardState.has(`${jumpRow}-${jumpCol}`)) continue;
-                        
-                        const stateKey = `${jumpRow}-${jumpCol}`;
-                        if (visited.has(stateKey)) continue;
-                        visited.add(stateKey);
-                        
-                        const newPath = [...path, {row: jumpRow, col: jumpCol}];
-                        const newJumpCount = jumpCount + 1;
-                        
-                        moves.push({
-                            row: jumpRow,
-                            col: jumpCol,
-                            isJump: true,
-                            jumpCount: newJumpCount,
-                            path: newPath,
-                            canContinue: true
-                        });
-                        
-                        queue.push({
-                            pos: {row: jumpRow, col: jumpCol},
-                            path: newPath,
-                            isJump: true,
-                            jumpCount: newJumpCount
-                        });
-                    }
-                }
-                
-                return moves.filter(m => !(m.row === startPos.row && m.col === startPos.col));
-            }
+            const confidenceBadge = showConfidence ? 
+                `<span class="confidence-badge ${confidenceClass}">${confidenceText}置信度</span>` : '';
 
-            highlightValidMoves() {
-                this.clearHighlights();
-                
-                this.validMoves.forEach(move => {
-                    const hole = this.findHole(move.row, move.col);
-                    if (hole) {
-                        if (this.isInJumpChain) {
-                            // 连跳阶段：金色高亮所有可继续跳跃的位置
-                            hole.classList.add('jump-continue');
-                        } else {
-                            if (move.isJump) {
-                                hole.classList.add('jump-move');
-                            } else {
-                                hole.classList.add('valid-move');
-                            }
-                        }
-                    }
-                });
-            }
+            line.innerHTML = `
+                <div class="timestamp">
+                    <span>${time}</span>
+                    ${confidenceBadge}
+                </div>
+                <div>${escapeHtml(text)}</div>
+            `;
 
-            updateMoveInfo() {
-                const moveDetail = document.getElementById('moveDetail');
-                const statusBadge = document.getElementById('statusBadge');
-                
-                if (this.isInJumpChain) {
-                    if (this.validMoves.length > 0) {
-                        moveDetail.innerHTML = `连跳进行中！已跳 <span class="jump-badge">${this.jumpChainCount}</span> 次`;
-                        statusBadge.textContent = '🎯 可继续跳跃（按空格结束）';
-                        statusBadge.className = 'status-badge continue';
-                        statusBadge.style.display = 'inline-block';
-                    } else {
-                        moveDetail.innerHTML = `连跳结束！共跳 <span class="jump-badge">${this.jumpChainCount}</span> 次`;
-                        statusBadge.textContent = '⏹️ 无可用跳跃，回合结束';
-                        statusBadge.className = 'status-badge';
-                        statusBadge.style.display = 'inline-block';
-                        statusBadge.style.background = 'rgba(107, 114, 128, 0.3)';
-                        statusBadge.style.color = '#9ca3af';
-                        
-                        // 自动结束回合
-                        setTimeout(() => this.endJumpChain(), 1500);
-                    }
-                    return;
-                }
-                
-                if (!this.selectedPiece) {
-                    moveDetail.textContent = '选择棋子查看可移动位置';
-                    statusBadge.style.display = 'none';
-                    return;
-                }
-                
-                if (this.validMoves.length === 0) {
-                    moveDetail.textContent = '该棋子无法移动';
-                    statusBadge.style.display = 'none';
-                    return;
-                }
-                
-                const jumpMoves = this.validMoves.filter(m => m.isJump);
-                const normalMoves = this.validMoves.filter(m => !m.isJump);
-                
-                if (jumpMoves.length > 0) {
-                    const maxJumps = Math.max(...jumpMoves.map(m => m.jumpCount));
-                    moveDetail.innerHTML = `可${normalMoves.length > 0 ? '移动或' : ''}跳跃 <span class="jump-badge">最多${maxJumps}跳</span>`;
-                    statusBadge.textContent = '💡 点击跳跃开始连跳';
-                    statusBadge.className = 'status-badge';
-                    statusBadge.style.display = 'inline-block';
-                    statusBadge.style.background = 'rgba(59, 130, 246, 0.2)';
-                    statusBadge.style.color = '#60a5fa';
-                } else {
-                    moveDetail.textContent = `可移动至 ${normalMoves.length} 个相邻位置`;
-                    statusBadge.style.display = 'none';
-                }
-            }
-
-            showMessage(text) {
-                const moveDetail = document.getElementById('moveDetail');
-                const originalText = moveDetail.textContent;
-                moveDetail.textContent = text;
-                moveDetail.style.color = '#fbbf24';
-                setTimeout(() => {
-                    moveDetail.textContent = originalText;
-                    moveDetail.style.color = '';
-                }, 2000);
-            }
-
-            shakeElement(element) {
-                element.style.animation = 'none';
-                element.offsetHeight; // 触发重排
-                element.style.animation = 'shake 0.4s';
-                setTimeout(() => element.style.animation = '', 400);
-            }
-
-            findHole(row, col) {
-                return this.holes.find(h => 
-                    parseInt(h.dataset.row) === row && parseInt(h.dataset.col) === col
-                );
-            }
-
-            onHoleClick(pos) {
-                if (this.isMoving || !this.selectedPiece) return;
-                
-                const move = this.validMoves.find(m => m.row === pos.row && m.col === pos.col);
-                if (!move) return;
-                
-                this.executeMove(move);
-            }
-
-            executeMove(move) {
-                this.isMoving = true;
-                const oldRow = parseInt(this.selectedPiece.dataset.row);
-                const oldCol = parseInt(this.selectedPiece.dataset.col);
-                const newRow = move.row;
-                const newCol = move.col;
-                const player = parseInt(this.selectedPiece.dataset.player);
-                
-                // 显示移动路径
-                if (move.path && move.path.length > 1) {
-                    this.showMovePath(move.path);
-                }
-                
-                // 如果不是连跳状态，记录历史（连跳只在最后记录一次）
-                if (!this.isInJumpChain) {
-                    this.moveHistory.push({
-                        piece: this.selectedPiece,
-                        from: {row: oldRow, col: oldCol},
-                        to: {row: newRow, col: newCol},
-                        player: player,
-                        path: move.path,
-                        isChainStart: true
-                    });
-                    this.originalPiece = this.selectedPiece;
-                    this.jumpStartPosition = {row: oldRow, col: oldCol};
-                } else {
-                    // 更新最后一次移动的历史记录
-                    const lastMove = this.moveHistory[this.moveHistory.length - 1];
-                    lastMove.to = {row: newRow, col: newCol};
-                    lastMove.path = move.path;
-                }
-                
-                document.getElementById('undoBtn').disabled = false;
-                
-                // 更新棋盘状态
-                this.boardState.delete(`${oldRow}-${oldCol}`);
-                this.boardState.set(`${newRow}-${newCol}`, player);
-                
-                const newPos = this.positions[newRow][newCol];
-                
-                // 移动动画
-                this.selectedPiece.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                this.selectedPiece.style.left = (newPos.x - 13) + 'px';
-                this.selectedPiece.style.top = (newPos.y - 13) + 'px';
-                
-                setTimeout(() => {
-                    this.selectedPiece.dataset.row = newRow;
-                    this.selectedPiece.dataset.col = newCol;
-                    this.selectedPiece.style.transition = '';
-                    
-                    this.showLastMove(newPos);
-                    
-                    // 判断是否继续连跳
-                    if (move.isJump && move.canContinue) {
-                        this.isInJumpChain = true;
-                        this.jumpChainCount = move.jumpCount;
-                        
-                        // 重新计算可继续跳跃的位置
-                        this.validMoves = this.calculateJumpOnlyMoves({row: newRow, col: newCol});
-                        
-                        if (this.validMoves.length > 0) {
-                            // 保持选中状态，更新提示
-                            this.updateMoveInfo();
-                            if (this.showMoveHint) {
-                                this.highlightValidMoves();
-                            }
-                            this.isMoving = false;
-                            
-                            // 自动提示可以按空格结束
-                            if (this.jumpChainCount >= 3) {
-                                this.showMessage(`精彩！已连跳${this.jumpChainCount}次，按空格可随时结束`);
-                            }
-                        } else {
-                            // 无法继续跳跃，自动结束回合
-                            this.endJumpChain();
-                        }
-                    } else {
-                        // 单步移动，直接结束回合
-                        this.deselect();
-                        if (this.checkWin(player)) {
-                            this.showWin(player);
-                        } else {
-                            this.nextPlayer();
-                        }
-                        this.isMoving = false;
-                    }
-                }, 400);
-            }
-
-            endJumpChain() {
-                if (!this.isInJumpChain) return;
-                
-                this.isInJumpChain = false;
-                this.deselect();
-                
-                const player = this.currentPlayer;
-                if (this.checkWin(player)) {
-                    this.showWin(player);
-                } else {
-                    this.nextPlayer();
-                }
-                this.isMoving = false;
-            }
-
-            showMovePath(path) {
-                document.querySelectorAll('.move-path').forEach(el => el.remove());
-                
-                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                svg.classList.add('move-path');
-                svg.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:18;';
-                
-                let pathData = '';
-                for (let i = 0; i < path.length; i++) {
-                    const pos = this.positions[path[i].row][path[i].col];
-                    if (i === 0) pathData = `M ${pos.x} ${pos.y}`;
-                    else pathData += ` L ${pos.x} ${pos.y}`;
-                }
-                
-                const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                pathEl.setAttribute("d", pathData);
-                pathEl.setAttribute("stroke", this.isInJumpChain ? "#fbbf24" : "#60a5fa");
-                pathEl.setAttribute("stroke-width", "3");
-                pathEl.setAttribute("fill", "none");
-                pathEl.setAttribute("stroke-linecap", "round");
-                pathEl.setAttribute("stroke-linejoin", "round");
-                pathEl.setAttribute("stroke-dasharray", "8,4");
-                pathEl.style.filter = `drop-shadow(0 0 8px ${this.isInJumpChain ? "#fbbf24" : "#60a5fa"})`;
-                
-                // 路径动画
-                const length = 1000;
-                pathEl.style.strokeDasharray = length;
-                pathEl.style.strokeDashoffset = length;
-                pathEl.style.animation = 'draw-path 0.5s ease-out forwards';
-                
-                const style = document.createElement('style');
-                style.textContent = '@keyframes draw-path { to { stroke-dashoffset: 0; } }';
-                document.head.appendChild(style);
-                
-                svg.appendChild(pathEl);
-                this.board.appendChild(svg);
-                
-                setTimeout(() => {
-                    svg.remove();
-                    style.remove();
-                }, 2500);
-            }
-
-            showLastMove(pos) {
-                const indicator = document.createElement('div');
-                indicator.className = 'last-move';
-                indicator.style.left = (pos.x - 16) + 'px';
-                indicator.style.top = (pos.y - 16) + 'px';
-                this.board.appendChild(indicator);
-                setTimeout(() => indicator.remove(), 2000);
-            }
-
-            deselect() {
-                if (this.selectedPiece) {
-                    this.selectedPiece.classList.remove('selected');
-                    this.selectedPiece = null;
-                }
-                this.validMoves = [];
-                this.clearHighlights();
-                
-                if (!this.isInJumpChain) {
-                    document.getElementById('moveDetail').textContent = '选择棋子查看可移动位置';
-                    document.getElementById('statusBadge').style.display = 'none';
-                }
-            }
-
-            nextPlayer() {
-                const playOrder = this.getPlayOrder();
-                const currentIndex = playOrder.indexOf(this.currentPlayer);
-                this.currentPlayer = playOrder[(currentIndex + 1) % playOrder.length];
-                this.jumpChainCount = 0;
-                this.isInJumpChain = false;
-                this.originalPiece = null;
-                this.jumpStartPosition = null;
-                this.updatePlayerDisplay();
-            }
-
-            updatePlayerDisplay() {
-                const indicator = document.getElementById('playerIndicator');
-                const text = document.getElementById('playerText');
-                const display = document.getElementById('currentPlayer');
-                
-                indicator.style.background = this.colorCodes[this.currentPlayer];
-                indicator.style.boxShadow = `0 0 15px ${this.colorCodes[this.currentPlayer]}`;
-                text.textContent = `${this.playerColors[this.currentPlayer]}方回合`;
-                display.style.borderColor = this.colorCodes[this.currentPlayer];
-                display.style.boxShadow = `0 0 20px ${this.colorCodes[this.currentPlayer]}40`;
-            }
-
-            checkWin(player) {
-                const targetPlayer = (player + 3) % 6;
-                const allPositions = this.getAllCornerPositions();
-                const targetPositions = allPositions[targetPlayer];
-                
-                let count = 0;
-                for (let pos of targetPositions) {
-                    if (this.boardState.get(`${pos.row}-${pos.col}`) === player) count++;
-                }
-                
-                return count >= 10;
-            }
-
-            showWin(player) {
-                const modal = document.getElementById('winMessage');
-                const text = document.getElementById('winnerText');
-                text.innerHTML = `<div style="font-size: 1.4em; margin-bottom: 10px;"><span style="color: ${this.colorCodes[player]}; text-shadow: 0 0 20px currentColor;">${this.playerColors[player]}方</span></div><div style="color: #94a3b8; font-size: 0.9em;">率先占领对角营地！</div>`;
-                modal.style.display = 'block';
-            }
-
-            undo() {
-                if (this.isMoving || this.moveHistory.length === 0) return;
-                
-                // 如果正在连跳，先结束连跳状态
-                if (this.isInJumpChain) {
-                    this.isInJumpChain = false;
-                    this.jumpChainCount = 0;
-                }
-                
-                const lastMove = this.moveHistory.pop();
-                const piece = lastMove.piece;
-                
-                this.boardState.delete(`${lastMove.to.row}-${lastMove.to.col}`);
-                this.boardState.set(`${lastMove.from.row}-${lastMove.from.col}`, lastMove.player);
-                
-                const oldPos = this.positions[lastMove.from.row][lastMove.from.col];
-                
-                piece.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                piece.style.left = (oldPos.x - 13) + 'px';
-                piece.style.top = (oldPos.y - 13) + 'px';
-                
-                setTimeout(() => {
-                    piece.dataset.row = lastMove.from.row;
-                    piece.dataset.col = lastMove.from.col;
-                    piece.style.transition = '';
-                    
-                    this.currentPlayer = lastMove.player;
-                    this.updatePlayerDisplay();
-                    this.deselect();
-                    
-                    if (this.moveHistory.length === 0) {
-                        document.getElementById('undoBtn').disabled = true;
-                    }
-                }, 500);
-            }
-
-            reset() {
-                this.moveHistory = [];
-                this.isMoving = false;
-                this.isInJumpChain = false;
-                this.jumpChainCount = 0;
-                this.originalPiece = null;
-                this.jumpStartPosition = null;
-                
-                document.getElementById('undoBtn').disabled = true;
-                document.getElementById('winMessage').style.display = 'none';
-                document.getElementById('moveDetail').textContent = '选择棋子开始游戏';
-                document.getElementById('statusBadge').style.display = 'none';
-                
-                const activePlayers = this.getActivePlayers();
-                this.currentPlayer = activePlayers[0];
-                
-                this.deselect();
-                this.setupPieces();
-                this.updatePlayerDisplay();
+            transcriptContent.appendChild(line);
+            transcriptHistory.push({ text, time, confidence });
+            
+            // 限制历史记录长度，防止内存泄漏
+            if (transcriptHistory.length > 1000) {
+                transcriptHistory.shift();
             }
         }
 
-        const game = new ChineseCheckers();
-        
-        // 添加摇晃动画样式
-        const shakeStyle = document.createElement('style');
-        shakeStyle.textContent = `
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                20%, 60% { transform: translateX(-5px); }
-                40%, 80% { transform: translateX(5px); }
+        // 更新中间结果
+        function updateInterim(text, confidence) {
+            removeInterim();
+            
+            const line = document.createElement('div');
+            line.className = 'transcript-line interim';
+            line.id = 'interim-line';
+            
+            const time = new Date().toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+
+            line.innerHTML = `
+                <div class="timestamp">
+                    <span>${time}</span>
+                    <span style="margin-left: 8px; opacity: 0.5;">识别中...</span>
+                </div>
+                <div>${escapeHtml(text)}</div>
+            `;
+
+            transcriptContent.appendChild(line);
+            currentInterimId = line.id;
+        }
+
+        // 移除中间结果
+        function removeInterim() {
+            const interim = document.getElementById('interim-line');
+            if (interim) {
+                interim.remove();
             }
-        `;
-        document.head.appendChild(shakeStyle);
+            currentInterimId = null;
+        }
+
+        // 处理错误
+        function handleError(event) {
+            console.error('Speech recognition error:', event.error);
+            
+            switch(event.error) {
+                case 'no-speech':
+                    showToast('未检测到语音，请重试');
+                    break;
+                case 'audio-capture':
+                    showToast('无法访问麦克风，请检查权限');
+                    break;
+                case 'not-allowed':
+                    showToast('麦克风权限被拒绝');
+                    break;
+                case 'network':
+                    showToast('网络错误，请检查连接');
+                    break;
+                case 'aborted':
+                    // 用户主动停止，不显示错误
+                    break;
+                default:
+                    showToast('识别出错: ' + event.error);
+            }
+            
+            if (event.error !== 'aborted') {
+                isRecording = false;
+                updateUIState();
+                stopVisualizer();
+            }
+        }
+
+        // 切换录音状态
+        function toggleRecording() {
+            if (!checkBrowserSupport()) return;
+
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        // 开始录音
+        function startRecording() {
+            if (!recognition) {
+                initSpeechRecognition();
+            }
+
+            try {
+                recognition.lang = currentLang;
+                recognition.continuous = recognitionMode === 'continuous';
+                recognition.start();
+            } catch (e) {
+                showToast('启动失败，请重试');
+                console.error(e);
+            }
+        }
+
+        // 停止录音
+        function stopRecording() {
+            if (recognition) {
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            isRecording = false;
+            updateUIState();
+            stopVisualizer();
+        }
+
+        // 更新UI状态
+        function updateUIState() {
+            if (isRecording) {
+                recordBtn.classList.add('recording');
+                micIcon.style.display = 'none';
+                stopIcon.style.display = 'block';
+                statusDot.classList.add('recording');
+                statusText.textContent = '正在录音...';
+                visualizer.classList.add('active');
+            } else {
+                recordBtn.classList.remove('recording');
+                micIcon.style.display = 'block';
+                stopIcon.style.display = 'none';
+                statusDot.classList.remove('recording');
+                statusText.textContent = '准备就绪';
+                visualizer.classList.remove('active');
+            }
+            updateButtons();
+        }
+
+        // 更新按钮状态
+        function updateButtons() {
+            const hasContent = transcriptContent.children.length > 0;
+            clearBtn.disabled = !hasContent;
+            copyBtn.disabled = !hasContent;
+        }
+
+        // 设置语言
+        function setLanguage(lang) {
+            currentLang = lang;
+            
+            // 更新UI
+            document.querySelectorAll('.lang-option').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.lang === lang) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // 如果正在录音，重启以应用新语言
+            if (isRecording) {
+                stopRecording();
+                setTimeout(() => startRecording(), 300);
+            }
+            
+            showToast(`已切换至: ${getLangName(lang)}`);
+        }
+
+        function getLangName(lang) {
+            const names = {
+                'zh-CN': '普通话',
+                'en-US': 'English',
+                'zh-CN,en-US': '中英混合'
+            };
+            return names[lang] || lang;
+        }
+
+        // 清空转写
+        function clearTranscript() {
+            if (transcriptHistory.length === 0) return;
+            
+            if (confirm('确定要清空所有转写内容吗？')) {
+                transcriptContent.innerHTML = '';
+                transcriptHistory = [];
+                emptyState.classList.add('show');
+                updateButtons();
+                showToast('已清空');
+            }
+        }
+
+        // 复制转写
+        function copyTranscript() {
+            if (transcriptHistory.length === 0) return;
+            
+            const text = transcriptHistory.map(item => item.text).join('\n');
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showCopyHint();
+                }).catch(() => {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                showCopyHint();
+            } catch (err) {
+                showToast('复制失败');
+            }
+            
+            document.body.removeChild(textarea);
+        }
+
+        function showCopyHint() {
+            const hint = document.getElementById('copyHint');
+            hint.classList.add('show');
+            setTimeout(() => hint.classList.remove('show'), 2000);
+        }
+
+        // 导出文本
+        function exportTxt() {
+            if (transcriptHistory.length === 0) {
+                showToast('没有可导出的内容');
+                return;
+            }
+
+            const text = transcriptHistory.map(item => 
+                `[${item.time}] ${item.text}`
+            ).join('\n');
+
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `转写记录_${new Date().toLocaleDateString()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast('已导出');
+        }
+
+        // 插入标点（手动）
+        function insertPunctuation() {
+            if (isRecording) {
+                // 在录音中插入短暂停顿标记
+                showToast('已标记停顿');
+            } else {
+                showToast('请在录音时使用');
+            }
+        }
+
+        // 切换自动滚动
+        function toggleAutoScroll() {
+            autoScroll = !autoScroll;
+            const btn = document.getElementById('autoScrollBtn');
+            btn.style.color = autoScroll ? 'var(--text)' : 'var(--text-secondary)';
+            showToast(autoScroll ? '自动滚动已开启' : '自动滚动已关闭');
+        }
+
+        // 滚动到底部
+        function scrollToBottom() {
+            container.scrollTo({
+                top: container.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        // 设置面板控制
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            const overlay = document.getElementById('overlay');
+            panel.classList.toggle('open');
+            overlay.classList.toggle('show');
+        }
+
+        // 设置选项
+        function setRecognitionMode(mode, btn) {
+            recognitionMode = mode;
+            updateSettingButtons(btn);
+            if (recognition) {
+                recognition.continuous = mode === 'continuous';
+            }
+            showToast(mode === 'continuous' ? '连续识别模式' : '单次识别模式');
+        }
+
+        function setAutoPunctuation(value, btn) {
+            autoPunctuation = value;
+            updateSettingButtons(btn);
+            showToast(value ? '自动标点已开启' : '自动标点已关闭');
+        }
+
+        function setShowConfidence(value, btn) {
+            showConfidence = value;
+            updateSettingButtons(btn);
+            // 刷新现有内容
+            document.querySelectorAll('.confidence-badge').forEach(badge => {
+                badge.style.display = value ? 'inline-flex' : 'none';
+            });
+        }
+
+        function setFontSize(size, btn) {
+            transcriptContent.style.fontSize = size;
+            updateSettingButtons(btn);
+        }
+
+        function updateSettingButtons(activeBtn) {
+            const parent = activeBtn.parentElement;
+            parent.querySelectorAll('.option-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            activeBtn.classList.add('active');
+        }
+
+        // 初始化音频可视化
+        function initVisualizer() {
+            for (let i = 0; i < 20; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = '4px';
+                visualizer.appendChild(bar);
+            }
+        }
+
+        // 启动可视化
+        function startVisualizer() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+            
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioContext.createAnalyser();
+                    const source = audioContext.createMediaStreamSource(stream);
+                    source.connect(analyser);
+                    analyser.fftSize = 64;
+                    
+                    const bars = visualizer.querySelectorAll('.bar');
+                    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    
+                    visualizerInterval = setInterval(() => {
+                        analyser.getByteFrequencyData(dataArray);
+                        bars.forEach((bar, index) => {
+                            const value = dataArray[index * 2] || 0;
+                            const height = Math.max(4, (value / 255) * 50);
+                            bar.style.height = height + 'px';
+                            // 根据音量调整颜色
+                            const intensity = value / 255;
+                            bar.style.background = intensity > 0.7 ? 
+                                'var(--secondary)' : 'var(--primary)';
+                        });
+                    }, 50);
+                })
+                .catch(err => {
+                    console.log('Visualizer error:', err);
+                });
+        }
+
+        // 停止可视化
+        function stopVisualizer() {
+            if (visualizerInterval) {
+                clearInterval(visualizerInterval);
+                visualizerInterval = null;
+            }
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            // 重置条形图
+            const bars = visualizer.querySelectorAll('.bar');
+            bars.forEach(bar => {
+                bar.style.height = '4px';
+                bar.style.background = 'var(--primary)';
+            });
+        }
+
+        // 显示提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // HTML转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', init);
+
+        // 页面可见性变化处理
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && isRecording) {
+                // 页面隐藏时保持录音，但降低资源消耗
+                console.log('Page hidden, continuing recording...');
+            }
+        });
+
+        // 错误处理
+        window.onerror = function(msg, url, line) {
+            console.error('Global error:', msg, url, line);
+            return false;
+        };
+
+        // 防止意外关闭
+        window.onbeforeunload = function(e) {
+            if (isRecording || transcriptHistory.length > 0) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
     </script>
 </body>
 </html>
-
