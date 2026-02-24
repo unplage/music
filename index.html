@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>语音转写 · 离线专业版</title>
+    <title>语音转写 · 专业持续版</title>
     <!-- Font Awesome 6 (免费图标库) 用于简洁美观的按钮 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* 样式基本保持不变，仅微调 */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -285,9 +286,10 @@
 
         .history-actions {
             display: flex;
-            gap: 18px;
+            gap: 12px;
             justify-content: flex-end;
             margin-top: 4px;
+            flex-wrap: wrap;
         }
 
         .history-actions button {
@@ -303,6 +305,7 @@
             justify-content: center;
             background: #f1f4f9;
             cursor: pointer;
+            transition: 0.1s;
         }
 
         .history-actions button:active {
@@ -377,7 +380,6 @@
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
                 alert('您的浏览器不支持语音识别，请使用 Edge/Chrome/Safari 最新版。\n我们将模拟离线识别(仅演示UI)');
-                // 但仍然允许录制保存
             }
 
             // ---------- DOM 元素 ----------
@@ -394,9 +396,8 @@
             let currentStream = null;               // 麦克风 MediaStream
             let mediaRecorder = null;               
             let recognition = null;                 
-            let isRecording = false;                 // 是否正在录音
-            let recognitionEnded = false;            // 识别已停止标记
-            let mediaEnded = false;                   // 录制已停止标记
+            let isRecording = false;                 // 是否正在录音/识别中
+            let userStopped = false;                 // 是否由用户主动停止（避免自动重启）
             let finalTranscript = '';                 // 最终完整转写 (仅final)
             let audioChunks = [];                      // 录音数据块
             let currentLanguage = 'zh-CN';            // 默认中文
@@ -505,7 +506,8 @@
                             <div class="history-text">${escapeHtml(rec.transcript) || '无文本'}</div>
                             <div class="history-actions">
                                 <button class="play-audio" title="播放录音"><i class="fas fa-play"></i></button>
-                                <button class="export-text" title="导出为txt"><i class="fas fa-file-alt"></i></button>
+                                <button class="export-text" title="导出文本"><i class="fas fa-file-alt"></i></button>
+                                <button class="export-audio" title="导出音频"><i class="fas fa-download"></i></button>
                                 <button class="delete-entry" title="删除"><i class="fas fa-trash-alt"></i></button>
                             </div>
                         </div>`;
@@ -545,6 +547,22 @@
                             }
                         });
 
+                        // 新增：导出音频按钮
+                        item.querySelector('.export-audio')?.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            if (record?.audioBlob) {
+                                const url = URL.createObjectURL(record.audioBlob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `audio_${record.timestamp}.webm`; // 使用webm后缀
+                                a.click();
+                                URL.revokeObjectURL(url);
+                                showToast('音频已导出');
+                            } else {
+                                showToast('无音频数据');
+                            }
+                        });
+
                         item.querySelector('.delete-entry')?.addEventListener('click', async (e) => {
                             e.stopPropagation();
                             await deleteRecording(id);
@@ -575,10 +593,9 @@
 
             // ---------- 重置录音标记 ----------
             function resetRecordingState() {
-                recognitionEnded = false;
-                mediaEnded = false;
                 finalTranscript = '';
                 audioChunks = [];
+                userStopped = false;
             }
 
             // ---------- 停止所有track并清理stream ----------
@@ -593,8 +610,9 @@
 
             // ---------- 保存当前录音/转写到IndexedDB (由两者结束触发) ----------
             async function saveToDBAndCleanup() {
-                if (!recognitionEnded || !mediaEnded) return; // 等待两个都完成
-
+                // 注意：在持续识别模式下，只有当用户主动停止时才会调用此函数
+                // 如果recognition因为网络等原因意外结束，我们不会保存，而是重启识别
+                // 因此这里只会在stop流程中调用
                 try {
                     const blob = new Blob(audioChunks, { type: 'audio/webm' }); // 移动端常见格式
                     const transcript = finalTranscript.trim() || '（无语音识别文本）';
@@ -615,6 +633,29 @@
                     // 刷新历史
                     renderHistory();
                 }
+            }
+
+            // ---------- 停止录音（用户主动） ----------
+            function stopRecording() {
+                if (!isRecording) return;
+
+                userStopped = true;  // 标记用户主动停止
+
+                // 停止识别
+                if (recognition) {
+                    try {
+                        recognition.stop();  // 这会触发onend，但我们已经标记userStopped，所以不会重启
+                    } catch (e) {
+                        console.warn('识别停止异常', e);
+                    }
+                }
+
+                // 停止录制
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
+
+                // 按钮状态在saveToDBAndCleanup中统一改变
             }
 
             // ---------- 开始录音 ----------
@@ -658,13 +699,40 @@
                             console.warn('识别错误:', e.error);
                             if (e.error === 'not-allowed') showToast('麦克风权限被拒绝');
                             else showToast('识别出错: ' + e.error);
-                            // 不要卡死，尝试停止
-                            try { recognition.stop(); } catch (_) {}
+                            // 如果错误导致识别结束，且不是用户停止，尝试重启
+                            if (!userStopped && isRecording) {
+                                // 短暂延迟后重启
+                                setTimeout(() => {
+                                    if (!userStopped && isRecording && recognition) {
+                                        try {
+                                            recognition.start();
+                                        } catch (err) {
+                                            console.warn('重启识别失败', err);
+                                        }
+                                    }
+                                }, 500);
+                            }
                         };
 
                         recognition.onend = () => {
-                            recognitionEnded = true;
-                            saveToDBAndCleanup();
+                            // 如果还在录音中且不是用户主动停止，则重启识别（保持持续）
+                            if (!userStopped && isRecording) {
+                                // 延迟重启，避免频繁启动
+                                setTimeout(() => {
+                                    if (!userStopped && isRecording && recognition) {
+                                        try {
+                                            recognition.start();
+                                            console.log('识别已自动重启');
+                                        } catch (err) {
+                                            showToast('自动重启识别失败');
+                                        }
+                                    }
+                                }, 300);
+                            } else if (userStopped) {
+                                // 用户主动停止，此时mediaRecorder可能还在等停止事件，我们标记识别已结束
+                                // 但保存流程由mediaRecorder的onstop触发，这里不再单独触发
+                                // 因为mediaRecorder onstop时会调用saveToDBAndCleanup
+                            }
                         };
                     } catch (e) {
                         showToast('语音识别初始化失败');
@@ -673,7 +741,6 @@
                 } else {
                     // 降级：没有语音识别，手动模拟
                     recognition = null;
-                    // 仍继续录制音频，但转写文本置为占位符
                     showToast('当前浏览器不支持离线识别，仅录制音频');
                 }
 
@@ -686,8 +753,12 @@
                         if (e.data.size > 0) audioChunks.push(e.data);
                     };
                     mediaRecorder.onstop = () => {
-                        mediaEnded = true;
-                        saveToDBAndCleanup();
+                        // 只有当用户主动停止时才保存，并且识别已经结束（或标记为结束）
+                        // 如果识别还在进行，但我们停止了mediaRecorder，recognition可能还在运行，我们需要确保它停止
+                        if (recognition && !userStopped) {
+                            // 理论上不会走到这里，因为stopRecording会先停止recognition
+                        }
+                        saveToDBAndCleanup();  // 保存并清理
                     };
                     mediaRecorder.start(200); // 每200ms触发一次dataavailable
                 } catch (e) {
@@ -705,9 +776,6 @@
                         mediaRecorder.stop();
                         return;
                     }
-                } else {
-                    // 无识别，但标记识别已结束（无识别部分）
-                    recognitionEnded = true;  // 视作识别已完成，等待媒体停止
                 }
 
                 isRecording = true;
@@ -716,31 +784,6 @@
                 statusBadge.innerHTML = '<i class="fas fa-circle"></i> 录音中...';
                 statusBadge.classList.add('recording');
                 liveTranscriptEl.innerText = '正在聆听...';
-            }
-
-            // ---------- 停止录音 ----------
-            function stopRecording() {
-                if (!isRecording) return;
-
-                // 停止识别
-                if (recognition) {
-                    try {
-                        recognition.stop();
-                    } catch (e) {
-                        recognitionEnded = true; // 如果出错直接标记
-                    }
-                } else {
-                    recognitionEnded = true; // 无识别
-                }
-
-                // 停止录制
-                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                    mediaRecorder.stop();
-                } else {
-                    mediaEnded = true;
-                }
-
-                // 按钮状态在保存后统一改变
             }
 
             // ---------- 事件绑定 ----------
