@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>菌落计数器 · YOLO离线版</title>
+    <title>菌落计数器 · 离线版</title>
     
     <!-- ONNX Runtime Web -->
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/ort.min.js"></script>
@@ -155,20 +155,25 @@
         
         .fallback-notice { background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); border-radius: 8px; padding: 12px; margin-top: 15px; font-size: 0.85rem; color: var(--text-muted); }
         
+        .debug-info { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: #0f0; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; max-width: 300px; z-index: 9999; display: none; }
+        .debug-info.show { display: block; }
+        
         @media (max-width: 768px) { h1 { font-size: 1.3rem; } .upload-title { font-size: 1.2rem; } .control-panel { grid-template-columns: 1fr; } .stats-panel { grid-template-columns: repeat(2, 1fr); } .splash-actions { flex-direction: column; width: 100%; padding: 0 20px; } .splash-btn { width: 100%; justify-content: center; } }
     </style>
 </head>
 <body>
+    <!-- 调试信息面板 -->
+    <div class="debug-info" id="debugInfo"></div>
+    
     <div class="splash" id="splash">
         <div class="splash-icon">🔬</div>
         <div class="splash-text">菌落计数器 · 离线版</div>
-        <div class="splash-subtitle" id="splashSubtitle">准备加载YOLO模型...</div>
+        <div class="splash-subtitle" id="splashSubtitle">准备加载模型...</div>
         
         <div class="loading-bar" id="loadingBar" style="display: none;">
             <div class="loading-progress" id="loadingProgress" style="width: 0%"></div>
         </div>
         
-        <!-- 模型选择器 -->
         <div class="model-selector" id="modelSelector">
             <div class="model-selector-title">📦 选择模型加载方式</div>
             
@@ -176,47 +181,48 @@
                 <div class="model-option-icon">💻</div>
                 <div class="model-option-info">
                     <div class="model-option-name">本地上传（推荐）</div>
-                    <div class="model-option-desc">上传 .onnx 模型文件，无需网络，永久可用</div>
+                    <div class="model-option-desc">上传 .onnx 模型文件，无需网络</div>
                 </div>
             </div>
             
-            <div class="model-option" onclick="selectModelSource('moda')" id="optionModa">
-                <div class="model-option-icon">🇨🇳</div>
-                <div class="model-option-info">
-                    <div class="model-option-name">魔搭社区（国内）</div>
-                    <div class="model-option-desc">阿里云模型平台，国内访问稳定</div>
-                </div>
-            </div>
-            
-            <div class="model-option" onclick="selectModelSource('github')" id="optionGithub">
+            <div class="model-option" onclick="selectModelSource('url')" id="optionUrl">
                 <div class="model-option-icon">🌐</div>
                 <div class="model-option-info">
-                    <div class="model-option-name">GitHub Release（国际）</div>
-                    <div class="model-option-desc">GitHub Releases，可能需要代理</div>
+                    <div class="model-option-name">URL下载</div>
+                    <div class="model-option-desc">从可访问的URL下载模型</div>
+                </div>
+            </div>
+            
+            <div class="model-option" onclick="selectModelSource('cv')" id="optionCv">
+                <div class="model-option-icon">⚫</div>
+                <div class="model-option-info">
+                    <div class="model-option-name">仅使用传统CV（无需模型）</div>
+                    <div class="model-option-desc">纯JavaScript图像处理，永久可用</div>
                 </div>
             </div>
             
             <div class="fallback-notice" id="fallbackNotice" style="display: none;">
-                ⚠️ 在线源加载失败，已自动切换到本地上传模式
+                ⚠️ 加载失败，建议切换到传统CV模式
             </div>
             
             <div class="splash-actions" style="margin-top: 20px;">
                 <button class="splash-btn splash-btn-primary" onclick="confirmModelSource()">
                     <span>✓</span><span>确认选择</span>
                 </button>
-                <button class="splash-btn splash-btn-secondary" onclick="skipToUpload()" id="skipBtn" style="display: none;">
-                    <span>⏭</span><span>跳过，先使用传统算法</span>
-                </button>
             </div>
             
-            <!-- 隐藏的文件输入 -->
             <input type="file" id="modelFileInput" accept=".onnx" style="display: none;" onchange="handleModelFile(event)">
+            
+            <!-- URL输入框（默认隐藏） -->
+            <div id="urlInputContainer" style="display: none; margin-top: 15px;">
+                <input type="text" id="modelUrlInput" placeholder="输入模型URL（.onnx文件直链）" 
+                       style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--secondary); background: var(--bg); color: var(--text);">
+            </div>
         </div>
         
-        <!-- 加载状态显示 -->
         <div id="loadingStatus" style="display: none; margin-top: 20px; text-align: center;">
             <div class="model-status loading">
-                <span>⏳</span><span id="loadingText">正在下载模型...</span>
+                <span>⏳</span><span id="loadingText">正在加载...</span>
             </div>
             <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;" id="loadingDetail"></div>
         </div>
@@ -224,13 +230,16 @@
     
     <div class="app">
         <header>
-            <h1><span>🔬</span><span>菌落计数器 Pro</span><span class="version-badge" id="versionBadge">传统算法</span></h1>
+            <h1><span>🔬</span><span>菌落计数器 Pro</span><span class="version-badge" id="versionBadge">CV模式</span></h1>
             <div style="margin-top: 8px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-                <span class="model-status loading" id="modelStatus">
-                    <span>⏳</span><span>等待模型加载...</span>
+                <span class="model-status local" id="modelStatus">
+                    <span>⚫</span><span>传统CV算法就绪</span>
                 </span>
-                <button class="btn-small btn-outline" onclick="switchModel()" id="switchModelBtn" style="display: none; padding: 4px 12px; font-size: 0.75rem;">
-                    切换模型
+                <button class="btn-small btn-outline" onclick="toggleDebug()" style="padding: 4px 12px; font-size: 0.75rem;">
+                    调试信息
+                </button>
+                <button class="btn-small btn-outline" onclick="switchModel()" id="switchModelBtn" style="padding: 4px 12px; font-size: 0.75rem;">
+                    切换模式
                 </button>
             </div>
         </header>
@@ -284,37 +293,53 @@
                     <div class="control-section" id="cvParams">
                         <div class="section-title">⚙️ 传统CV检测参数</div>
                         <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">累加器阈值</span><span class="slider-value" id="param2Value">14</span></div>
-                            <input type="range" id="param2" min="8" max="25" value="14" step="1">
-                            <div class="param-tip">推荐14-16（越小检测越多）</div>
+                            <div class="slider-header"><span class="slider-label">亮度阈值</span><span class="slider-value" id="thresholdValue">128</span></div>
+                            <input type="range" id="threshold" min="50" max="250" value="128" step="5">
+                            <div class="param-tip">菌落亮度阈值，根据图片调整</div>
                         </div>
                         <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">圆心最小距离</span><span class="slider-value" id="minDistValue">10</span></div>
-                            <input type="range" id="minDist" min="6" max="20" value="10" step="1">
-                            <div class="param-tip">密集平板用8-10</div>
+                            <div class="slider-header"><span class="slider-label">最小菌落面积</span><span class="slider-value" id="minAreaValue">10</span></div>
+                            <input type="range" id="minArea" min="5" max="100" value="10" step="5">
+                            <div class="param-tip">过滤太小的噪声点</div>
                         </div>
                         <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">最小半径</span><span class="slider-value" id="cvMinRadiusValue">3</span></div>
-                            <input type="range" id="cvMinRadius" min="2" max="8" value="3">
+                            <div class="slider-header"><span class="slider-label">最大菌落面积</span><span class="slider-value" id="maxAreaValue">500</span></div>
+                            <input type="range" id="maxArea" min="100" max="2000" value="500" step="50">
+                            <div class="param-tip">过滤过大的杂质</div>
                         </div>
                         <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">最大半径</span><span class="slider-value" id="cvMaxRadiusValue">25</span></div>
-                            <input type="range" id="cvMaxRadius" min="15" max="40" value="25">
+                            <div class="slider-header"><span class="slider-label">圆形度阈值</span><span class="slider-value" id="circularityValue">0.7</span></div>
+                            <input type="range" id="circularity" min="0.3" max="1.0" value="0.7" step="0.05">
+                            <div class="param-tip">越接近1越圆，菌落通常0.6-0.9</div>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span class="slider-label">膨胀/腐蚀迭代</span><span class="slider-value" id="morphValue">1</span></div>
+                            <input type="range" id="morphIterations" min="0" max="5" value="1" step="1">
+                            <div class="param-tip">形态学操作，连接断裂菌落</div>
                         </div>
                         <div class="algo-info">
-                            使用OpenCV Hough圆变换检测菌落
+                            使用JavaScript实现图像处理：灰度→阈值→形态学→轮廓分析→圆形度过滤
                         </div>
                     </div>
                     
                     <div class="control-section">
                         <div class="section-title">🖼️ 预处理 / ROI</div>
                         <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">对比度增强</span><span class="slider-value" id="contrastValue">1.5</span></div>
-                            <input type="range" id="contrast" min="1.0" max="3.0" value="1.5" step="0.1">
+                            <div class="slider-header"><span class="slider-label">对比度增强</span><span class="slider-value" id="contrastValue">1.0</span></div>
+                            <input type="range" id="contrast" min="0.5" max="3.0" value="1.0" step="0.1">
                         </div>
                         <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">高斯模糊</span><span class="slider-value" id="blurValue">5</span></div>
-                            <input type="range" id="blurRadius" min="1" max="9" value="5" step="2">
+                            <div class="slider-header"><span class="slider-label">高斯模糊半径</span><span class="slider-value" id="blurValue">1</span></div>
+                            <input type="range" id="blurRadius" min="0" max="5" value="1" step="1">
+                            <div class="param-tip">去噪，0表示不模糊</div>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span class="slider-label">反相模式</span></div>
+                            <select id="invertMode">
+                                <option value="auto" selected>自动检测</option>
+                                <option value="normal">正常（菌落亮背景暗）</option>
+                                <option value="inverted">反相（菌落暗背景亮）</option>
+                            </select>
                         </div>
                         <div class="action-buttons">
                             <button class="btn btn-warning btn-small" id="selectRoiBtn">🎯 选择培养皿</button>
@@ -326,8 +351,9 @@
                     <div class="control-section">
                         <div class="section-title">🧹 后处理 / 操作</div>
                         <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">合并距离</span><span class="slider-value" id="mergeDistValue">8</span></div>
-                            <input type="range" id="mergeDist" min="4" max="20" value="8">
+                            <div class="slider-header"><span class="slider-label">合并距离</span><span class="slider-value" id="mergeDistValue">15</span></div>
+                            <input type="range" id="mergeDist" min="5" max="50" value="15" step="5">
+                            <div class="param-tip">合并重叠菌落的距离阈值</div>
                         </div>
                         <div class="slider-group">
                             <div class="slider-header"><span class="slider-label">图像缩放</span><span class="slider-value" id="zoomValue">1.00</span></div>
@@ -373,50 +399,27 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // ==================== 模型加载配置（国内优化版） ====================
+        // ==================== 调试功能 ====================
+        function log(msg) {
+            console.log(msg);
+            const debug = document.getElementById('debugInfo');
+            debug.innerHTML += msg + '<br>';
+            debug.scrollTop = debug.scrollHeight;
+        }
         
-        // 多源配置，按优先级排序
-        const MODEL_SOURCES = {
-            local: {
-                name: '本地上传',
-                type: 'file',
-                url: null, // 由用户选择
-                description: '用户本地上传的ONNX模型'
-            },
-            moda: {
-                name: '魔搭社区',
-                type: 'url',
-                // 魔搭社区国内镜像示例（你需要替换为实际的模型ID）
-                // 格式：https://modelscope.cn/models/{user}/{model}/resolve/master/{file}
-                url: 'https://modelscope.cn/models/yangheng/yolov8n/resolve/master/yolov8n.onnx',
-                // 备用路径
-                backupUrls: [
-                    'https://www.modelscope.cn/api/v1/studio/yangheng/yolov8n/repo?Revision=master&FilePath=yolov8n.onnx'
-                ],
-                description: '阿里云魔搭社区'
-            },
-            github: {
-                name: 'GitHub Release',
-                type: 'url',
-                // GitHub Release 直链（使用ghproxy代理）
-                url: 'https://ghproxy.com/https://github.com/ultralytics/assets/releases/download/v8.1.0/yolov8n.onnx',
-                backupUrls: [
-                    'https://mirror.ghproxy.com/https://github.com/ultralytics/assets/releases/download/v8.1.0/yolov8n.onnx',
-                    'https://hub.gitmirror.com/https://github.com/ultralytics/assets/releases/download/v8.1.0/yolov8n.onnx'
-                ],
-                description: 'GitHub代理加速'
-            }
-        };
+        function toggleDebug() {
+            document.getElementById('debugInfo').classList.toggle('show');
+        }
         
-        let currentModelSource = 'local';
+        // ==================== 模型加载配置 ====================
+        let currentModelSource = 'cv'; // 默认CV模式
         let session = null;
         let modelLoaded = false;
-        let useYOLO = false; // 是否使用YOLO（否则用传统CV）
+        let useYOLO = false;
         
         // ==================== 全局状态 ====================
         let currentImage = null;
-        let srcMat = null; // OpenCV Mat（传统算法用）
-        let grayMat = null;
+        let originalImageData = null; // 保存原始图像数据
         let colonies = [];
         let isAddMode = false;
         let showCircles = true;
@@ -428,7 +431,7 @@
         const uploadCard = document.getElementById('uploadCard');
         const viewer = document.getElementById('viewer');
         const canvas = document.getElementById('mainCanvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true }); // 优化频繁读取
         const overlayLayer = document.getElementById('overlayLayer');
         const roiVisual = document.getElementById('roiVisual');
         const imageWrapper = document.getElementById('imageWrapper');
@@ -440,13 +443,14 @@
         function selectModelSource(source) {
             currentModelSource = source;
             
-            // 更新UI选中状态
             document.querySelectorAll('.model-option').forEach(el => {
                 el.classList.remove('selected');
             });
             document.getElementById('option' + source.charAt(0).toUpperCase() + source.slice(1)).classList.add('selected');
             
-            // 如果选择本地上传，触发文件选择
+            // 显示/隐藏URL输入框
+            document.getElementById('urlInputContainer').style.display = source === 'url' ? 'block' : 'none';
+            
             if (source === 'local') {
                 setTimeout(() => {
                     document.getElementById('modelFileInput').click();
@@ -455,21 +459,23 @@
         }
         
         function confirmModelSource() {
-            if (currentModelSource === 'local') {
-                // 本地上传模式，等待用户选择文件
+            if (currentModelSource === 'cv') {
+                // 直接进入CV模式
+                useYOLO = false;
+                modelLoaded = false;
+                document.getElementById('splash').classList.add('hidden');
+                updateAlgoUI();
+                showToast('✅ 已进入传统CV模式，可直接上传图片分析');
+            } else if (currentModelSource === 'local') {
                 document.getElementById('modelFileInput').click();
-            } else {
-                // 在线下载模式
-                startModelLoading();
+            } else if (currentModelSource === 'url') {
+                const url = document.getElementById('modelUrlInput').value.trim();
+                if (!url) {
+                    showToast('❌ 请输入模型URL');
+                    return;
+                }
+                loadModelFromUrl(url, '自定义URL');
             }
-        }
-        
-        function skipToUpload() {
-            // 跳过YOLO，使用传统CV算法
-            useYOLO = false;
-            document.getElementById('splash').classList.add('hidden');
-            updateAlgoUI();
-            showToast('已切换到传统CV算法（Hough圆检测）');
         }
         
         async function handleModelFile(event) {
@@ -488,108 +494,46 @@
             
             try {
                 const arrayBuffer = await file.arrayBuffer();
-                const blob = new Blob([arrayBuffer]);
-                const url = URL.createObjectURL(blob);
                 
-                await loadModelFromUrl(url, '本地上传: ' + file.name);
+                const ortConfig = {
+                    executionProviders: ['wasm'],
+                    graphOptimizationLevel: 'all',
+                    wasmOptions: { numThreads: 2, simd: true }
+                };
                 
-                // 保存到IndexedDB供下次使用
+                session = await ort.InferenceSession.create(arrayBuffer, ortConfig);
+                modelLoaded = true;
+                useYOLO = true;
+                
+                document.getElementById('splash').classList.add('hidden');
+                updateAlgoUI();
+                showToast(`✅ 模型加载成功：${file.name}`);
+                
+                // 保存到缓存
                 await saveModelToCache(arrayBuffer, file.name);
                 
             } catch (error) {
                 console.error('本地模型加载失败:', error);
-                showToast('❌ 模型加载失败: ' + error.message);
-                document.getElementById('fallbackNotice').style.display = 'block';
-                document.getElementById('skipBtn').style.display = 'inline-flex';
-            }
-        }
-        
-        // ==================== 模型加载核心逻辑 ====================
-        
-        async function startModelLoading() {
-            const source = MODEL_SOURCES[currentModelSource];
-            const urls = [source.url, ...(source.backupUrls || [])];
-            
-            document.getElementById('modelSelector').style.display = 'none';
-            document.getElementById('loadingStatus').style.display = 'block';
-            document.getElementById('loadingBar').style.display = 'block';
-            
-            // 尝试所有可用URL
-            for (let i = 0; i < urls.length; i++) {
-                const url = urls[i];
-                const progress = ((i / urls.length) * 100).toFixed(0);
-                document.getElementById('loadingProgress').style.width = progress + '%';
-                document.getElementById('loadingText').textContent = `尝试源 ${i + 1}/${urls.length}...`;
-                document.getElementById('loadingDetail').textContent = url.substring(0, 50) + '...';
+                log('模型加载失败: ' + error.message);
+                showToast('❌ 模型加载失败，已切换到CV模式');
                 
-                try {
-                    await loadModelFromUrl(url, source.name);
-                    return; // 成功则返回
-                } catch (error) {
-                    console.warn(`源 ${i + 1} 失败:`, error);
-                    continue; // 失败则尝试下一个
-                }
+                useYOLO = false;
+                modelLoaded = false;
+                document.getElementById('splash').classList.add('hidden');
+                updateAlgoUI();
             }
-            
-            // 所有在线源都失败
-            document.getElementById('loadingProgress').style.width = '100%';
-            document.getElementById('loadingText').textContent = '在线加载失败';
-            document.getElementById('loadingDetail').textContent = '请尝试本地上传模型文件';
-            
-            // 显示回退选项
-            document.getElementById('fallbackNotice').style.display = 'block';
-            document.getElementById('skipBtn').style.display = 'inline-flex';
-            
-            // 自动切换回本地上传
-            setTimeout(() => {
-                selectModelSource('local');
-                document.getElementById('modelSelector').style.display = 'block';
-                document.getElementById('loadingStatus').style.display = 'none';
-                document.getElementById('loadingBar').style.display = 'none';
-            }, 2000);
         }
         
         async function loadModelFromUrl(url, sourceName) {
-            document.getElementById('loadingText').textContent = '正在初始化ONNX Runtime...';
-            
-            // 配置ONNX Runtime（针对国内网络优化）
-            const ortConfig = {
-                executionProviders: ['wasm'], // WebAssembly最兼容
-                graphOptimizationLevel: 'all',
-                wasmOptions: {
-                    numThreads: Math.min(navigator.hardwareConcurrency || 4, 4),
-                    simd: true,
-                    // 国内CDN加载wasm文件
-                    wasmPaths: {
-                        'ort-wasm-simd.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/ort-wasm-simd.wasm',
-                        'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/ort-wasm.wasm'
-                    }
-                }
-            };
-            
-            // 创建会话（带超时控制）
-            const timeout = 60000; // 60秒超时
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            document.getElementById('modelSelector').style.display = 'none';
+            document.getElementById('loadingStatus').style.display = 'block';
+            document.getElementById('loadingBar').style.display = 'block';
+            document.getElementById('loadingText').textContent = '正在下载模型...';
             
             try {
-                document.getElementById('loadingText').textContent = '正在下载模型文件...';
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
-                // 使用fetch下载（支持进度监控）
-                const response = await fetch(url, { 
-                    signal: controller.signal,
-                    headers: {
-                        'Accept': 'application/octet-stream'
-                    }
-                });
-                
-                clearTimeout(timeoutId);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                // 获取内容长度用于进度显示
                 const contentLength = response.headers.get('content-length');
                 const total = contentLength ? parseInt(contentLength) : 0;
                 const reader = response.body.getReader();
@@ -599,18 +543,17 @@
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-                    
                     chunks.push(value);
                     received += value.length;
                     
                     if (total > 0) {
                         const percent = ((received / total) * 100).toFixed(0);
                         document.getElementById('loadingProgress').style.width = percent + '%';
-                        document.getElementById('loadingDetail').textContent = `已下载 ${(received/1024/1024).toFixed(1)}MB / ${(total/1024/1024).toFixed(1)}MB`;
+                        document.getElementById('loadingDetail').textContent = 
+                            `已下载 ${(received/1024/1024).toFixed(1)}MB`;
                     }
                 }
                 
-                // 合并chunks
                 const arrayBuffer = new Uint8Array(received);
                 let position = 0;
                 for (const chunk of chunks) {
@@ -618,240 +561,469 @@
                     position += chunk.length;
                 }
                 
-                document.getElementById('loadingText').textContent = '正在创建推理会话...';
-                document.getElementById('loadingDetail').textContent = '这可能需要几秒钟';
+                document.getElementById('loadingText').textContent = '正在初始化...';
                 
-                // 从buffer创建会话
+                const ortConfig = {
+                    executionProviders: ['wasm'],
+                    graphOptimizationLevel: 'all',
+                    wasmOptions: { numThreads: 2, simd: true }
+                };
+                
                 session = await ort.InferenceSession.create(arrayBuffer.buffer, ortConfig);
-                
                 modelLoaded = true;
                 useYOLO = true;
                 
-                // 更新UI
                 document.getElementById('splash').classList.add('hidden');
                 updateAlgoUI();
-                
-                // 保存到缓存
-                await saveModelToCache(arrayBuffer.buffer, 'model.onnx');
-                
-                showToast(`✅ ${sourceName}模型加载成功！`);
+                showToast(`✅ ${sourceName}模型加载成功`);
                 
             } catch (error) {
-                clearTimeout(timeoutId);
-                throw error;
+                console.error('URL加载失败:', error);
+                showToast('❌ 下载失败，已切换到CV模式');
+                useYOLO = false;
+                document.getElementById('splash').classList.add('hidden');
+                updateAlgoUI();
             }
         }
         
-        // ==================== IndexedDB缓存系统 ====================
+        // ==================== IndexedDB缓存 ====================
         
         const DB_NAME = 'ColonyCounterDB';
-        const DB_VERSION = 1;
         const STORE_NAME = 'models';
-        
-        function openDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => resolve(request.result);
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains(STORE_NAME)) {
-                        db.createObjectStore(STORE_NAME, { keyPath: 'name' });
-                    }
-                };
-            });
-        }
         
         async function saveModelToCache(arrayBuffer, name) {
             try {
-                const db = await openDB();
-                const transaction = db.transaction([STORE_NAME], 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
-                await store.put({ name, data: arrayBuffer, timestamp: Date.now() });
-                console.log('模型已缓存到IndexedDB');
-            } catch (e) {
-                console.warn('缓存失败:', e);
-            }
-        }
-        
-        async function loadModelFromCache() {
-            try {
-                const db = await openDB();
-                const transaction = db.transaction([STORE_NAME], 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.getAll();
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    e.target.result.createObjectStore(STORE_NAME, { keyPath: 'name' });
+                };
                 
-                return new Promise((resolve, reject) => {
-                    request.onsuccess = () => {
-                        const models = request.result;
-                        if (models && models.length > 0) {
-                            // 返回最新的模型
-                            models.sort((a, b) => b.timestamp - a.timestamp);
-                            resolve(models[0]);
-                        } else {
-                            resolve(null);
-                        }
-                    };
+                const db = await new Promise((resolve, reject) => {
+                    request.onsuccess = () => resolve(request.result);
                     request.onerror = () => reject(request.error);
                 });
-            } catch (e) {
-                console.warn('读取缓存失败:', e);
-                return null;
-            }
-        }
-        
-        // 启动时尝试从缓存加载
-        async function tryLoadFromCache() {
-            const cached = await loadModelFromCache();
-            if (cached) {
-                console.log('发现缓存的模型:', cached.name);
-                document.getElementById('splashSubtitle').textContent = '发现本地缓存的模型，正在加载...';
                 
-                try {
-                    const ortConfig = {
-                        executionProviders: ['wasm'],
-                        graphOptimizationLevel: 'all',
-                        wasmOptions: { numThreads: 2, simd: true }
-                    };
-                    
-                    session = await ort.InferenceSession.create(cached.data, ortConfig);
-                    modelLoaded = true;
-                    useYOLO = true;
-                    
-                    document.getElementById('splash').classList.add('hidden');
-                    updateAlgoUI();
-                    showToast('✅ 已从缓存加载模型');
-                    return true;
-                } catch (e) {
-                    console.error('缓存模型加载失败:', e);
-                    return false;
-                }
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                await store.put({ name, data: arrayBuffer, timestamp: Date.now() });
+                log('模型已缓存');
+            } catch (e) {
+                log('缓存失败: ' + e.message);
             }
-            return false;
         }
         
         // ==================== UI更新 ====================
         
         function updateAlgoUI() {
             if (useYOLO && modelLoaded) {
-                // YOLO模式
                 versionBadge.textContent = 'YOLO';
                 modelStatus.className = 'model-status ready';
                 modelStatus.innerHTML = '<span>✅</span><span>YOLO模型就绪</span>';
                 document.getElementById('algoIcon').textContent = '🤖';
                 document.getElementById('algoText').textContent = 'YOLO深度学习';
                 document.getElementById('statAutoLabel').textContent = 'YOLO检测';
-                
-                // 显示YOLO参数，隐藏CV参数
                 document.getElementById('yoloParams').style.display = 'flex';
                 document.getElementById('cvParams').style.display = 'none';
-                
-                document.getElementById('switchModelBtn').style.display = 'inline-block';
             } else {
-                // 传统CV模式
-                versionBadge.textContent = '传统算法';
+                versionBadge.textContent = 'CV模式';
                 modelStatus.className = 'model-status local';
-                modelStatus.innerHTML = '<span>⚫</span><span>使用传统CV算法</span>';
+                modelStatus.innerHTML = '<span>⚫</span><span>传统CV算法就绪</span>';
                 document.getElementById('algoIcon').textContent = '⚫';
-                document.getElementById('algoText').textContent = 'Hough圆检测';
+                document.getElementById('algoText').textContent = '图像处理算法';
                 document.getElementById('statAutoLabel').textContent = 'CV检测';
-                
-                // 显示CV参数，隐藏YOLO参数
                 document.getElementById('yoloParams').style.display = 'none';
                 document.getElementById('cvParams').style.display = 'flex';
-                
-                document.getElementById('switchModelBtn').style.display = 'inline-block';
             }
         }
         
         function switchModel() {
-            // 重新显示启动界面
             document.getElementById('splash').classList.remove('hidden');
             document.getElementById('modelSelector').style.display = 'block';
             document.getElementById('loadingStatus').style.display = 'none';
             document.getElementById('loadingBar').style.display = 'none';
-            document.getElementById('fallbackNotice').style.display = 'none';
-            document.getElementById('skipBtn').style.display = 'none';
         }
         
-        // ==================== 传统CV算法（完整保留） ====================
+        // ==================== 核心：传统CV算法（完全重写） ====================
         
-        function initCV(img) {
-            // 将图片转换为OpenCV可用的格式
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+        // 图像处理工具函数
+        const ImageUtils = {
+            // 转换为灰度图
+            toGrayscale: (imageData) => {
+                const { data, width, height } = imageData;
+                const gray = new Uint8Array(width * height);
+                for (let i = 0; i < data.length; i += 4) {
+                    // 标准灰度转换
+                    gray[i / 4] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                }
+                return { data: gray, width, height };
+            },
             
-            // 获取图像数据
-            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            // 高斯模糊
+            gaussianBlur: (grayImage, radius) => {
+                if (radius <= 0) return grayImage;
+                
+                const { data, width, height } = grayImage;
+                const output = new Uint8Array(width * height);
+                
+                // 创建高斯核
+                const size = radius * 2 + 1;
+                const kernel = new Float32Array(size);
+                const sigma = radius / 3;
+                let sum = 0;
+                
+                for (let i = 0; i < size; i++) {
+                    const x = i - radius;
+                    kernel[i] = Math.exp(-(x * x) / (2 * sigma * sigma));
+                    sum += kernel[i];
+                }
+                
+                // 归一化
+                for (let i = 0; i < size; i++) kernel[i] /= sum;
+                
+                // 水平模糊
+                const temp = new Float32Array(width * height);
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let val = 0;
+                        for (let k = -radius; k <= radius; k++) {
+                            const px = Math.min(width - 1, Math.max(0, x + k));
+                            val += data[y * width + px] * kernel[k + radius];
+                        }
+                        temp[y * width + x] = val;
+                    }
+                }
+                
+                // 垂直模糊
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let val = 0;
+                        for (let k = -radius; k <= radius; k++) {
+                            const py = Math.min(height - 1, Math.max(0, y + k));
+                            val += temp[py * width + x] * kernel[k + radius];
+                        }
+                        output[y * width + x] = Math.round(val);
+                    }
+                }
+                
+                return { data: output, width, height };
+            },
             
-            // 创建OpenCV Mat（模拟，实际需要使用opencv.js）
-            // 这里使用简化的图像处理逻辑
-            srcMat = imageData; // 简化的表示
-            grayMat = createGrayMat(imageData);
+            // 阈值处理
+            threshold: (grayImage, thresh, invert = false) => {
+                const { data, width, height } = grayImage;
+                const binary = new Uint8Array(width * height);
+                
+                for (let i = 0; i < data.length; i++) {
+                    if (invert) {
+                        binary[i] = data[i] < thresh ? 255 : 0;
+                    } else {
+                        binary[i] = data[i] > thresh ? 255 : 0;
+                    }
+                }
+                
+                return { data: binary, width, height };
+            },
             
-            displayImage(img);
-            analyzeCV();
-        }
-        
-        function createGrayMat(imageData) {
-            const gray = new Uint8Array(imageData.width * imageData.height);
-            for (let i = 0; i < imageData.data.length; i += 4) {
-                // 灰度转换：0.299R + 0.587G + 0.114B
-                gray[i / 4] = 0.299 * imageData.data[i] + 
-                              0.587 * imageData.data[i + 1] + 
-                              0.114 * imageData.data[i + 2];
+            // 形态学膨胀
+            dilate: (binaryImage, iterations) => {
+                let { data, width, height } = binaryImage;
+                
+                for (let iter = 0; iter < iterations; iter++) {
+                    const newData = new Uint8Array(width * height);
+                    
+                    for (let y = 0; y < height; y++) {
+                        for (let x = 0; x < width; x++) {
+                            let maxVal = 0;
+                            // 3x3核
+                            for (let dy = -1; dy <= 1; dy++) {
+                                for (let dx = -1; dx <= 1; dx++) {
+                                    const ny = y + dy;
+                                    const nx = x + dx;
+                                    if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+                                        maxVal = Math.max(maxVal, data[ny * width + nx]);
+                                    }
+                                }
+                            }
+                            newData[y * width + x] = maxVal;
+                        }
+                    }
+                    
+                    data = newData;
+                }
+                
+                return { data, width, height };
+            },
+            
+            // 形态学腐蚀
+            erode: (binaryImage, iterations) => {
+                let { data, width, height } = binaryImage;
+                
+                for (let iter = 0; iter < iterations; iter++) {
+                    const newData = new Uint8Array(width * height);
+                    
+                    for (let y = 0; y < height; y++) {
+                        for (let x = 0; x < width; x++) {
+                            let minVal = 255;
+                            for (let dy = -1; dy <= 1; dy++) {
+                                for (let dx = -1; dx <= 1; dx++) {
+                                    const ny = y + dy;
+                                    const nx = x + dx;
+                                    if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+                                        minVal = Math.min(minVal, data[ny * width + nx]);
+                                    }
+                                }
+                            }
+                            newData[y * width + x] = minVal;
+                        }
+                    }
+                    
+                    data = newData;
+                }
+                
+                return { data, width, height };
+            },
+            
+            // 查找轮廓（简化版 - 基于连通域）
+            findContours: (binaryImage) => {
+                const { data, width, height } = binaryImage;
+                const visited = new Uint8Array(width * height);
+                const contours = [];
+                
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const idx = y * width + x;
+                        if (data[idx] === 255 && !visited[idx]) {
+                            // 找到新连通域，使用洪水填充
+                            const contour = [];
+                            const stack = [idx];
+                            visited[idx] = 1;
+                            
+                            let minX = x, maxX = x, minY = y, maxY = y;
+                            
+                            while (stack.length > 0) {
+                                const curr = stack.pop();
+                                const cx = curr % width;
+                                const cy = Math.floor(curr / width);
+                                
+                                contour.push({ x: cx, y: cy });
+                                
+                                // 更新边界
+                                minX = Math.min(minX, cx);
+                                maxX = Math.max(maxX, cx);
+                                minY = Math.min(minY, cy);
+                                maxY = Math.max(maxY, cy);
+                                
+                                // 检查4邻域
+                                const neighbors = [
+                                    curr - 1, curr + 1,
+                                    curr - width, curr + width
+                                ];
+                                
+                                for (const n of neighbors) {
+                                    const nx = n % width;
+                                    const ny = Math.floor(n / width);
+                                    
+                                    if (nx >= 0 && nx < width && ny >= 0 && ny < height &&
+                                        data[n] === 255 && !visited[n]) {
+                                        visited[n] = 1;
+                                        stack.push(n);
+                                    }
+                                }
+                            }
+                            
+                            if (contour.length > 10) { // 过滤太小的噪声
+                                contours.push({
+                                    points: contour,
+                                    area: contour.length,
+                                    bbox: { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                return contours;
+            },
+            
+            // 计算圆形度
+            calculateCircularity: (contour) => {
+                const { area, bbox } = contour;
+                const radius = Math.sqrt(area / Math.PI);
+                const perimeter = 2 * Math.PI * radius;
+                
+                // 简化的圆形度计算：4π×面积/周长²
+                // 这里用边界框近似
+                const boxArea = bbox.width * bbox.height;
+                const circularity = area / boxArea; // 越圆越接近π/4≈0.785
+                
+                return circularity;
             }
-            return { data: gray, width: imageData.width, height: imageData.height };
-        }
+        };
         
+        // 主分析函数
         function analyzeCV() {
-            if (!srcMat) return;
+            if (!currentImage || !originalImageData) {
+                showToast('❌ 没有图像数据');
+                return;
+            }
             
+            log('开始CV分析...');
             document.getElementById('loadingOverlay').classList.add('active');
-            document.getElementById('overlayLoadingText').textContent = '传统CV分析中...';
-            document.getElementById('overlayLoadingSub').textContent = 'Hough圆检测 + 形态学处理';
+            document.getElementById('overlayLoadingText').textContent = 'CV分析中...';
+            document.getElementById('overlayLoadingSub').textContent = '图像预处理 → 阈值分割 → 轮廓检测';
             
+            // 使用setTimeout让UI更新
             setTimeout(() => {
                 try {
-                    const param2 = parseInt(document.getElementById('param2').value);
-                    const minDist = parseInt(document.getElementById('minDist').value);
-                    const minRadius = parseInt(document.getElementById('cvMinRadius').value);
-                    const maxRadius = parseInt(document.getElementById('cvMaxRadius').value);
-                    const contrast = parseFloat(document.getElementById('contrast').value);
-                    const blurRadius = parseInt(document.getElementById('blurRadius').value);
-                    const mergeDist = parseInt(document.getElementById('mergeDist').value);
+                    const params = {
+                        threshold: parseInt(document.getElementById('threshold').value),
+                        minArea: parseInt(document.getElementById('minArea').value),
+                        maxArea: parseInt(document.getElementById('maxArea').value),
+                        circularity: parseFloat(document.getElementById('circularity').value),
+                        morphIterations: parseInt(document.getElementById('morphIterations').value),
+                        contrast: parseFloat(document.getElementById('contrast').value),
+                        blurRadius: parseInt(document.getElementById('blurRadius').value),
+                        invertMode: document.getElementById('invertMode').value,
+                        mergeDist: parseInt(document.getElementById('mergeDist').value)
+                    };
                     
-                    // 简化的Hough圆检测模拟（实际应使用opencv.js的cv.HoughCircles）
-                    // 这里使用简单的blob检测作为演示
-                    const detected = simulateHoughDetection(
-                        grayMat, param2, minDist, minRadius, maxRadius, 
-                        contrast, blurRadius, mergeDist
-                    );
+                    log(`参数: 阈值=${params.threshold}, 面积=${params.minArea}-${params.maxArea}, 圆度=${params.circularity}`);
                     
-                    // ROI过滤
-                    let filtered = detected;
+                    // 1. 获取图像数据（应用对比度）
+                    let imageData;
+                    if (params.contrast !== 1.0) {
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = originalImageData.width;
+                        tempCanvas.height = originalImageData.height;
+                        const tCtx = tempCanvas.getContext('2d');
+                        tCtx.filter = `contrast(${params.contrast})`;
+                        tCtx.drawImage(currentImage, 0, 0);
+                        imageData = tCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                    } else {
+                        imageData = originalImageData;
+                    }
+                    
+                    // 2. 转灰度
+                    let gray = ImageUtils.toGrayscale(imageData);
+                    log(`灰度图: ${gray.width}x${gray.height}`);
+                    
+                    // 3. 高斯模糊去噪
+                    if (params.blurRadius > 0) {
+                        gray = ImageUtils.gaussianBlur(gray, params.blurRadius);
+                        log('高斯模糊完成');
+                    }
+                    
+                    // 4. 自动判断是否需要反相
+                    let needInvert = false;
+                    if (params.invertMode === 'auto') {
+                        // 计算图像中心区域的平均亮度
+                        const centerX = Math.floor(gray.width / 2);
+                        const centerY = Math.floor(gray.height / 2);
+                        const sampleSize = 50;
+                        let sum = 0, count = 0;
+                        
+                        for (let y = centerY - sampleSize; y < centerY + sampleSize; y++) {
+                            for (let x = centerX - sampleSize; x < centerX + sampleSize; x++) {
+                                if (x >= 0 && x < gray.width && y >= 0 && y < gray.height) {
+                                    sum += gray.data[y * gray.width + x];
+                                    count++;
+                                }
+                            }
+                        }
+                        
+                        const avgBrightness = sum / count;
+                        // 如果背景较亮（培养皿），菌落较暗，需要反相
+                        needInvert = avgBrightness > 128;
+                        log(`自动判断: 平均亮度=${avgBrightness.toFixed(1)}, 反相=${needInvert}`);
+                    } else {
+                        needInvert = params.invertMode === 'inverted';
+                    }
+                    
+                    // 5. 阈值处理
+                    let binary = ImageUtils.threshold(gray, params.threshold, needInvert);
+                    log('阈值处理完成');
+                    
+                    // 6. 形态学操作（先膨胀后腐蚀 = 闭运算，连接断裂区域）
+                    if (params.morphIterations > 0) {
+                        binary = ImageUtils.dilate(binary, params.morphIterations);
+                        binary = ImageUtils.erode(binary, params.morphIterations);
+                        log('形态学操作完成');
+                    }
+                    
+                    // 7. 查找轮廓
+                    const contours = ImageUtils.findContours(binary);
+                    log(`找到 ${contours.length} 个原始轮廓`);
+                    
+                    // 8. 过滤和转换为菌落对象
+                    let detected = [];
+                    for (let i = 0; i < contours.length; i++) {
+                        const contour = contours[i];
+                        
+                        // 面积过滤
+                        if (contour.area < params.minArea || contour.area > params.maxArea) {
+                            continue;
+                        }
+                        
+                        // 圆形度过滤
+                        const circularity = ImageUtils.calculateCircularity(contour);
+                        if (circularity < params.circularity) {
+                            continue;
+                        }
+                        
+                        // 计算中心点和等效半径
+                        let sumX = 0, sumY = 0;
+                        for (const p of contour.points) {
+                            sumX += p.x;
+                            sumY += p.y;
+                        }
+                        
+                        const centerX = sumX / contour.points.length;
+                        const centerY = sumY / contour.points.length;
+                        const radius = Math.sqrt(contour.area / Math.PI);
+                        
+                        detected.push({
+                            id: i,
+                            x: centerX,
+                            y: centerY,
+                            radius: radius,
+                            area: contour.area,
+                            circularity: circularity,
+                            confidence: circularity, // 用圆形度作为置信度
+                            manual: false
+                        });
+                    }
+                    
+                    log(`过滤后剩余 ${detected.length} 个候选`);
+                    
+                    // 9. ROI过滤
                     if (roiCenter && roiRadius) {
-                        filtered = detected.filter(c => {
+                        detected = detected.filter(c => {
                             const dx = c.x - roiCenter.x;
                             const dy = c.y - roiCenter.y;
                             return (dx*dx + dy*dy) <= (roiRadius * roiRadius);
                         });
+                        log(`ROI过滤后剩余 ${detected.length} 个`);
                     }
                     
-                    colonies = filtered.map((c, idx) => ({
-                        ...c,
-                        id: idx,
-                        confidence: 0.8, // CV算法默认置信度
-                        manual: false
-                    }));
+                    // 10. NMS合并
+                    detected = nonMaxSuppression(detected, params.mergeDist);
+                    log(`NMS后剩余 ${detected.length} 个`);
                     
+                    colonies = detected;
+                    
+                    // 显示结果
                     renderMarkers();
                     updateStats();
+                    
+                    // 显示调试图像（可选）
+                    // visualizeProcessing(binary);
+                    
                     showToast(`✅ CV算法检测到 ${colonies.length} 个菌落`);
+                    log('分析完成');
                     
                 } catch (err) {
                     console.error(err);
+                    log('错误: ' + err.message);
                     showToast('❌ 分析失败: ' + err.message);
                 }
                 
@@ -859,97 +1031,11 @@
             }, 100);
         }
         
-        // 简化的菌落检测模拟（实际应使用真实CV算法）
-        function simulateHoughDetection(grayMat, param2, minDist, minRadius, maxRadius, contrast, blur, mergeDist) {
-            // 这是一个模拟实现，实际使用时应该：
-            // 1. 加载真正的opencv.js
-            // 2. 使用 cv.HoughCircles 进行真实检测
-            
-            const { data, width, height } = grayMat;
-            const detected = [];
-            
-            // 简单的峰值检测模拟
-            const threshold = 255 - param2 * 10;
-            const step = Math.max(1, Math.floor(minDist / 2));
-            
-            for (let y = step; y < height - step; y += step) {
-                for (let x = step; x < width - step; x += step) {
-                    const idx = y * width + x;
-                    const brightness = data[idx] * contrast;
-                    
-                    // 简单的亮度阈值检测
-                    if (brightness > threshold) {
-                        // 检查是否是局部最大值
-                        let isLocalMax = true;
-                        for (let dy = -step; dy <= step && isLocalMax; dy++) {
-                            for (let dx = -step; dx <= step; dx++) {
-                                if (dx === 0 && dy === 0) continue;
-                                const nIdx = (y + dy) * width + (x + dx);
-                                if (data[nIdx] * contrast > brightness) {
-                                    isLocalMax = false;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        if (isLocalMax) {
-                            // 估算半径（基于亮度梯度）
-                            const estimatedRadius = estimateRadius(data, x, y, width, height, brightness);
-                            if (estimatedRadius >= minRadius && estimatedRadius <= maxRadius) {
-                                detected.push({
-                                    x, y,
-                                    radius: estimatedRadius,
-                                    brightness
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // NMS合并
-            return nonMaxSuppression(detected, mergeDist);
-        }
-        
-        function estimateRadius(data, cx, cy, width, height, centerBrightness) {
-            let maxRadius = 0;
-            const threshold = centerBrightness * 0.5;
-            
-            for (let r = 2; r < 50; r++) {
-                let edgeBrightness = 0;
-                let samples = 0;
-                
-                // 采样圆周
-                for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
-                    const x = Math.floor(cx + Math.cos(angle) * r);
-                    const y = Math.floor(cy + Math.sin(angle) * r);
-                    
-                    if (x >= 0 && x < width && y >= 0 && y < height) {
-                        edgeBrightness += data[y * width + x];
-                        samples++;
-                    }
-                }
-                
-                if (samples > 0) {
-                    edgeBrightness /= samples;
-                    // 如果边缘亮度显著低于中心，说明是边缘
-                    if (centerBrightness - edgeBrightness > threshold * 0.3) {
-                        maxRadius = r;
-                    } else {
-                        break;
-                    }
-                }
-            }
-            
-            return maxRadius > 0 ? maxRadius : 5;
-        }
-        
+        // NMS合并
         function nonMaxSuppression(detections, minDist) {
             if (detections.length < 2) return detections;
             
-            // 按亮度排序
-            detections.sort((a, b) => b.brightness - a.brightness);
-            
+            detections.sort((a, b) => b.confidence - a.confidence);
             const result = [];
             const suppressed = new Array(detections.length).fill(false);
             
@@ -965,7 +1051,7 @@
                     const dy = detections[i].y - detections[j].y;
                     const dist = Math.sqrt(dx*dx + dy*dy);
                     
-                    if (dist < minDist || dist < (detections[i].radius + detections[j].radius) * 0.5) {
+                    if (dist < minDist || dist < (detections[i].radius + detections[j].radius)) {
                         suppressed[j] = true;
                     }
                 }
@@ -977,8 +1063,13 @@
         // ==================== YOLO算法 ====================
         
         async function analyzeYOLO() {
-            if (!currentImage || !modelLoaded) {
-                showToast('⏳ YOLO模型未就绪，已切换到CV算法');
+            if (!currentImage) {
+                showToast('❌ 没有图像');
+                return;
+            }
+            
+            if (!modelLoaded || !session) {
+                showToast('⏳ YOLO模型未就绪，切换到CV模式');
                 useYOLO = false;
                 updateAlgoUI();
                 analyzeCV();
@@ -987,7 +1078,7 @@
             
             document.getElementById('loadingOverlay').classList.add('active');
             document.getElementById('overlayLoadingText').textContent = 'YOLO分析中...';
-            document.getElementById('overlayLoadingSub').textContent = '神经网络推理 + NMS后处理';
+            document.getElementById('overlayLoadingSub').textContent = '神经网络推理';
             
             setTimeout(async () => {
                 try {
@@ -996,18 +1087,13 @@
                     const inputSize = parseInt(document.getElementById('inputSize').value);
                     const contrast = parseFloat(document.getElementById('contrast').value);
                     
-                    // 预处理
-                    const processedTensor = await preprocessImage(currentImage, inputSize, contrast, 0);
-                    
-                    // 推理
-                    const feeds = { images: processedTensor };
+                    const tensor = await preprocessImage(currentImage, inputSize, contrast, 0);
+                    const feeds = { images: tensor };
                     const results = await session.run(feeds);
                     
-                    // 解析结果
                     const output = results.output0 || results[Object.keys(results)[0]];
                     const detections = parseYOLOOutput(output, confThreshold, iouThreshold, inputSize);
                     
-                    // 坐标映射
                     const scaleX = currentImage.width / inputSize;
                     const scaleY = currentImage.height / inputSize;
                     
@@ -1026,7 +1112,6 @@
                         };
                     });
                     
-                    // ROI过滤
                     if (roiCenter && roiRadius) {
                         detected = detected.filter(c => {
                             const dx = c.x - roiCenter.x;
@@ -1036,16 +1121,15 @@
                     }
                     
                     colonies = detected;
-                    
-                    processedTensor.dispose();
+                    tensor.dispose();
                     
                     renderMarkers();
                     updateStats();
                     showToast(`✅ YOLO检测到 ${colonies.length} 个菌落`);
                     
                 } catch (err) {
-                    console.error('YOLO分析失败:', err);
-                    showToast('❌ YOLO失败，尝试CV算法...');
+                    console.error(err);
+                    showToast('❌ YOLO失败，尝试CV算法');
                     analyzeCV();
                 }
                 
@@ -1059,7 +1143,6 @@
             tempCanvas.height = inputSize;
             const tCtx = tempCanvas.getContext('2d');
             
-            // Letterbox填充
             const scale = Math.min(inputSize / img.width, inputSize / img.height);
             const newWidth = img.width * scale;
             const newHeight = img.height * scale;
@@ -1070,7 +1153,6 @@
             tCtx.fillRect(0, 0, inputSize, inputSize);
             tCtx.filter = `contrast(${contrast}) brightness(${100 + brightness}%)`;
             tCtx.drawImage(img, padX, padY, newWidth, newHeight);
-            tCtx.filter = 'none';
             
             const imageData = tCtx.getImageData(0, 0, inputSize, inputSize);
             const data = imageData.data;
@@ -1093,7 +1175,6 @@
             const numBoxes = dims[2];
             
             let boxes = [];
-            
             for (let i = 0; i < numBoxes; i++) {
                 const cx = data[i];
                 const cy = data[numBoxes + i];
@@ -1111,7 +1192,6 @@
                     const y1 = (cy - h / 2) * inputSize;
                     const x2 = (cx + w / 2) * inputSize;
                     const y2 = (cy + h / 2) * inputSize;
-                    
                     boxes.push({ x1, y1, x2, y2, confidence: maxConf });
                 }
             }
@@ -1132,26 +1212,24 @@
                 
                 for (let j = i + 1; j < boxes.length; j++) {
                     if (suppressed[j]) continue;
-                    if (calculateIoU(boxes[i], boxes[j]) > iouThreshold) {
+                    
+                    const x1 = Math.max(boxes[i].x1, boxes[j].x1);
+                    const y1 = Math.max(boxes[i].y1, boxes[j].y1);
+                    const x2 = Math.min(boxes[i].x2, boxes[j].x2);
+                    const y2 = Math.min(boxes[i].y2, boxes[j].y2);
+                    
+                    const intersection = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+                    const area1 = (boxes[i].x2 - boxes[i].x1) * (boxes[i].y2 - boxes[i].y1);
+                    const area2 = (boxes[j].x2 - boxes[j].x1) * (boxes[j].y2 - boxes[j].y1);
+                    const union = area1 + area2 - intersection;
+                    
+                    if (union > 0 && intersection / union > iouThreshold) {
                         suppressed[j] = true;
                     }
                 }
             }
+            
             return picked;
-        }
-        
-        function calculateIoU(box1, box2) {
-            const x1 = Math.max(box1.x1, box2.x1);
-            const y1 = Math.max(box1.y1, box2.y1);
-            const x2 = Math.min(box1.x2, box2.x2);
-            const y2 = Math.min(box1.y2, box2.y2);
-            
-            const intersection = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
-            const area1 = (box1.x2 - box1.x1) * (box1.y2 - box1.y1);
-            const area2 = (box2.x2 - box2.x1) * (box2.y2 - box2.y1);
-            const union = area1 + area2 - intersection;
-            
-            return union > 0 ? intersection / union : 0;
         }
         
         // ==================== 通用功能 ====================
@@ -1160,6 +1238,10 @@
             canvas.width = img.width;
             canvas.height = img.height;
             ctx.drawImage(img, 0, 0);
+            
+            // 保存原始图像数据
+            originalImageData = ctx.getImageData(0, 0, img.width, img.height);
+            
             canvas.dataset.origWidth = img.width;
             canvas.dataset.origHeight = img.height;
             
@@ -1205,7 +1287,8 @@
                 const tooltip = document.createElement('div');
                 tooltip.className = 'marker-tooltip';
                 const confText = colony.confidence ? ` | ${(colony.confidence * 100).toFixed(0)}%` : '';
-                tooltip.textContent = `#${idx + 1} | r=${Math.round(colony.radius)}${confText}`;
+                const areaText = colony.area ? ` | A:${colony.area}` : '';
+                tooltip.textContent = `#${idx + 1} | r=${Math.round(colony.radius)}${confText}${areaText}`;
                 marker.appendChild(tooltip);
                 
                 marker.onclick = (e) => { e.stopPropagation(); removeColony(idx); };
@@ -1238,19 +1321,12 @@
         // ==================== 事件处理 ====================
         
         document.addEventListener('DOMContentLoaded', () => {
-            // 首先尝试从缓存加载
-            tryLoadFromCache().then(loaded => {
-                if (!loaded) {
-                    // 没有缓存，显示选择界面
-                    console.log('没有缓存的模型，等待用户选择');
-                }
-            });
+            // 默认进入CV模式
+            updateAlgoUI();
             
-            // 文件上传
             document.getElementById('fileInput').addEventListener('change', handleFile);
             document.getElementById('cameraInput').addEventListener('change', handleFile);
             
-            // 拖放
             uploadCard.addEventListener('dragover', (e) => { 
                 e.preventDefault(); 
                 uploadCard.classList.add('active'); 
@@ -1262,16 +1338,14 @@
                 if (e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]); 
             });
             
-            // 滑块
-            ['param2', 'minDist', 'cvMinRadius', 'cvMaxRadius', 'contrast', 'blurRadius', 
-             'mergeDist', 'confThreshold', 'iouThreshold'].forEach(id => {
+            // 滑块事件
+            ['threshold', 'minArea', 'maxArea', 'circularity', 'morphIterations', 
+             'contrast', 'blurRadius', 'mergeDist', 'confThreshold', 'iouThreshold'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.addEventListener('input', (e) => {
-                        const displayId = id.replace('cv', '').replace('Threshold', '').replace('Dist', '') + 'Value';
-                        const displayEl = document.getElementById(displayId) || 
-                                         document.getElementById(id + 'Value') ||
-                                         document.getElementById(id.replace('cv', '').replace('Threshold', '').replace('Dist', '') + 'Value');
+                        const displayId = id + 'Value';
+                        const displayEl = document.getElementById(displayId);
                         if (displayEl) displayEl.textContent = e.target.value;
                     });
                 }
@@ -1318,12 +1392,18 @@
                 showToast('❌ 请选择图片'); 
                 return; 
             }
+            
+            log('加载图片: ' + file.name);
+            
             const reader = new FileReader();
             reader.onload = (e) => { 
                 const img = new Image(); 
                 img.onload = () => { 
                     currentImage = img; 
                     displayImage(img);
+                    
+                    log(`图片尺寸: ${img.width}x${img.height}`);
+                    
                     // 自动分析
                     if (useYOLO && modelLoaded) analyzeYOLO();
                     else analyzeCV();
@@ -1493,7 +1573,7 @@
             if (!isAddMode) return;
             const { x, y } = getImageCoordsFromEvent(e);
             const avgRadius = colonies.length > 0 ? 
-                colonies.reduce((sum, c) => sum + c.radius, 0) / colonies.length : 10;
+                colonies.reduce((sum, c) => sum + c.radius, 0) / colonies.length : 15;
             
             colonies.push({ 
                 id: colonies.length, 
@@ -1520,6 +1600,7 @@
         
         function resetApp() {
             currentImage = null; 
+            originalImageData = null;
             colonies = []; 
             isAddMode = false; 
             clearRoi();
@@ -1531,28 +1612,23 @@
         }
         
         function resetToDefault() {
-            // 根据当前模式恢复默认参数
-            if (useYOLO) {
-                document.getElementById('confThreshold').value = 0.25;
-                document.getElementById('confValue').textContent = '0.25';
-                document.getElementById('iouThreshold').value = 0.45;
-                document.getElementById('iouValue').textContent = '0.45';
-                document.getElementById('inputSize').value = '640';
-            } else {
-                document.getElementById('param2').value = 14;
-                document.getElementById('param2Value').textContent = '14';
-                document.getElementById('minDist').value = 10;
-                document.getElementById('minDistValue').textContent = '10';
-                document.getElementById('cvMinRadius').value = 3;
-                document.getElementById('cvMinRadiusValue').textContent = '3';
-                document.getElementById('cvMaxRadius').value = 25;
-                document.getElementById('cvMaxRadiusValue').textContent = '25';
-            }
-            
-            document.getElementById('contrast').value = 1.5;
-            document.getElementById('contrastValue').textContent = '1.5';
-            document.getElementById('mergeDist').value = 8;
-            document.getElementById('mergeDistValue').textContent = '8';
+            // CV参数默认值
+            document.getElementById('threshold').value = 128;
+            document.getElementById('thresholdValue').textContent = '128';
+            document.getElementById('minArea').value = 10;
+            document.getElementById('minAreaValue').textContent = '10';
+            document.getElementById('maxArea').value = 500;
+            document.getElementById('maxAreaValue').textContent = '500';
+            document.getElementById('circularity').value = 0.7;
+            document.getElementById('circularityValue').textContent = '0.7';
+            document.getElementById('morphIterations').value = 1;
+            document.getElementById('morphValue').textContent = '1';
+            document.getElementById('contrast').value = 1.0;
+            document.getElementById('contrastValue').textContent = '1.0';
+            document.getElementById('blurRadius').value = 1;
+            document.getElementById('blurValue').textContent = '1';
+            document.getElementById('mergeDist').value = 15;
+            document.getElementById('mergeDistValue').textContent = '15';
             
             if (currentImage) {
                 const containerWidth = imageWrapper.clientWidth;
@@ -1561,10 +1637,9 @@
                 document.getElementById('zoomSlider').value = fitScale.toFixed(2);
                 document.getElementById('zoomValue').textContent = fitScale.toFixed(2);
                 applyZoom();
+                
+                analyzeCV();
             }
-            
-            if (useYOLO && modelLoaded) analyzeYOLO();
-            else analyzeCV();
         }
         
         function exportImage() {
@@ -1619,13 +1694,6 @@
                 applyZoom(); 
             } 
         });
-        
-        // Service Worker（简化版）
-        if ('serviceWorker' in navigator) { 
-            const swCode = `self.addEventListener('install',e=>self.skipWaiting()); self.addEventListener('activate',e=>e.waitUntil(clients.claim())); self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));`; 
-            const blob = new Blob([swCode], { type: 'application/javascript' }); 
-            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{}); 
-        }
     </script>
 </body>
 </html>
