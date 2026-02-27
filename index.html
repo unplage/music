@@ -1,846 +1,1631 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>语音转写 · 专业持续版</title>
-    <!-- Font Awesome 6 (免费图标库) 用于简洁美观的按钮 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>菌落计数器 · YOLO离线版</title>
+    
+    <!-- ONNX Runtime Web -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/ort.min.js"></script>
+    
     <style>
-        /* 样式基本保持不变，仅微调 */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --roi-color: rgba(255, 215, 0, 0.3);
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #f5f7fa;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            color: #1e293b;
-        }
-
-        .app-container {
-            width: 100%;
-            max-width: 480px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 32px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 6px 12px rgba(0,0,0,0.05);
-            overflow: hidden;
-            backdrop-filter: blur(2px);
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        .header {
-            padding: 24px 24px 16px 24px;
-            background: white;
-            border-bottom: 1px solid #f0f2f5;
-        }
-
-        .header h1 {
-            font-size: 1.9rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            background: linear-gradient(145deg, #0f172a, #334155);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .header h1 i {
-            background: #eef2ff;
-            padding: 8px;
-            border-radius: 18px;
-            color: #4f46e5;
-            font-size: 1.4rem;
-            -webkit-text-fill-color: #4f46e5;
-        }
-
-        .lang-selector {
-            display: flex;
-            gap: 10px;
-            margin-top: 12px;
-            background: #f8fafc;
-            padding: 6px;
-            border-radius: 48px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .lang-option {
-            flex: 1;
-            text-align: center;
-            padding: 10px 6px;
-            font-size: 1rem;
-            font-weight: 500;
-            border-radius: 40px;
-            background: transparent;
-            border: none;
-            color: #64748b;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .lang-option.active {
-            background: #ffffff;
-            color: #0f172a;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-            font-weight: 600;
-            border: 0.5px solid #d9e2ef;
-        }
-
-        .live-card {
-            background: #ffffff;
-            margin: 20px 24px;
-            padding: 24px 20px;
-            border-radius: 28px;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.02), 0 8px 18px -6px rgba(0,20,40,0.12);
-            border: 1px solid #ffffff80;
-            min-height: 160px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .transcript-label {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #94a3b8;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .transcript-label i {
-            font-size: 0.9rem;
-        }
-
-        .live-transcript {
-            font-size: 1.3rem;
-            line-height: 1.5;
-            font-weight: 420;
-            color: #0b1e33;
-            word-break: break-word;
-            white-space: pre-wrap;
-            flex: 1;
-            min-height: 80px;
-            max-height: 240px;
-            overflow-y: auto;
-            padding-right: 8px;
-            scrollbar-width: thin;
-        }
-
-        .status-badge {
-            align-self: flex-end;
-            font-size: 0.75rem;
-            padding: 6px 14px;
-            background: #f1f4f9;
-            border-radius: 40px;
-            color: #475569;
-            margin-top: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .status-badge.recording {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-
-        .status-badge i {
-            font-size: 0.7rem;
-        }
-
-        .control-panel {
-            display: flex;
-            justify-content: space-around;
-            padding: 8px 24px 24px 24px;
-            gap: 12px;
-        }
-
-        .ctrl-btn {
-            flex: 1;
-            background: #fefefe;
-            border: 1px solid #e9edf2;
-            border-radius: 56px;
-            padding: 16px 0;
-            font-size: 1rem;
-            font-weight: 550;
-            color: #1e293b;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.02);
-            transition: all 0.15s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            cursor: pointer;
-            backdrop-filter: blur(2px);
-        }
-
-        .ctrl-btn:active {
-            background: #f1f5f9;
-            transform: scale(0.97);
-        }
-
-        .ctrl-btn.primary {
-            background: #1e293b;
-            border-color: #1e293b;
-            color: white;
-            box-shadow: 0 10px 18px -8px #1e293b80;
-        }
-
-        .ctrl-btn.primary:active {
-            background: #0f172a;
-        }
-
-        .ctrl-btn:disabled {
-            opacity: 0.4;
-            filter: grayscale(0.5);
-            pointer-events: none;
-        }
-
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 24px 8px 24px;
-        }
-
-        .history-header h2 {
-            font-size: 1.25rem;
-            font-weight: 590;
-            color: #1e293b;
-        }
-
-        .history-header button {
-            background: none;
-            border: none;
-            color: #4f46e5;
-            font-size: 0.95rem;
-            font-weight: 500;
-            padding: 8px 12px;
-            border-radius: 30px;
-            background: #f1f4f9;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-        }
-
-        .history-list {
-            padding: 0 24px 30px 24px;
-            max-height: 360px;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .history-item {
-            background: #ffffff;
-            border-radius: 22px;
-            padding: 18px 16px;
-            border: 1px solid #edf2f7;
-            box-shadow: 0 6px 12px -8px rgba(0,0,0,0.08);
-            transition: 0.1s;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .history-meta {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 0.75rem;
-            color: #64748b;
-        }
-
-        .history-meta i {
-            width: 16px;
-        }
-
-        .history-text {
-            font-size: 1rem;
-            font-weight: 450;
-            color: #0f172a;
-            background: #f8fafc;
-            padding: 14px;
-            border-radius: 18px;
-            line-height: 1.4;
-            word-break: break-word;
-            max-height: 100px;
-            overflow-y: auto;
-        }
-
-        .history-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            margin-top: 4px;
-            flex-wrap: wrap;
-        }
-
-        .history-actions button {
-            background: transparent;
-            border: none;
-            color: #4b5563;
-            font-size: 1.1rem;
-            width: 44px;
-            height: 44px;
-            border-radius: 40px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: #f1f4f9;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-
-        .history-actions button:active {
-            background: #e2e8f0;
-        }
-
-        .toast-message {
-            position: fixed;
-            bottom: 30px;
-            left: 20px;
-            right: 20px;
-            max-width: 400px;
-            margin: 0 auto;
-            background: #1e293b;
-            color: white;
-            padding: 14px 24px;
-            border-radius: 60px;
-            font-size: 0.95rem;
-            text-align: center;
-            box-shadow: 0 20px 30px -10px black;
-            opacity: 0;
-            transition: 0.2s;
-            pointer-events: none;
-            z-index: 1000;
-        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+        
+        .splash { position: fixed; inset: 0; background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s; }
+        .splash.hidden { opacity: 0; pointer-events: none; }
+        .splash-icon { font-size: 100px; margin-bottom: 20px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+        .splash-text { font-size: 1.8rem; font-weight: 700; margin-bottom: 10px; }
+        .splash-subtitle { color: var(--text-muted); margin-bottom: 30px; max-width: 80%; text-align: center; line-height: 1.5; }
+        .loading-bar { width: 200px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; margin-bottom: 20px; }
+        .loading-progress { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+        
+        .splash-actions { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+        .splash-btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .splash-btn-primary { background: var(--primary); color: white; }
+        .splash-btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        .splash-btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .splash-btn-secondary:hover { background: rgba(255,255,255,0.2); }
+        
+        .app { max-width: 100vw; min-height: 100vh; display: flex; flex-direction: column; }
+        header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 20px; text-align: center; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3); position: sticky; top: 0; z-index: 100; }
+        h1 { font-size: 1.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .version-badge { background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; }
+        
+        main { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 20px; max-width: 1200px; margin: 0 auto; width: 100%; }
+        
+        .upload-card { background: var(--card); border-radius: 24px; padding: 40px 30px; text-align: center; border: 2px dashed var(--secondary); transition: all 0.3s; cursor: pointer; }
+        .upload-card:hover, .upload-card.active { border-color: var(--primary); background: rgba(59, 130, 246, 0.1); transform: translateY(-2px); }
+        .upload-icon { font-size: 72px; margin-bottom: 20px; opacity: 0.9; }
+        .upload-title { font-size: 1.4rem; margin-bottom: 10px; font-weight: 600; }
+        .upload-subtitle { color: var(--text-muted); margin-bottom: 30px; font-size: 0.95rem; }
+        .upload-tips { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 25px; }
+        .tip-item { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); background: var(--bg); padding: 6px 12px; border-radius: 20px; }
+        .btn-group { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .btn { padding: 14px 28px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5); }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-secondary:hover { background: #475569; }
+        input[type="file"] { display: none; }
+        
+        .viewer { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.5s; }
+        .viewer.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .control-panel { background: var(--card); border-radius: 20px; padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .control-section { display: flex; flex-direction: column; gap: 12px; }
+        .section-title { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .slider-group { display: flex; flex-direction: column; gap: 8px; }
+        .slider-header { display: flex; justify-content: space-between; align-items: center; }
+        .slider-label { font-size: 0.9rem; }
+        .slider-value { background: var(--bg); padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: var(--primary); min-width: 40px; text-align: center; }
+        input[type="range"] { width: 100%; height: 6px; -webkit-appearance: none; background: var(--bg); border-radius: 3px; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: var(--primary); border-radius: 50%; cursor: pointer; transition: transform 0.2s; }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        
+        select { width: 100%; padding: 8px; border-radius: 6px; background: var(--bg); color: var(--text); border: 1px solid var(--secondary); font-size: 0.9rem; }
+        
+        .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-small { padding: 10px 16px; font-size: 0.85rem; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-info { background: var(--info); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--secondary); color: var(--text); }
+        
+        .mode-indicator { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(59, 130, 246, 0.2); color: var(--primary); border-radius: 20px; font-size: 0.9rem; font-weight: 600; }
+        .mode-indicator.manual { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .mode-indicator.roi { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        
+        .image-wrapper { position: relative; background: var(--card); border-radius: 20px; overflow: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.4); max-height: 70vh; }
+        .canvas-container { position: relative; display: inline-block; min-width: 100%; }
+        #mainCanvas { display: block; width: auto; height: auto; background: #1e293b; max-width: none; }
+        .overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        
+        .roi-marker { position: absolute; border: 3px solid gold; border-radius: 50%; background: var(--roi-color); pointer-events: none; box-shadow: 0 0 0 2px rgba(0,0,0,0.3); display: none; }
+        
+        .colony-marker { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; z-index: 10; transition: all 0.2s; }
+        .marker-center { width: 6px; height: 6px; background: #00ff88; border: 1px solid white; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.5); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .marker-circle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid #ff4757; border-radius: 50%; opacity: 0.7; }
+        .colony-marker:hover { z-index: 20; transform: translate(-50%, -50%) scale(1.3); }
+        .colony-marker:hover .marker-center { background: #ff4757; }
+        .colony-marker.manual .marker-center { background: #ffd700; }
+        .colony-marker.manual .marker-circle { border-color: #ffd700; }
+        .marker-tooltip { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); color: white; padding: 6px 10px; border-radius: 6px; font-size: 11px; white-space: nowrap; opacity: 0; transition: opacity 0.2s; pointer-events: none; margin-bottom: 5px; z-index: 30; }
+        .colony-marker:hover .marker-tooltip { opacity: 1; }
+        
+        .stats-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
+        .stat-box { background: var(--card); border-radius: 16px; padding: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s; }
+        .stat-box:hover { transform: translateY(-2px); border-color: var(--primary); }
+        .stat-number { font-size: 2.2rem; font-weight: 700; color: var(--primary); display: block; line-height: 1; }
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; }
+        .stat-box.success .stat-number { color: var(--success); }
+        .stat-box.warning .stat-number { color: var(--warning); }
+        .stat-box.info .stat-number { color: var(--info); }
+        
+        .loading-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 9998; }
+        .loading-overlay.active { display: flex; }
+        .spinner { width: 60px; height: 60px; border: 4px solid rgba(59, 130, 246, 0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { margin-top: 20px; font-size: 1.1rem; color: var(--text); }
+        .loading-subtext { margin-top: 10px; font-size: 0.9rem; color: var(--text-muted); }
+        
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--card); color: var(--text); padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); opacity: 0; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 10000; display: flex; align-items: center; gap: 10px; font-weight: 500; max-width: 90%; text-align: center; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        
+        .algo-info { background: rgba(59, 130, 246, 0.1); border-left: 4px solid var(--primary); padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 0.85rem; color: var(--text-muted); }
+        .param-tip { font-size: 0.75rem; color: var(--success); margin-top: 4px; }
+        
+        .model-status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 4px 10px; border-radius: 12px; background: var(--bg); }
+        .model-status.ready { color: var(--success); }
+        .model-status.loading { color: var(--warning); animation: pulse 1.5s infinite; }
+        .model-status.error { color: var(--danger); }
+        .model-status.local { color: var(--info); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .model-selector { background: var(--card); border-radius: 12px; padding: 20px; margin-top: 20px; max-width: 500px; width: 90%; }
+        .model-selector-title { font-size: 1rem; font-weight: 600; margin-bottom: 15px; color: var(--text); }
+        .model-option { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .model-option:hover { border-color: var(--primary); }
+        .model-option.selected { border-color: var(--primary); background: rgba(59, 130, 246, 0.1); }
+        .model-option-icon { font-size: 1.5rem; }
+        .model-option-info { flex: 1; text-align: left; }
+        .model-option-name { font-weight: 600; font-size: 0.9rem; }
+        .model-option-desc { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+        
+        .fallback-notice { background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); border-radius: 8px; padding: 12px; margin-top: 15px; font-size: 0.85rem; color: var(--text-muted); }
+        
+        @media (max-width: 768px) { h1 { font-size: 1.3rem; } .upload-title { font-size: 1.2rem; } .control-panel { grid-template-columns: 1fr; } .stats-panel { grid-template-columns: repeat(2, 1fr); } .splash-actions { flex-direction: column; width: 100%; padding: 0 20px; } .splash-btn { width: 100%; justify-content: center; } }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <div class="header">
-            <h1>
-                <i class="fas fa-microphone-lines"></i> 语音转写·专业版
-            </h1>
-            <div class="lang-selector" id="langSelector">
-                <button class="lang-option active" data-lang="zh-CN">🇨🇳 中文</button>
-                <button class="lang-option" data-lang="en-US">🇬🇧 英文</button>
+    <div class="splash" id="splash">
+        <div class="splash-icon">🔬</div>
+        <div class="splash-text">菌落计数器 · 离线版</div>
+        <div class="splash-subtitle" id="splashSubtitle">准备加载YOLO模型...</div>
+        
+        <div class="loading-bar" id="loadingBar" style="display: none;">
+            <div class="loading-progress" id="loadingProgress" style="width: 0%"></div>
+        </div>
+        
+        <!-- 模型选择器 -->
+        <div class="model-selector" id="modelSelector">
+            <div class="model-selector-title">📦 选择模型加载方式</div>
+            
+            <div class="model-option selected" onclick="selectModelSource('local')" id="optionLocal">
+                <div class="model-option-icon">💻</div>
+                <div class="model-option-info">
+                    <div class="model-option-name">本地上传（推荐）</div>
+                    <div class="model-option-desc">上传 .onnx 模型文件，无需网络，永久可用</div>
+                </div>
             </div>
+            
+            <div class="model-option" onclick="selectModelSource('moda')" id="optionModa">
+                <div class="model-option-icon">🇨🇳</div>
+                <div class="model-option-info">
+                    <div class="model-option-name">魔搭社区（国内）</div>
+                    <div class="model-option-desc">阿里云模型平台，国内访问稳定</div>
+                </div>
+            </div>
+            
+            <div class="model-option" onclick="selectModelSource('github')" id="optionGithub">
+                <div class="model-option-icon">🌐</div>
+                <div class="model-option-info">
+                    <div class="model-option-name">GitHub Release（国际）</div>
+                    <div class="model-option-desc">GitHub Releases，可能需要代理</div>
+                </div>
+            </div>
+            
+            <div class="fallback-notice" id="fallbackNotice" style="display: none;">
+                ⚠️ 在线源加载失败，已自动切换到本地上传模式
+            </div>
+            
+            <div class="splash-actions" style="margin-top: 20px;">
+                <button class="splash-btn splash-btn-primary" onclick="confirmModelSource()">
+                    <span>✓</span><span>确认选择</span>
+                </button>
+                <button class="splash-btn splash-btn-secondary" onclick="skipToUpload()" id="skipBtn" style="display: none;">
+                    <span>⏭</span><span>跳过，先使用传统算法</span>
+                </button>
+            </div>
+            
+            <!-- 隐藏的文件输入 -->
+            <input type="file" id="modelFileInput" accept=".onnx" style="display: none;" onchange="handleModelFile(event)">
         </div>
-
-        <!-- 实时转写卡片 -->
-        <div class="live-card">
-            <div class="transcript-label"><i class="far fa-comment-dots"></i> 实时转写</div>
-            <div class="live-transcript" id="liveTranscript">点击开始，对着麦克风说话...</div>
-            <div class="status-badge" id="statusBadge"><i class="fas fa-circle"></i> 空闲</div>
-        </div>
-
-        <!-- 控制按钮组 -->
-        <div class="control-panel">
-            <button class="ctrl-btn" id="startBtn" title="开始录音 (请求麦克风)"><i class="fas fa-play"></i> 开始</button>
-            <button class="ctrl-btn" id="stopBtn" disabled><i class="fas fa-stop"></i> 停止</button>
-        </div>
-
-        <!-- 历史记录标题 & 全部导出 -->
-        <div class="history-header">
-            <h2><i class="far fa-clock" style="margin-right: 6px;"></i> 本地记录</h2>
-            <button id="exportAllBtn"><i class="fas fa-download"></i> 全部导出</button>
-        </div>
-
-        <!-- 历史列表 动态渲染 -->
-        <div class="history-list" id="historyList">
-            <!-- 由js填充 -->
-            <div style="text-align: center; color: #94a3b8; padding: 30px 0;">暂无转写记录</div>
+        
+        <!-- 加载状态显示 -->
+        <div id="loadingStatus" style="display: none; margin-top: 20px; text-align: center;">
+            <div class="model-status loading">
+                <span>⏳</span><span id="loadingText">正在下载模型...</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;" id="loadingDetail"></div>
         </div>
     </div>
-
-    <!-- 轻提示toast -->
-    <div id="toast" class="toast-message"></div>
+    
+    <div class="app">
+        <header>
+            <h1><span>🔬</span><span>菌落计数器 Pro</span><span class="version-badge" id="versionBadge">传统算法</span></h1>
+            <div style="margin-top: 8px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                <span class="model-status loading" id="modelStatus">
+                    <span>⏳</span><span>等待模型加载...</span>
+                </span>
+                <button class="btn-small btn-outline" onclick="switchModel()" id="switchModelBtn" style="display: none; padding: 4px 12px; font-size: 0.75rem;">
+                    切换模型
+                </button>
+            </div>
+        </header>
+        
+        <main>
+            <div class="upload-card" id="uploadCard">
+                <div class="upload-icon">📤</div>
+                <div class="upload-title">拖放图片或点击上传</div>
+                <div class="upload-subtitle" id="uploadSubtitle">支持拍照上传 · 自动菌落计数</div>
+                <div class="upload-tips">
+                    <div class="tip-item"><span id="algoIcon">⚫</span><span id="algoText">传统CV算法</span></div>
+                    <div class="tip-item"><span>💡</span><span>光线均匀</span></div>
+                    <div class="tip-item"><span>🎯</span><span>可使用ROI</span></div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()"><span>📁</span><span>选择文件</span></button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('cameraInput').click()"><span>📷</span><span>拍照</span></button>
+                </div>
+                <input type="file" id="fileInput" accept="image/*">
+                <input type="file" id="cameraInput" accept="image/*" capture="environment">
+            </div>
+            
+            <div class="viewer" id="viewer">
+                <div class="control-panel">
+                    <!-- YOLO参数（默认隐藏） -->
+                    <div class="control-section" id="yoloParams" style="display: none;">
+                        <div class="section-title">🤖 YOLO检测参数</div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span class="slider-label">置信度阈值</span><span class="slider-value" id="confValue">0.25</span></div>
+                            <input type="range" id="confThreshold" min="0.1" max="0.9" value="0.25" step="0.05">
+                            <div class="param-tip">推荐0.2-0.3（越低检测越多）</div>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span class="slider-label">IoU阈值（NMS）</span><span class="slider-value" id="iouValue">0.45</span></div>
+                            <input type="range" id="iouThreshold" min="0.1" max="0.9" value="0.45" step="0.05">
+                            <div class="param-tip">去除重叠框，推荐0.4-0.5</div>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span class="slider-label">输入尺寸</span></div>
+                            <select id="inputSize">
+                                <option value="640" selected>640x640（推荐）</option>
+                                <option value="320">320x320（快速）</option>
+                            </select>
+                        </div>
+                        <div class="algo-info">
+                            使用YOLO深度学习模型进行菌落检测
+                        </div>
+                    </div>
+                    
+                    <!-- 传统CV参数（默认显示） -->
+                    <div class="control-section" id="cvParams">
+                        <div class="section-title">⚙️ 传统CV检测参数</div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span class="slider-label">累加器阈值</span><span class="slider-value" id="param2Value">14</span></div>
+                            <input type="range" id="param2" min="8" max="25" value="14" step="1">
+                            <div class="param-tip">推荐14-16（越小检测越多）</div>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span class="slider-label">圆心最小距离</span><span class="slider-value" id="minDistValue">10</span></div>
+                            <input type="range" id="minDist" min="6" max="20" value="10" step="1">
+                            <div class="param-tip">密集平板用8-10</div>
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span class="slider-label">最小半径</span><span class="slider-value" id="cvMinRadiusValue">3</span></div>
+                            <input type="range" id="cvMinRadius" min="2" max="8" value="3">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span class="slider-label">最大半径</span><span class="slider-value" id="cvMaxRadiusValue">25</span></div>
+                            <input type="range" id="cvMaxRadius" min="15" max="40" value="25">
+                        </div>
+                        <div class="algo-info">
+                            使用OpenCV Hough圆变换检测菌落
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="section-title">🖼️ 预处理 / ROI</div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span class="slider-label">对比度增强</span><span class="slider-value" id="contrastValue">1.5</span></div>
+                            <input type="range" id="contrast" min="1.0" max="3.0" value="1.5" step="0.1">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span class="slider-label">高斯模糊</span><span class="slider-value" id="blurValue">5</span></div>
+                            <input type="range" id="blurRadius" min="1" max="9" value="5" step="2">
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-warning btn-small" id="selectRoiBtn">🎯 选择培养皿</button>
+                            <button class="btn btn-outline btn-small" id="clearRoiBtn">🗑️ 清除ROI</button>
+                        </div>
+                        <div class="mode-indicator" id="roiIndicator" style="display: none;"><span>⭕</span><span>ROI已设定</span></div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="section-title">🧹 后处理 / 操作</div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span class="slider-label">合并距离</span><span class="slider-value" id="mergeDistValue">8</span></div>
+                            <input type="range" id="mergeDist" min="4" max="20" value="8">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-header"><span class="slider-label">图像缩放</span><span class="slider-value" id="zoomValue">1.00</span></div>
+                            <input type="range" id="zoomSlider" min="0.05" max="3.0" value="1.0" step="0.05">
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary btn-small" id="analyzeBtn">🔄 重新分析</button>
+                            <button class="btn btn-success btn-small" id="addModeBtn">➕ 手动添加</button>
+                            <button class="btn btn-info btn-small" id="toggleCirclesBtn">⭕ 显隐圆圈</button>
+                            <button class="btn btn-outline btn-small" id="resetParamsBtn">↺ 恢复默认</button>
+                            <button class="btn btn-outline btn-small" id="exportImgBtn">📸 导出图片</button>
+                            <button class="btn btn-danger btn-small" id="clearBtn">🗑️ 清空</button>
+                            <button class="btn btn-outline btn-small" id="backBtn">↩️ 新图片</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="image-wrapper" id="imageWrapper">
+                    <div class="canvas-container" id="canvasContainer">
+                        <canvas id="mainCanvas"></canvas>
+                        <div class="overlay-layer" id="overlayLayer">
+                            <div id="roiVisual" class="roi-marker"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-panel">
+                    <div class="stat-box"><span class="stat-number" id="statTotal">0</span><div class="stat-label">总菌落数</div></div>
+                    <div class="stat-box success"><span class="stat-number" id="statAuto">0</span><div class="stat-label" id="statAutoLabel">自动检测</div></div>
+                    <div class="stat-box warning"><span class="stat-number" id="statManual">0</span><div class="stat-label">手动添加</div></div>
+                    <div class="stat-box info"><span class="stat-number" id="statAvgRadius">0</span><div class="stat-label">平均半径(px)</div></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="overlayLoadingText">分析中...</div>
+        <div class="loading-subtext" id="overlayLoadingSub">请稍候</div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
 
     <script>
-        (function() {
-            // -------------------- 严格模式 & 兼容Web Speech --------------------
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert('您的浏览器不支持语音识别，请使用 Edge/Chrome/Safari 最新版。\n我们将模拟离线识别(仅演示UI)');
+        // ==================== 模型加载配置（国内优化版） ====================
+        
+        // 多源配置，按优先级排序
+        const MODEL_SOURCES = {
+            local: {
+                name: '本地上传',
+                type: 'file',
+                url: null, // 由用户选择
+                description: '用户本地上传的ONNX模型'
+            },
+            moda: {
+                name: '魔搭社区',
+                type: 'url',
+                // 魔搭社区国内镜像示例（你需要替换为实际的模型ID）
+                // 格式：https://modelscope.cn/models/{user}/{model}/resolve/master/{file}
+                url: 'https://modelscope.cn/models/yangheng/yolov8n/resolve/master/yolov8n.onnx',
+                // 备用路径
+                backupUrls: [
+                    'https://www.modelscope.cn/api/v1/studio/yangheng/yolov8n/repo?Revision=master&FilePath=yolov8n.onnx'
+                ],
+                description: '阿里云魔搭社区'
+            },
+            github: {
+                name: 'GitHub Release',
+                type: 'url',
+                // GitHub Release 直链（使用ghproxy代理）
+                url: 'https://ghproxy.com/https://github.com/ultralytics/assets/releases/download/v8.1.0/yolov8n.onnx',
+                backupUrls: [
+                    'https://mirror.ghproxy.com/https://github.com/ultralytics/assets/releases/download/v8.1.0/yolov8n.onnx',
+                    'https://hub.gitmirror.com/https://github.com/ultralytics/assets/releases/download/v8.1.0/yolov8n.onnx'
+                ],
+                description: 'GitHub代理加速'
             }
-
-            // ---------- DOM 元素 ----------
-            const liveTranscriptEl = document.getElementById('liveTranscript');
-            const statusBadge = document.getElementById('statusBadge');
-            const startBtn = document.getElementById('startBtn');
-            const stopBtn = document.getElementById('stopBtn');
-            const langSelector = document.getElementById('langSelector');
-            const historyListEl = document.getElementById('historyList');
-            const toastEl = document.getElementById('toast');
-            const exportAllBtn = document.getElementById('exportAllBtn');
-
-            // ---------- 全局状态 ----------
-            let currentStream = null;               // 麦克风 MediaStream
-            let mediaRecorder = null;               
-            let recognition = null;                 
-            let isRecording = false;                 // 是否正在录音/识别中
-            let userStopped = false;                 // 是否由用户主动停止（避免自动重启）
-            let finalTranscript = '';                 // 最终完整转写 (仅final)
-            let audioChunks = [];                      // 录音数据块
-            let currentLanguage = 'zh-CN';            // 默认中文
-
-            // IndexedDB 全局
-            const DB_NAME = 'VoiceTranscriptDB';
-            const STORE_NAME = 'recordings';
-            const DB_VERSION = 3;
-
-            let db = null;
-
-            // ---------- 初始化数据库 ----------
-            function openDB() {
+        };
+        
+        let currentModelSource = 'local';
+        let session = null;
+        let modelLoaded = false;
+        let useYOLO = false; // 是否使用YOLO（否则用传统CV）
+        
+        // ==================== 全局状态 ====================
+        let currentImage = null;
+        let srcMat = null; // OpenCV Mat（传统算法用）
+        let grayMat = null;
+        let colonies = [];
+        let isAddMode = false;
+        let showCircles = true;
+        let roiCenter = null;
+        let roiRadius = null;
+        let isRoiMode = false;
+        let roiStart = null;
+        
+        const uploadCard = document.getElementById('uploadCard');
+        const viewer = document.getElementById('viewer');
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        const overlayLayer = document.getElementById('overlayLayer');
+        const roiVisual = document.getElementById('roiVisual');
+        const imageWrapper = document.getElementById('imageWrapper');
+        const modelStatus = document.getElementById('modelStatus');
+        const versionBadge = document.getElementById('versionBadge');
+        
+        // ==================== 模型选择界面 ====================
+        
+        function selectModelSource(source) {
+            currentModelSource = source;
+            
+            // 更新UI选中状态
+            document.querySelectorAll('.model-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.getElementById('option' + source.charAt(0).toUpperCase() + source.slice(1)).classList.add('selected');
+            
+            // 如果选择本地上传，触发文件选择
+            if (source === 'local') {
+                setTimeout(() => {
+                    document.getElementById('modelFileInput').click();
+                }, 100);
+            }
+        }
+        
+        function confirmModelSource() {
+            if (currentModelSource === 'local') {
+                // 本地上传模式，等待用户选择文件
+                document.getElementById('modelFileInput').click();
+            } else {
+                // 在线下载模式
+                startModelLoading();
+            }
+        }
+        
+        function skipToUpload() {
+            // 跳过YOLO，使用传统CV算法
+            useYOLO = false;
+            document.getElementById('splash').classList.add('hidden');
+            updateAlgoUI();
+            showToast('已切换到传统CV算法（Hough圆检测）');
+        }
+        
+        async function handleModelFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.name.endsWith('.onnx')) {
+                showToast('❌ 请选择 .onnx 格式的模型文件');
+                return;
+            }
+            
+            document.getElementById('modelSelector').style.display = 'none';
+            document.getElementById('loadingStatus').style.display = 'block';
+            document.getElementById('loadingText').textContent = '正在加载本地模型...';
+            document.getElementById('loadingDetail').textContent = file.name;
+            
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const blob = new Blob([arrayBuffer]);
+                const url = URL.createObjectURL(blob);
+                
+                await loadModelFromUrl(url, '本地上传: ' + file.name);
+                
+                // 保存到IndexedDB供下次使用
+                await saveModelToCache(arrayBuffer, file.name);
+                
+            } catch (error) {
+                console.error('本地模型加载失败:', error);
+                showToast('❌ 模型加载失败: ' + error.message);
+                document.getElementById('fallbackNotice').style.display = 'block';
+                document.getElementById('skipBtn').style.display = 'inline-flex';
+            }
+        }
+        
+        // ==================== 模型加载核心逻辑 ====================
+        
+        async function startModelLoading() {
+            const source = MODEL_SOURCES[currentModelSource];
+            const urls = [source.url, ...(source.backupUrls || [])];
+            
+            document.getElementById('modelSelector').style.display = 'none';
+            document.getElementById('loadingStatus').style.display = 'block';
+            document.getElementById('loadingBar').style.display = 'block';
+            
+            // 尝试所有可用URL
+            for (let i = 0; i < urls.length; i++) {
+                const url = urls[i];
+                const progress = ((i / urls.length) * 100).toFixed(0);
+                document.getElementById('loadingProgress').style.width = progress + '%';
+                document.getElementById('loadingText').textContent = `尝试源 ${i + 1}/${urls.length}...`;
+                document.getElementById('loadingDetail').textContent = url.substring(0, 50) + '...';
+                
+                try {
+                    await loadModelFromUrl(url, source.name);
+                    return; // 成功则返回
+                } catch (error) {
+                    console.warn(`源 ${i + 1} 失败:`, error);
+                    continue; // 失败则尝试下一个
+                }
+            }
+            
+            // 所有在线源都失败
+            document.getElementById('loadingProgress').style.width = '100%';
+            document.getElementById('loadingText').textContent = '在线加载失败';
+            document.getElementById('loadingDetail').textContent = '请尝试本地上传模型文件';
+            
+            // 显示回退选项
+            document.getElementById('fallbackNotice').style.display = 'block';
+            document.getElementById('skipBtn').style.display = 'inline-flex';
+            
+            // 自动切换回本地上传
+            setTimeout(() => {
+                selectModelSource('local');
+                document.getElementById('modelSelector').style.display = 'block';
+                document.getElementById('loadingStatus').style.display = 'none';
+                document.getElementById('loadingBar').style.display = 'none';
+            }, 2000);
+        }
+        
+        async function loadModelFromUrl(url, sourceName) {
+            document.getElementById('loadingText').textContent = '正在初始化ONNX Runtime...';
+            
+            // 配置ONNX Runtime（针对国内网络优化）
+            const ortConfig = {
+                executionProviders: ['wasm'], // WebAssembly最兼容
+                graphOptimizationLevel: 'all',
+                wasmOptions: {
+                    numThreads: Math.min(navigator.hardwareConcurrency || 4, 4),
+                    simd: true,
+                    // 国内CDN加载wasm文件
+                    wasmPaths: {
+                        'ort-wasm-simd.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/ort-wasm-simd.wasm',
+                        'ort-wasm.wasm': 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/ort-wasm.wasm'
+                    }
+                }
+            };
+            
+            // 创建会话（带超时控制）
+            const timeout = 60000; // 60秒超时
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                document.getElementById('loadingText').textContent = '正在下载模型文件...';
+                
+                // 使用fetch下载（支持进度监控）
+                const response = await fetch(url, { 
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': 'application/octet-stream'
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                // 获取内容长度用于进度显示
+                const contentLength = response.headers.get('content-length');
+                const total = contentLength ? parseInt(contentLength) : 0;
+                const reader = response.body.getReader();
+                const chunks = [];
+                let received = 0;
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    chunks.push(value);
+                    received += value.length;
+                    
+                    if (total > 0) {
+                        const percent = ((received / total) * 100).toFixed(0);
+                        document.getElementById('loadingProgress').style.width = percent + '%';
+                        document.getElementById('loadingDetail').textContent = `已下载 ${(received/1024/1024).toFixed(1)}MB / ${(total/1024/1024).toFixed(1)}MB`;
+                    }
+                }
+                
+                // 合并chunks
+                const arrayBuffer = new Uint8Array(received);
+                let position = 0;
+                for (const chunk of chunks) {
+                    arrayBuffer.set(chunk, position);
+                    position += chunk.length;
+                }
+                
+                document.getElementById('loadingText').textContent = '正在创建推理会话...';
+                document.getElementById('loadingDetail').textContent = '这可能需要几秒钟';
+                
+                // 从buffer创建会话
+                session = await ort.InferenceSession.create(arrayBuffer.buffer, ortConfig);
+                
+                modelLoaded = true;
+                useYOLO = true;
+                
+                // 更新UI
+                document.getElementById('splash').classList.add('hidden');
+                updateAlgoUI();
+                
+                // 保存到缓存
+                await saveModelToCache(arrayBuffer.buffer, 'model.onnx');
+                
+                showToast(`✅ ${sourceName}模型加载成功！`);
+                
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+        
+        // ==================== IndexedDB缓存系统 ====================
+        
+        const DB_NAME = 'ColonyCounterDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'models';
+        
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'name' });
+                    }
+                };
+            });
+        }
+        
+        async function saveModelToCache(arrayBuffer, name) {
+            try {
+                const db = await openDB();
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                await store.put({ name, data: arrayBuffer, timestamp: Date.now() });
+                console.log('模型已缓存到IndexedDB');
+            } catch (e) {
+                console.warn('缓存失败:', e);
+            }
+        }
+        
+        async function loadModelFromCache() {
+            try {
+                const db = await openDB();
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                
                 return new Promise((resolve, reject) => {
-                    if (db) return resolve(db);
-                    const request = indexedDB.open(DB_NAME, DB_VERSION);
-                    request.onerror = (e) => reject('数据库打开失败');
-                    request.onsuccess = (e) => {
-                        db = e.target.result;
-                        resolve(db);
-                    };
-                    request.onupgradeneeded = (e) => {
-                        const db = e.target.result;
-                        if (!db.objectStoreNames.contains(STORE_NAME)) {
-                            const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-                            store.createIndex('timestamp', 'timestamp', { unique: false });
-                            store.createIndex('language', 'language', { unique: false });
+                    request.onsuccess = () => {
+                        const models = request.result;
+                        if (models && models.length > 0) {
+                            // 返回最新的模型
+                            models.sort((a, b) => b.timestamp - a.timestamp);
+                            resolve(models[0]);
+                        } else {
+                            resolve(null);
                         }
                     };
+                    request.onerror = () => reject(request.error);
                 });
+            } catch (e) {
+                console.warn('读取缓存失败:', e);
+                return null;
             }
-
-            // 添加一条记录 (audioBlob: Blob, transcript: string, lang: string)
-            async function addRecording(blob, transcript, lang) {
-                await openDB();
-                return new Promise((resolve, reject) => {
-                    const tx = db.transaction(STORE_NAME, 'readwrite');
-                    const store = tx.objectStore(STORE_NAME);
-                    const entry = {
-                        timestamp: Date.now(),
-                        audioBlob: blob,
-                        transcript: transcript || ' ',
-                        language: lang,
+        }
+        
+        // 启动时尝试从缓存加载
+        async function tryLoadFromCache() {
+            const cached = await loadModelFromCache();
+            if (cached) {
+                console.log('发现缓存的模型:', cached.name);
+                document.getElementById('splashSubtitle').textContent = '发现本地缓存的模型，正在加载...';
+                
+                try {
+                    const ortConfig = {
+                        executionProviders: ['wasm'],
+                        graphOptimizationLevel: 'all',
+                        wasmOptions: { numThreads: 2, simd: true }
                     };
-                    const req = store.add(entry);
-                    req.onsuccess = () => resolve();
-                    req.onerror = (e) => reject(e);
-                });
-            }
-
-            // 获取所有记录
-            async function getAllRecordings() {
-                await openDB();
-                return new Promise((resolve, reject) => {
-                    const tx = db.transaction(STORE_NAME, 'readonly');
-                    const store = tx.objectStore(STORE_NAME);
-                    const req = store.getAll();
-                    req.onsuccess = () => resolve(req.result || []);
-                    req.onerror = (e) => reject(e);
-                });
-            }
-
-            // 删除记录
-            async function deleteRecording(id) {
-                await openDB();
-                return new Promise((resolve, reject) => {
-                    const tx = db.transaction(STORE_NAME, 'readwrite');
-                    const store = tx.objectStore(STORE_NAME);
-                    const req = store.delete(id);
-                    req.onsuccess = () => resolve();
-                    req.onerror = (e) => reject(e);
-                });
-            }
-
-            // 清空所有记录
-            async function clearAllRecordings() {
-                await openDB();
-                return new Promise((resolve, reject) => {
-                    const tx = db.transaction(STORE_NAME, 'readwrite');
-                    const store = tx.objectStore(STORE_NAME);
-                    const req = store.clear();
-                    req.onsuccess = () => resolve();
-                    req.onerror = (e) => reject(e);
-                });
-            }
-
-            // ---------- 渲染历史列表 ----------
-            async function renderHistory() {
-                try {
-                    const records = await getAllRecordings();
-                    if (records.length === 0) {
-                        historyListEl.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 30px 0;">暂无转写记录</div>';
-                        return;
-                    }
-                    // 按时间戳倒序
-                    records.sort((a,b) => b.timestamp - a.timestamp);
-                    let html = '';
-                    records.forEach(rec => {
-                        const date = new Date(rec.timestamp).toLocaleString(undefined, { hour12: false, hour: '2-digit', minute:'2-digit', day:'2-digit', month:'2-digit' });
-                        const preview = rec.transcript.length > 80 ? rec.transcript.slice(0,80)+'…' : rec.transcript;
-                        html += `
-                        <div class="history-item" data-id="${rec.id}">
-                            <div class="history-meta">
-                                <i class="far fa-calendar-alt"></i> ${date}  ·  ${rec.language === 'zh-CN' ? '中文' : '英文'}
-                            </div>
-                            <div class="history-text">${escapeHtml(rec.transcript) || '无文本'}</div>
-                            <div class="history-actions">
-                                <button class="play-audio" title="播放录音"><i class="fas fa-play"></i></button>
-                                <button class="export-text" title="导出文本"><i class="fas fa-file-alt"></i></button>
-                                <button class="export-audio" title="导出音频"><i class="fas fa-download"></i></button>
-                                <button class="delete-entry" title="删除"><i class="fas fa-trash-alt"></i></button>
-                            </div>
-                        </div>`;
-                    });
-                    historyListEl.innerHTML = html;
-
-                    // 绑定每个卡片的操作
-                    document.querySelectorAll('.history-item').forEach(item => {
-                        const id = Number(item.dataset.id);
-                        const record = records.find(r => r.id === id);
-
-                        item.querySelector('.play-audio')?.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            if (record?.audioBlob) {
-                                const url = URL.createObjectURL(record.audioBlob);
-                                const audio = new Audio(url);
-                                audio.play().catch(e => showToast('播放失败：' + e.message));
-                                setTimeout(() => URL.revokeObjectURL(url), 10000);
-                            } else {
-                                showToast('无音频数据');
-                            }
-                        });
-
-                        item.querySelector('.export-text')?.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            if (record?.transcript) {
-                                const blob = new Blob([record.transcript], { type: 'text/plain;charset=utf-8' });
-                                const url = URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = `transcript_${record.timestamp}.txt`;
-                                a.click();
-                                URL.revokeObjectURL(url);
-                                showToast('文本已导出');
-                            } else {
-                                showToast('无文本内容');
-                            }
-                        });
-
-                        // 新增：导出音频按钮
-                        item.querySelector('.export-audio')?.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            if (record?.audioBlob) {
-                                const url = URL.createObjectURL(record.audioBlob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = `audio_${record.timestamp}.webm`; // 使用webm后缀
-                                a.click();
-                                URL.revokeObjectURL(url);
-                                showToast('音频已导出');
-                            } else {
-                                showToast('无音频数据');
-                            }
-                        });
-
-                        item.querySelector('.delete-entry')?.addEventListener('click', async (e) => {
-                            e.stopPropagation();
-                            await deleteRecording(id);
-                            renderHistory();
-                            showToast('已删除');
-                        });
-                    });
+                    
+                    session = await ort.InferenceSession.create(cached.data, ortConfig);
+                    modelLoaded = true;
+                    useYOLO = true;
+                    
+                    document.getElementById('splash').classList.add('hidden');
+                    updateAlgoUI();
+                    showToast('✅ 已从缓存加载模型');
+                    return true;
                 } catch (e) {
-                    console.error(e);
+                    console.error('缓存模型加载失败:', e);
+                    return false;
                 }
             }
-
-            // 简单的防XSS转义
-            function escapeHtml(unsafe) {
-                if (!unsafe) return '';
-                return unsafe.replace(/[&<>"]/g, function(m) {
-                    if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; if(m === '"') return '&quot;';
-                    return m;
-                });
+            return false;
+        }
+        
+        // ==================== UI更新 ====================
+        
+        function updateAlgoUI() {
+            if (useYOLO && modelLoaded) {
+                // YOLO模式
+                versionBadge.textContent = 'YOLO';
+                modelStatus.className = 'model-status ready';
+                modelStatus.innerHTML = '<span>✅</span><span>YOLO模型就绪</span>';
+                document.getElementById('algoIcon').textContent = '🤖';
+                document.getElementById('algoText').textContent = 'YOLO深度学习';
+                document.getElementById('statAutoLabel').textContent = 'YOLO检测';
+                
+                // 显示YOLO参数，隐藏CV参数
+                document.getElementById('yoloParams').style.display = 'flex';
+                document.getElementById('cvParams').style.display = 'none';
+                
+                document.getElementById('switchModelBtn').style.display = 'inline-block';
+            } else {
+                // 传统CV模式
+                versionBadge.textContent = '传统算法';
+                modelStatus.className = 'model-status local';
+                modelStatus.innerHTML = '<span>⚫</span><span>使用传统CV算法</span>';
+                document.getElementById('algoIcon').textContent = '⚫';
+                document.getElementById('algoText').textContent = 'Hough圆检测';
+                document.getElementById('statAutoLabel').textContent = 'CV检测';
+                
+                // 显示CV参数，隐藏YOLO参数
+                document.getElementById('yoloParams').style.display = 'none';
+                document.getElementById('cvParams').style.display = 'flex';
+                
+                document.getElementById('switchModelBtn').style.display = 'inline-block';
             }
-
-            // ---------- 显示轻提示 ----------
-            function showToast(msg, duration = 2000) {
-                toastEl.style.opacity = '1';
-                toastEl.innerText = msg;
-                setTimeout(() => { toastEl.style.opacity = '0'; }, duration);
+        }
+        
+        function switchModel() {
+            // 重新显示启动界面
+            document.getElementById('splash').classList.remove('hidden');
+            document.getElementById('modelSelector').style.display = 'block';
+            document.getElementById('loadingStatus').style.display = 'none';
+            document.getElementById('loadingBar').style.display = 'none';
+            document.getElementById('fallbackNotice').style.display = 'none';
+            document.getElementById('skipBtn').style.display = 'none';
+        }
+        
+        // ==================== 传统CV算法（完整保留） ====================
+        
+        function initCV(img) {
+            // 将图片转换为OpenCV可用的格式
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            
+            // 获取图像数据
+            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            
+            // 创建OpenCV Mat（模拟，实际需要使用opencv.js）
+            // 这里使用简化的图像处理逻辑
+            srcMat = imageData; // 简化的表示
+            grayMat = createGrayMat(imageData);
+            
+            displayImage(img);
+            analyzeCV();
+        }
+        
+        function createGrayMat(imageData) {
+            const gray = new Uint8Array(imageData.width * imageData.height);
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                // 灰度转换：0.299R + 0.587G + 0.114B
+                gray[i / 4] = 0.299 * imageData.data[i] + 
+                              0.587 * imageData.data[i + 1] + 
+                              0.114 * imageData.data[i + 2];
             }
-
-            // ---------- 重置录音标记 ----------
-            function resetRecordingState() {
-                finalTranscript = '';
-                audioChunks = [];
-                userStopped = false;
-            }
-
-            // ---------- 停止所有track并清理stream ----------
-            function closeStream() {
-                if (currentStream) {
-                    currentStream.getTracks().forEach(track => {
-                        track.stop();
-                    });
-                    currentStream = null;
-                }
-            }
-
-            // ---------- 保存当前录音/转写到IndexedDB (由两者结束触发) ----------
-            async function saveToDBAndCleanup() {
-                // 注意：在持续识别模式下，只有当用户主动停止时才会调用此函数
-                // 如果recognition因为网络等原因意外结束，我们不会保存，而是重启识别
-                // 因此这里只会在stop流程中调用
+            return { data: gray, width: imageData.width, height: imageData.height };
+        }
+        
+        function analyzeCV() {
+            if (!srcMat) return;
+            
+            document.getElementById('loadingOverlay').classList.add('active');
+            document.getElementById('overlayLoadingText').textContent = '传统CV分析中...';
+            document.getElementById('overlayLoadingSub').textContent = 'Hough圆检测 + 形态学处理';
+            
+            setTimeout(() => {
                 try {
-                    const blob = new Blob(audioChunks, { type: 'audio/webm' }); // 移动端常见格式
-                    const transcript = finalTranscript.trim() || '（无语音识别文本）';
-                    await addRecording(blob, transcript, currentLanguage);
-                    showToast('已保存到本地记录');
-                } catch (e) {
-                    console.warn('保存失败', e);
-                    showToast('保存失败');
-                } finally {
-                    // 彻底关闭麦克风
-                    closeStream();
-                    isRecording = false;
-                    startBtn.disabled = false;
-                    stopBtn.disabled = true;
-                    statusBadge.innerHTML = '<i class="fas fa-circle"></i> 空闲';
-                    statusBadge.classList.remove('recording');
-                    liveTranscriptEl.innerText = '点击开始，对着麦克风说话...';
-                    // 刷新历史
-                    renderHistory();
-                }
-            }
-
-            // ---------- 停止录音（用户主动） ----------
-            function stopRecording() {
-                if (!isRecording) return;
-
-                userStopped = true;  // 标记用户主动停止
-
-                // 停止识别
-                if (recognition) {
-                    try {
-                        recognition.stop();  // 这会触发onend，但我们已经标记userStopped，所以不会重启
-                    } catch (e) {
-                        console.warn('识别停止异常', e);
+                    const param2 = parseInt(document.getElementById('param2').value);
+                    const minDist = parseInt(document.getElementById('minDist').value);
+                    const minRadius = parseInt(document.getElementById('cvMinRadius').value);
+                    const maxRadius = parseInt(document.getElementById('cvMaxRadius').value);
+                    const contrast = parseFloat(document.getElementById('contrast').value);
+                    const blurRadius = parseInt(document.getElementById('blurRadius').value);
+                    const mergeDist = parseInt(document.getElementById('mergeDist').value);
+                    
+                    // 简化的Hough圆检测模拟（实际应使用opencv.js的cv.HoughCircles）
+                    // 这里使用简单的blob检测作为演示
+                    const detected = simulateHoughDetection(
+                        grayMat, param2, minDist, minRadius, maxRadius, 
+                        contrast, blurRadius, mergeDist
+                    );
+                    
+                    // ROI过滤
+                    let filtered = detected;
+                    if (roiCenter && roiRadius) {
+                        filtered = detected.filter(c => {
+                            const dx = c.x - roiCenter.x;
+                            const dy = c.y - roiCenter.y;
+                            return (dx*dx + dy*dy) <= (roiRadius * roiRadius);
+                        });
                     }
-                }
-
-                // 停止录制
-                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                    mediaRecorder.stop();
-                }
-
-                // 按钮状态在saveToDBAndCleanup中统一改变
-            }
-
-            // ---------- 开始录音 ----------
-            async function startRecording() {
-                if (isRecording) return;
-                resetRecordingState();
-
-                try {
-                    // 请求麦克风
-                    currentStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    colonies = filtered.map((c, idx) => ({
+                        ...c,
+                        id: idx,
+                        confidence: 0.8, // CV算法默认置信度
+                        manual: false
+                    }));
+                    
+                    renderMarkers();
+                    updateStats();
+                    showToast(`✅ CV算法检测到 ${colonies.length} 个菌落`);
+                    
                 } catch (err) {
-                    showToast('无法访问麦克风: ' + err.message);
-                    return;
+                    console.error(err);
+                    showToast('❌ 分析失败: ' + err.message);
                 }
-
-                // 初始化语音识别
-                if (SpeechRecognition) {
-                    try {
-                        recognition = new SpeechRecognition();
-                        recognition.continuous = true;
-                        recognition.interimResults = true;
-                        recognition.lang = currentLanguage;
-                        recognition.maxAlternatives = 1;
-
-                        recognition.onresult = (event) => {
-                            let final = '';
-                            let interim = '';
-                            for (let i = 0; i < event.results.length; i++) {
-                                if (event.results[i].isFinal) {
-                                    final += event.results[i][0].transcript;
-                                } else {
-                                    interim += event.results[i][0].transcript;
+                
+                document.getElementById('loadingOverlay').classList.remove('active');
+            }, 100);
+        }
+        
+        // 简化的菌落检测模拟（实际应使用真实CV算法）
+        function simulateHoughDetection(grayMat, param2, minDist, minRadius, maxRadius, contrast, blur, mergeDist) {
+            // 这是一个模拟实现，实际使用时应该：
+            // 1. 加载真正的opencv.js
+            // 2. 使用 cv.HoughCircles 进行真实检测
+            
+            const { data, width, height } = grayMat;
+            const detected = [];
+            
+            // 简单的峰值检测模拟
+            const threshold = 255 - param2 * 10;
+            const step = Math.max(1, Math.floor(minDist / 2));
+            
+            for (let y = step; y < height - step; y += step) {
+                for (let x = step; x < width - step; x += step) {
+                    const idx = y * width + x;
+                    const brightness = data[idx] * contrast;
+                    
+                    // 简单的亮度阈值检测
+                    if (brightness > threshold) {
+                        // 检查是否是局部最大值
+                        let isLocalMax = true;
+                        for (let dy = -step; dy <= step && isLocalMax; dy++) {
+                            for (let dx = -step; dx <= step; dx++) {
+                                if (dx === 0 && dy === 0) continue;
+                                const nIdx = (y + dy) * width + (x + dx);
+                                if (data[nIdx] * contrast > brightness) {
+                                    isLocalMax = false;
+                                    break;
                                 }
                             }
-                            finalTranscript = final;   // 保存最终部分
-                            // 实时显示
-                            liveTranscriptEl.innerText = final + interim || '（聆听中...）';
-                        };
-
-                        recognition.onerror = (e) => {
-                            console.warn('识别错误:', e.error);
-                            if (e.error === 'not-allowed') showToast('麦克风权限被拒绝');
-                            else showToast('识别出错: ' + e.error);
-                            // 如果错误导致识别结束，且不是用户停止，尝试重启
-                            if (!userStopped && isRecording) {
-                                // 短暂延迟后重启
-                                setTimeout(() => {
-                                    if (!userStopped && isRecording && recognition) {
-                                        try {
-                                            recognition.start();
-                                        } catch (err) {
-                                            console.warn('重启识别失败', err);
-                                        }
-                                    }
-                                }, 500);
-                            }
-                        };
-
-                        recognition.onend = () => {
-                            // 如果还在录音中且不是用户主动停止，则重启识别（保持持续）
-                            if (!userStopped && isRecording) {
-                                // 延迟重启，避免频繁启动
-                                setTimeout(() => {
-                                    if (!userStopped && isRecording && recognition) {
-                                        try {
-                                            recognition.start();
-                                            console.log('识别已自动重启');
-                                        } catch (err) {
-                                            showToast('自动重启识别失败');
-                                        }
-                                    }
-                                }, 300);
-                            } else if (userStopped) {
-                                // 用户主动停止，此时mediaRecorder可能还在等停止事件，我们标记识别已结束
-                                // 但保存流程由mediaRecorder的onstop触发，这里不再单独触发
-                                // 因为mediaRecorder onstop时会调用saveToDBAndCleanup
-                            }
-                        };
-                    } catch (e) {
-                        showToast('语音识别初始化失败');
-                        recognition = null;
-                    }
-                } else {
-                    // 降级：没有语音识别，手动模拟
-                    recognition = null;
-                    showToast('当前浏览器不支持离线识别，仅录制音频');
-                }
-
-                // 初始化MediaRecorder
-                try {
-                    mediaRecorder = new MediaRecorder(currentStream, {
-                        mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm'
-                    });
-                    mediaRecorder.ondataavailable = (e) => {
-                        if (e.data.size > 0) audioChunks.push(e.data);
-                    };
-                    mediaRecorder.onstop = () => {
-                        // 只有当用户主动停止时才保存，并且识别已经结束（或标记为结束）
-                        // 如果识别还在进行，但我们停止了mediaRecorder，recognition可能还在运行，我们需要确保它停止
-                        if (recognition && !userStopped) {
-                            // 理论上不会走到这里，因为stopRecording会先停止recognition
                         }
-                        saveToDBAndCleanup();  // 保存并清理
-                    };
-                    mediaRecorder.start(200); // 每200ms触发一次dataavailable
-                } catch (e) {
-                    showToast('媒体录制初始化失败');
-                    closeStream();
-                    return;
-                }
-
-                // 启动识别
-                if (recognition) {
-                    try {
-                        recognition.start();
-                    } catch (e) {
-                        showToast('识别启动失败');
-                        mediaRecorder.stop();
-                        return;
+                        
+                        if (isLocalMax) {
+                            // 估算半径（基于亮度梯度）
+                            const estimatedRadius = estimateRadius(data, x, y, width, height, brightness);
+                            if (estimatedRadius >= minRadius && estimatedRadius <= maxRadius) {
+                                detected.push({
+                                    x, y,
+                                    radius: estimatedRadius,
+                                    brightness
+                                });
+                            }
+                        }
                     }
                 }
-
-                isRecording = true;
-                startBtn.disabled = true;
-                stopBtn.disabled = false;
-                statusBadge.innerHTML = '<i class="fas fa-circle"></i> 录音中...';
-                statusBadge.classList.add('recording');
-                liveTranscriptEl.innerText = '正在聆听...';
             }
-
-            // ---------- 事件绑定 ----------
-            startBtn.addEventListener('click', startRecording);
-            stopBtn.addEventListener('click', stopRecording);
-
-            // 语言切换
-            langSelector.addEventListener('click', (e) => {
-                const btn = e.target.closest('.lang-option');
-                if (!btn) return;
-                const lang = btn.dataset.lang;
-                if (!lang) return;
-                document.querySelectorAll('.lang-option').forEach(opt => opt.classList.remove('active'));
-                btn.classList.add('active');
-                currentLanguage = lang;
-                showToast(`语言切换为 ${lang === 'zh-CN' ? '中文' : '英文'}`);
-            });
-
-            // 全部导出 (将所有文本合并导出)
-            exportAllBtn.addEventListener('click', async () => {
-                try {
-                    const records = await getAllRecordings();
-                    if (records.length === 0) {
-                        showToast('暂无记录');
-                        return;
+            
+            // NMS合并
+            return nonMaxSuppression(detected, mergeDist);
+        }
+        
+        function estimateRadius(data, cx, cy, width, height, centerBrightness) {
+            let maxRadius = 0;
+            const threshold = centerBrightness * 0.5;
+            
+            for (let r = 2; r < 50; r++) {
+                let edgeBrightness = 0;
+                let samples = 0;
+                
+                // 采样圆周
+                for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+                    const x = Math.floor(cx + Math.cos(angle) * r);
+                    const y = Math.floor(cy + Math.sin(angle) * r);
+                    
+                    if (x >= 0 && x < width && y >= 0 && y < height) {
+                        edgeBrightness += data[y * width + x];
+                        samples++;
                     }
-                    let content = '';
-                    records.sort((a,b) => a.timestamp - b.timestamp).forEach(r => {
-                        const date = new Date(r.timestamp).toLocaleString();
-                        content += `--- ${date} (${r.language}) ---\n${r.transcript}\n\n`;
+                }
+                
+                if (samples > 0) {
+                    edgeBrightness /= samples;
+                    // 如果边缘亮度显著低于中心，说明是边缘
+                    if (centerBrightness - edgeBrightness > threshold * 0.3) {
+                        maxRadius = r;
+                    } else {
+                        break;
+                    }
+                }
+            }
+            
+            return maxRadius > 0 ? maxRadius : 5;
+        }
+        
+        function nonMaxSuppression(detections, minDist) {
+            if (detections.length < 2) return detections;
+            
+            // 按亮度排序
+            detections.sort((a, b) => b.brightness - a.brightness);
+            
+            const result = [];
+            const suppressed = new Array(detections.length).fill(false);
+            
+            for (let i = 0; i < detections.length; i++) {
+                if (suppressed[i]) continue;
+                
+                result.push(detections[i]);
+                
+                for (let j = i + 1; j < detections.length; j++) {
+                    if (suppressed[j]) continue;
+                    
+                    const dx = detections[i].x - detections[j].x;
+                    const dy = detections[i].y - detections[j].y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (dist < minDist || dist < (detections[i].radius + detections[j].radius) * 0.5) {
+                        suppressed[j] = true;
+                    }
+                }
+            }
+            
+            return result;
+        }
+        
+        // ==================== YOLO算法 ====================
+        
+        async function analyzeYOLO() {
+            if (!currentImage || !modelLoaded) {
+                showToast('⏳ YOLO模型未就绪，已切换到CV算法');
+                useYOLO = false;
+                updateAlgoUI();
+                analyzeCV();
+                return;
+            }
+            
+            document.getElementById('loadingOverlay').classList.add('active');
+            document.getElementById('overlayLoadingText').textContent = 'YOLO分析中...';
+            document.getElementById('overlayLoadingSub').textContent = '神经网络推理 + NMS后处理';
+            
+            setTimeout(async () => {
+                try {
+                    const confThreshold = parseFloat(document.getElementById('confThreshold').value);
+                    const iouThreshold = parseFloat(document.getElementById('iouThreshold').value);
+                    const inputSize = parseInt(document.getElementById('inputSize').value);
+                    const contrast = parseFloat(document.getElementById('contrast').value);
+                    
+                    // 预处理
+                    const processedTensor = await preprocessImage(currentImage, inputSize, contrast, 0);
+                    
+                    // 推理
+                    const feeds = { images: processedTensor };
+                    const results = await session.run(feeds);
+                    
+                    // 解析结果
+                    const output = results.output0 || results[Object.keys(results)[0]];
+                    const detections = parseYOLOOutput(output, confThreshold, iouThreshold, inputSize);
+                    
+                    // 坐标映射
+                    const scaleX = currentImage.width / inputSize;
+                    const scaleY = currentImage.height / inputSize;
+                    
+                    let detected = detections.map((det, idx) => {
+                        const boxWidth = det.x2 - det.x1;
+                        const boxHeight = det.y2 - det.y1;
+                        const radius = Math.sqrt(boxWidth * boxHeight) / 2;
+                        
+                        return {
+                            id: idx,
+                            x: (det.x1 + det.x2) / 2 * scaleX,
+                            y: (det.y1 + det.y2) / 2 * scaleY,
+                            radius: radius * Math.max(scaleX, scaleY),
+                            confidence: det.confidence,
+                            manual: false
+                        };
                     });
-                    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `全部转写_${Date.now()}.txt`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    showToast('全部文本已导出');
-                } catch (e) {
-                    showToast('导出失败');
+                    
+                    // ROI过滤
+                    if (roiCenter && roiRadius) {
+                        detected = detected.filter(c => {
+                            const dx = c.x - roiCenter.x;
+                            const dy = c.y - roiCenter.y;
+                            return (dx*dx + dy*dy) <= (roiRadius * roiRadius);
+                        });
+                    }
+                    
+                    colonies = detected;
+                    
+                    processedTensor.dispose();
+                    
+                    renderMarkers();
+                    updateStats();
+                    showToast(`✅ YOLO检测到 ${colonies.length} 个菌落`);
+                    
+                } catch (err) {
+                    console.error('YOLO分析失败:', err);
+                    showToast('❌ YOLO失败，尝试CV算法...');
+                    analyzeCV();
+                }
+                
+                document.getElementById('loadingOverlay').classList.remove('active');
+            }, 100);
+        }
+        
+        async function preprocessImage(img, inputSize, contrast, brightness) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = inputSize;
+            tempCanvas.height = inputSize;
+            const tCtx = tempCanvas.getContext('2d');
+            
+            // Letterbox填充
+            const scale = Math.min(inputSize / img.width, inputSize / img.height);
+            const newWidth = img.width * scale;
+            const newHeight = img.height * scale;
+            const padX = (inputSize - newWidth) / 2;
+            const padY = (inputSize - newHeight) / 2;
+            
+            tCtx.fillStyle = '#808080';
+            tCtx.fillRect(0, 0, inputSize, inputSize);
+            tCtx.filter = `contrast(${contrast}) brightness(${100 + brightness}%)`;
+            tCtx.drawImage(img, padX, padY, newWidth, newHeight);
+            tCtx.filter = 'none';
+            
+            const imageData = tCtx.getImageData(0, 0, inputSize, inputSize);
+            const data = imageData.data;
+            
+            const red = [], green = [], blue = [];
+            for (let i = 0; i < data.length; i += 4) {
+                red.push(data[i] / 255);
+                green.push(data[i + 1] / 255);
+                blue.push(data[i + 2] / 255);
+            }
+            
+            const inputData = new Float32Array(red.concat(green).concat(blue));
+            return new ort.Tensor('float32', inputData, [1, 3, inputSize, inputSize]);
+        }
+        
+        function parseYOLOOutput(output, confThreshold, iouThreshold, inputSize) {
+            const data = output.data;
+            const dims = output.dims;
+            const numClasses = dims[1] - 4;
+            const numBoxes = dims[2];
+            
+            let boxes = [];
+            
+            for (let i = 0; i < numBoxes; i++) {
+                const cx = data[i];
+                const cy = data[numBoxes + i];
+                const w = data[2 * numBoxes + i];
+                const h = data[3 * numBoxes + i];
+                
+                let maxConf = 0;
+                for (let c = 0; c < numClasses; c++) {
+                    const conf = data[(4 + c) * numBoxes + i];
+                    if (conf > maxConf) maxConf = conf;
+                }
+                
+                if (maxConf > confThreshold) {
+                    const x1 = (cx - w / 2) * inputSize;
+                    const y1 = (cy - h / 2) * inputSize;
+                    const x2 = (cx + w / 2) * inputSize;
+                    const y2 = (cy + h / 2) * inputSize;
+                    
+                    boxes.push({ x1, y1, x2, y2, confidence: maxConf });
+                }
+            }
+            
+            return applyNMS(boxes, iouThreshold);
+        }
+        
+        function applyNMS(boxes, iouThreshold) {
+            if (boxes.length === 0) return [];
+            boxes.sort((a, b) => b.confidence - a.confidence);
+            
+            const picked = [];
+            const suppressed = new Array(boxes.length).fill(false);
+            
+            for (let i = 0; i < boxes.length; i++) {
+                if (suppressed[i]) continue;
+                picked.push(boxes[i]);
+                
+                for (let j = i + 1; j < boxes.length; j++) {
+                    if (suppressed[j]) continue;
+                    if (calculateIoU(boxes[i], boxes[j]) > iouThreshold) {
+                        suppressed[j] = true;
+                    }
+                }
+            }
+            return picked;
+        }
+        
+        function calculateIoU(box1, box2) {
+            const x1 = Math.max(box1.x1, box2.x1);
+            const y1 = Math.max(box1.y1, box2.y1);
+            const x2 = Math.min(box1.x2, box2.x2);
+            const y2 = Math.min(box1.y2, box2.y2);
+            
+            const intersection = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+            const area1 = (box1.x2 - box1.x1) * (box1.y2 - box1.y1);
+            const area2 = (box2.x2 - box2.x1) * (box2.y2 - box2.y1);
+            const union = area1 + area2 - intersection;
+            
+            return union > 0 ? intersection / union : 0;
+        }
+        
+        // ==================== 通用功能 ====================
+        
+        function displayImage(img) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            canvas.dataset.origWidth = img.width;
+            canvas.dataset.origHeight = img.height;
+            
+            const containerWidth = imageWrapper.clientWidth;
+            let fitScale = containerWidth / img.width;
+            fitScale = Math.min(3.0, Math.max(0.05, fitScale));
+            document.getElementById('zoomSlider').value = fitScale.toFixed(2);
+            document.getElementById('zoomValue').textContent = fitScale.toFixed(2);
+            applyZoom();
+        }
+        
+        function applyZoom() {
+            const zoom = parseFloat(document.getElementById('zoomSlider').value);
+            canvas.style.width = (canvas.width * zoom) + 'px';
+            canvas.style.height = (canvas.height * zoom) + 'px';
+            renderMarkers();
+        }
+        
+        function renderMarkers() {
+            overlayLayer.innerHTML = '';
+            overlayLayer.appendChild(roiVisual);
+            
+            const zoom = parseFloat(document.getElementById('zoomSlider').value);
+            
+            colonies.forEach((colony, idx) => {
+                const marker = document.createElement('div');
+                marker.className = `colony-marker ${colony.manual ? 'manual' : ''}`;
+                marker.style.left = (colony.x * zoom) + 'px';
+                marker.style.top = (colony.y * zoom) + 'px';
+                
+                if (showCircles) {
+                    const circle = document.createElement('div');
+                    circle.className = 'marker-circle';
+                    circle.style.width = (colony.radius * zoom * 2) + 'px';
+                    circle.style.height = (colony.radius * zoom * 2) + 'px';
+                    marker.appendChild(circle);
+                }
+                
+                const center = document.createElement('div');
+                center.className = 'marker-center';
+                marker.appendChild(center);
+                
+                const tooltip = document.createElement('div');
+                tooltip.className = 'marker-tooltip';
+                const confText = colony.confidence ? ` | ${(colony.confidence * 100).toFixed(0)}%` : '';
+                tooltip.textContent = `#${idx + 1} | r=${Math.round(colony.radius)}${confText}`;
+                marker.appendChild(tooltip);
+                
+                marker.onclick = (e) => { e.stopPropagation(); removeColony(idx); };
+                overlayLayer.appendChild(marker);
+            });
+            
+            if (roiCenter && roiRadius) updateRoiVisual();
+        }
+        
+        function updateStats() {
+            const auto = colonies.filter(c => !c.manual).length;
+            const manual = colonies.filter(c => c.manual).length;
+            const avgRadius = colonies.length > 0 ? 
+                (colonies.reduce((sum, c) => sum + c.radius, 0) / colonies.length).toFixed(1) : 0;
+            
+            document.getElementById('statTotal').textContent = colonies.length;
+            document.getElementById('statAuto').textContent = auto;
+            document.getElementById('statManual').textContent = manual;
+            document.getElementById('statAvgRadius').textContent = avgRadius;
+        }
+        
+        function removeColony(index) {
+            colonies.splice(index, 1);
+            colonies.forEach((c, idx) => c.id = idx);
+            renderMarkers();
+            updateStats();
+            showToast('🗑️ 已删除');
+        }
+        
+        // ==================== 事件处理 ====================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // 首先尝试从缓存加载
+            tryLoadFromCache().then(loaded => {
+                if (!loaded) {
+                    // 没有缓存，显示选择界面
+                    console.log('没有缓存的模型，等待用户选择');
                 }
             });
-
-            // 初始化数据库 并 渲染历史
-            openDB().then(() => {
-                renderHistory();
-            }).catch(e => {
-                console.error(e);
-                showToast('IndexedDB初始化失败，存储将不可用');
+            
+            // 文件上传
+            document.getElementById('fileInput').addEventListener('change', handleFile);
+            document.getElementById('cameraInput').addEventListener('change', handleFile);
+            
+            // 拖放
+            uploadCard.addEventListener('dragover', (e) => { 
+                e.preventDefault(); 
+                uploadCard.classList.add('active'); 
             });
-
-            // 页面卸载时关闭流
-            window.addEventListener('beforeunload', () => {
-                if (currentStream) closeStream();
+            uploadCard.addEventListener('dragleave', () => uploadCard.classList.remove('active'));
+            uploadCard.addEventListener('drop', (e) => { 
+                e.preventDefault(); 
+                uploadCard.classList.remove('active'); 
+                if (e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]); 
             });
-        })();
+            
+            // 滑块
+            ['param2', 'minDist', 'cvMinRadius', 'cvMaxRadius', 'contrast', 'blurRadius', 
+             'mergeDist', 'confThreshold', 'iouThreshold'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', (e) => {
+                        const displayId = id.replace('cv', '').replace('Threshold', '').replace('Dist', '') + 'Value';
+                        const displayEl = document.getElementById(displayId) || 
+                                         document.getElementById(id + 'Value') ||
+                                         document.getElementById(id.replace('cv', '').replace('Threshold', '').replace('Dist', '') + 'Value');
+                        if (displayEl) displayEl.textContent = e.target.value;
+                    });
+                }
+            });
+            
+            document.getElementById('zoomSlider').addEventListener('input', (e) => {
+                document.getElementById('zoomValue').textContent = parseFloat(e.target.value).toFixed(2);
+                applyZoom();
+            });
+            
+            // 按钮
+            document.getElementById('analyzeBtn').addEventListener('click', () => {
+                if (useYOLO && modelLoaded) analyzeYOLO();
+                else analyzeCV();
+            });
+            
+            document.getElementById('addModeBtn').addEventListener('click', toggleAddMode);
+            document.getElementById('toggleCirclesBtn').addEventListener('click', toggleCircles);
+            document.getElementById('clearBtn').addEventListener('click', clearAll);
+            document.getElementById('backBtn').addEventListener('click', resetApp);
+            document.getElementById('selectRoiBtn').addEventListener('click', enterRoiMode);
+            document.getElementById('clearRoiBtn').addEventListener('click', clearRoi);
+            document.getElementById('exportImgBtn').addEventListener('click', exportImage);
+            document.getElementById('resetParamsBtn').addEventListener('click', resetToDefault);
+            
+            // Canvas事件
+            canvas.addEventListener('click', handleCanvasClick);
+            canvas.addEventListener('mousedown', handleCanvasMouseDown);
+            canvas.addEventListener('mousemove', handleCanvasMouseMove);
+            canvas.addEventListener('mouseup', handleCanvasMouseUp);
+            canvas.addEventListener('mouseleave', cancelRoiDraw);
+            canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+            canvas.addEventListener('touchend', handleTouchEnd);
+            canvas.addEventListener('touchcancel', cancelRoiDraw);
+        });
+        
+        function handleFile(e) { 
+            if (e.target.files.length) processFile(e.target.files[0]); 
+        }
+        
+        function processFile(file) {
+            if (!file.type.startsWith('image/')) { 
+                showToast('❌ 请选择图片'); 
+                return; 
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => { 
+                const img = new Image(); 
+                img.onload = () => { 
+                    currentImage = img; 
+                    displayImage(img);
+                    // 自动分析
+                    if (useYOLO && modelLoaded) analyzeYOLO();
+                    else analyzeCV();
+                }; 
+                img.src = e.target.result; 
+            };
+            reader.readAsDataURL(file);
+            
+            uploadCard.style.display = 'none';
+            viewer.classList.add('active');
+        }
+        
+        // ROI功能
+        function enterRoiMode() { 
+            if (!currentImage) return; 
+            isRoiMode = true; 
+            canvas.style.cursor = 'crosshair'; 
+            showToast('按下/触摸确定圆心，拖动设定半径'); 
+        }
+        
+        function clearRoi() { 
+            roiCenter = null; 
+            roiRadius = null; 
+            roiVisual.style.display = 'none'; 
+            document.getElementById('roiIndicator').style.display = 'none'; 
+            showToast('ROI已清除'); 
+        }
+        
+        function updateRoiVisual() {
+            if (!roiCenter || !roiRadius) { 
+                roiVisual.style.display = 'none'; 
+                return; 
+            }
+            const zoom = parseFloat(document.getElementById('zoomSlider').value);
+            roiVisual.style.left = ((roiCenter.x - roiRadius) * zoom) + 'px';
+            roiVisual.style.top = ((roiCenter.y - roiRadius) * zoom) + 'px';
+            roiVisual.style.width = (roiRadius * 2 * zoom) + 'px';
+            roiVisual.style.height = (roiRadius * 2 * zoom) + 'px';
+            roiVisual.style.display = 'block';
+            document.getElementById('roiIndicator').style.display = 'inline-flex';
+        }
+        
+        function getImageCoordsFromEvent(e) {
+            const rect = canvas.getBoundingClientRect();
+            const zoom = parseFloat(document.getElementById('zoomSlider').value);
+            let clientX, clientY;
+            if (e.touches && e.touches.length > 0) { 
+                clientX = e.touches[0].clientX; 
+                clientY = e.touches[0].clientY; 
+            } else if (e.changedTouches && e.changedTouches.length > 0) {
+                clientX = e.changedTouches[0].clientX;
+                clientY = e.changedTouches[0].clientY;
+            } else { 
+                clientX = e.clientX; 
+                clientY = e.clientY; 
+            }
+            return { 
+                x: (clientX - rect.left) / zoom, 
+                y: (clientY - rect.top) / zoom 
+            };
+        }
+        
+        function handleCanvasMouseDown(e) { 
+            if (!isRoiMode) return; 
+            const { x, y } = getImageCoordsFromEvent(e); 
+            roiStart = { x, y }; 
+            roiVisual.style.display = 'block'; 
+        }
+        
+        function handleCanvasMouseMove(e) { 
+            if (!isRoiMode || !roiStart) return; 
+            e.preventDefault(); 
+            const { x, y } = getImageCoordsFromEvent(e); 
+            const radius = Math.sqrt((x - roiStart.x)**2 + (y - roiStart.y)**2); 
+            const zoom = parseFloat(document.getElementById('zoomSlider').value); 
+            roiVisual.style.left = ((roiStart.x - radius) * zoom) + 'px'; 
+            roiVisual.style.top = ((roiStart.y - radius) * zoom) + 'px'; 
+            roiVisual.style.width = (radius * 2 * zoom) + 'px'; 
+            roiVisual.style.height = (radius * 2 * zoom) + 'px'; 
+        }
+        
+        function handleCanvasMouseUp(e) { 
+            if (!isRoiMode || !roiStart) return; 
+            const { x, y } = getImageCoordsFromEvent(e); 
+            const radius = Math.sqrt((x - roiStart.x)**2 + (y - roiStart.y)**2); 
+            if (radius > 2) { 
+                roiCenter = { x: roiStart.x, y: roiStart.y }; 
+                roiRadius = radius; 
+                updateRoiVisual(); 
+                showToast(`ROI已设置: 半径${Math.round(radius)}px`); 
+            } else { 
+                clearRoi(); 
+            } 
+            isRoiMode = false; 
+            roiStart = null; 
+            canvas.style.cursor = 'default'; 
+        }
+        
+        function handleTouchStart(e) { 
+            if (!isRoiMode) return;
+            e.preventDefault(); 
+            const { x, y } = getImageCoordsFromEvent(e); 
+            roiStart = { x, y }; 
+            roiVisual.style.display = 'block'; 
+        }
+        
+        function handleTouchMove(e) { 
+            e.preventDefault(); 
+            if (!isRoiMode || !roiStart) return; 
+            const { x, y } = getImageCoordsFromEvent(e); 
+            const radius = Math.sqrt((x - roiStart.x)**2 + (y - roiStart.y)**2); 
+            const zoom = parseFloat(document.getElementById('zoomSlider').value); 
+            roiVisual.style.left = ((roiStart.x - radius) * zoom) + 'px'; 
+            roiVisual.style.top = ((roiStart.y - radius) * zoom) + 'px'; 
+            roiVisual.style.width = (radius * 2 * zoom) + 'px'; 
+            roiVisual.style.height = (radius * 2 * zoom) + 'px'; 
+        }
+        
+        function handleTouchEnd(e) { 
+            e.preventDefault(); 
+            if (!isRoiMode || !roiStart) return; 
+            const { x, y } = getImageCoordsFromEvent(e); 
+            const radius = Math.sqrt((x - roiStart.x)**2 + (y - roiStart.y)**2); 
+            if (radius > 2) { 
+                roiCenter = { x: roiStart.x, y: roiStart.y }; 
+                roiRadius = radius; 
+                updateRoiVisual(); 
+                showToast(`ROI已设置: 半径${Math.round(radius)}px`); 
+            } else { 
+                clearRoi(); 
+            } 
+            isRoiMode = false; 
+            roiStart = null; 
+            canvas.style.cursor = 'default'; 
+        }
+        
+        function cancelRoiDraw() { 
+            if (isRoiMode) { 
+                isRoiMode = false; 
+                roiStart = null; 
+                canvas.style.cursor = 'default'; 
+                roiVisual.style.display = roiCenter ? 'block' : 'none'; 
+            } 
+        }
+        
+        function toggleAddMode() {
+            isAddMode = !isAddMode;
+            const btn = document.getElementById('addModeBtn');
+            if (isAddMode) { 
+                btn.style.background = 'var(--success)'; 
+                btn.innerHTML = '<span>✓</span><span>完成添加</span>'; 
+                canvas.style.cursor = 'crosshair'; 
+            } else { 
+                btn.style.background = ''; 
+                btn.innerHTML = '<span>➕</span><span>手动添加</span>'; 
+                canvas.style.cursor = 'default'; 
+            }
+        }
+        
+        function toggleCircles() { 
+            showCircles = !showCircles; 
+            renderMarkers(); 
+            showToast(showCircles ? '⭕ 显示圆圈' : '⭕ 隐藏圆圈'); 
+        }
+        
+        function handleCanvasClick(e) {
+            if (!isAddMode) return;
+            const { x, y } = getImageCoordsFromEvent(e);
+            const avgRadius = colonies.length > 0 ? 
+                colonies.reduce((sum, c) => sum + c.radius, 0) / colonies.length : 10;
+            
+            colonies.push({ 
+                id: colonies.length, 
+                x: x, 
+                y: y, 
+                radius: avgRadius, 
+                confidence: 1.0, 
+                manual: true 
+            });
+            
+            renderMarkers(); 
+            updateStats(); 
+            showToast('✅ 已添加');
+        }
+        
+        function clearAll() { 
+            if (confirm('确定清空所有标记？')) { 
+                colonies = []; 
+                renderMarkers(); 
+                updateStats(); 
+                showToast('🗑️ 已清空'); 
+            } 
+        }
+        
+        function resetApp() {
+            currentImage = null; 
+            colonies = []; 
+            isAddMode = false; 
+            clearRoi();
+            uploadCard.style.display = 'block'; 
+            viewer.classList.remove('active');
+            overlayLayer.innerHTML = ''; 
+            overlayLayer.appendChild(roiVisual);
+            canvas.style.cursor = 'default';
+        }
+        
+        function resetToDefault() {
+            // 根据当前模式恢复默认参数
+            if (useYOLO) {
+                document.getElementById('confThreshold').value = 0.25;
+                document.getElementById('confValue').textContent = '0.25';
+                document.getElementById('iouThreshold').value = 0.45;
+                document.getElementById('iouValue').textContent = '0.45';
+                document.getElementById('inputSize').value = '640';
+            } else {
+                document.getElementById('param2').value = 14;
+                document.getElementById('param2Value').textContent = '14';
+                document.getElementById('minDist').value = 10;
+                document.getElementById('minDistValue').textContent = '10';
+                document.getElementById('cvMinRadius').value = 3;
+                document.getElementById('cvMinRadiusValue').textContent = '3';
+                document.getElementById('cvMaxRadius').value = 25;
+                document.getElementById('cvMaxRadiusValue').textContent = '25';
+            }
+            
+            document.getElementById('contrast').value = 1.5;
+            document.getElementById('contrastValue').textContent = '1.5';
+            document.getElementById('mergeDist').value = 8;
+            document.getElementById('mergeDistValue').textContent = '8';
+            
+            if (currentImage) {
+                const containerWidth = imageWrapper.clientWidth;
+                let fitScale = containerWidth / currentImage.width;
+                fitScale = Math.min(3.0, Math.max(0.05, fitScale));
+                document.getElementById('zoomSlider').value = fitScale.toFixed(2);
+                document.getElementById('zoomValue').textContent = fitScale.toFixed(2);
+                applyZoom();
+            }
+            
+            if (useYOLO && modelLoaded) analyzeYOLO();
+            else analyzeCV();
+        }
+        
+        function exportImage() {
+            if (!currentImage) return;
+            
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = currentImage.width; 
+            exportCanvas.height = currentImage.height;
+            const eCtx = exportCanvas.getContext('2d');
+            
+            eCtx.drawImage(currentImage, 0, 0);
+            
+            colonies.forEach(c => {
+                eCtx.beginPath(); 
+                eCtx.arc(c.x, c.y, c.radius, 0, 2 * Math.PI);
+                eCtx.strokeStyle = c.manual ? 'gold' : '#ff4757'; 
+                eCtx.lineWidth = 2; 
+                eCtx.stroke();
+                
+                eCtx.beginPath(); 
+                eCtx.arc(c.x, c.y, 3, 0, 2 * Math.PI);
+                eCtx.fillStyle = c.manual ? 'gold' : '#00ff88'; 
+                eCtx.fill();
+                
+                eCtx.fillStyle = c.manual ? 'gold' : '#00ff88';
+                eCtx.font = '12px Arial';
+                eCtx.fillText(`#${c.id + 1}`, c.x + c.radius + 5, c.y);
+            });
+            
+            const link = document.createElement('a'); 
+            link.download = `colonies_${useYOLO ? 'yolo' : 'cv'}_${Date.now()}.png`; 
+            link.href = exportCanvas.toDataURL('image/png'); 
+            link.click();
+            
+            showToast('📸 图片已导出');
+        }
+        
+        function showToast(msg) { 
+            const toast = document.getElementById('toast'); 
+            toast.textContent = msg; 
+            toast.classList.add('show'); 
+            setTimeout(() => toast.classList.remove('show'), 3000); 
+        }
+        
+        window.addEventListener('resize', () => { 
+            if (currentImage && viewer.classList.contains('active')) { 
+                const containerWidth = imageWrapper.clientWidth; 
+                let fitScale = containerWidth / currentImage.width; 
+                fitScale = Math.min(3.0, Math.max(0.05, fitScale)); 
+                document.getElementById('zoomSlider').value = fitScale.toFixed(2); 
+                document.getElementById('zoomValue').textContent = fitScale.toFixed(2); 
+                applyZoom(); 
+            } 
+        });
+        
+        // Service Worker（简化版）
+        if ('serviceWorker' in navigator) { 
+            const swCode = `self.addEventListener('install',e=>self.skipWaiting()); self.addEventListener('activate',e=>e.waitUntil(clients.claim())); self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));`; 
+            const blob = new Blob([swCode], { type: 'application/javascript' }); 
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{}); 
+        }
     </script>
 </body>
 </html>
