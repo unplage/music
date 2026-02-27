@@ -140,7 +140,7 @@
                 <div class="model-option-icon">🚀</div>
                 <div class="model-option-info">
                     <div class="model-option-name">YOLO11n（推荐）</div>
-                    <div class="model-option-desc">官方YOLO11n模型，约5.4MB，GitHub直链下载</div>
+                    <div class="model-option-desc">最新YOLO11模型，更小更快更准，约5.4MB</div>
                 </div>
             </div>
             
@@ -337,11 +337,16 @@
             yolo11: {
                 name: 'YOLO11n',
                 type: 'url',
-                // 官方GitHub Releases直链 - 已验证可用
+                // 你提供的模型链接（已替换）
                 url: 'https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n.onnx',
+                // 备用链接（保留原备份，并清理了空格）
+                backupUrls: [
+                    'https://huggingface.co/ultralytics/yolo11/resolve/main/yolo11n.onnx',
+                    'https://www.kaggle.com/models/ultralytics/yolo11/frameworks/tfJs/variations/yolo11n/versions/1?tfjs-format=onnx&tfjs-path=model.onnx'
+                ],
                 size: '5.4MB',
-                description: '官方YOLO11n模型，GitHub直链',
-                isYOLO11: true
+                description: '最新YOLO11n模型',
+                isYOLO11: true  // 标记为YOLO11，需要特殊处理
             },
             local: {
                 name: '本地上传',
@@ -359,7 +364,7 @@
         let session = null;
         let modelLoaded = false;
         let useYOLO = false;
-        let isYOLO11 = false;
+        let isYOLO11 = false;  // 标记当前是否为YOLO11模型
         
         // ==================== 全局状态 ====================
         
@@ -393,6 +398,7 @@
             });
             document.getElementById('option' + source.charAt(0).toUpperCase() + source.slice(1)).classList.add('selected');
             
+            // 更新按钮文字
             const btnText = document.getElementById('primaryBtnText');
             if (source === 'yolo11') {
                 btnText.textContent = '加载YOLO11n';
@@ -425,108 +431,111 @@
         
         async function loadModelFromSource() {
             const source = MODEL_SOURCES[currentModelSource];
+            const urls = [source.url, ...(source.backupUrls || [])];
             
             document.getElementById('modelSelector').style.display = 'none';
             document.getElementById('loadingStatus').style.display = 'block';
             document.getElementById('loadingBar').style.display = 'block';
-            document.getElementById('loadingProgress').style.width = '0%';
             
-            try {
-                document.getElementById('loadingText').textContent = '正在下载模型...';
-                document.getElementById('loadingDetail').textContent = source.name + ' - ' + source.size;
+            // 尝试所有可用URL
+            for (let i = 0; i < urls.length; i++) {
+                const url = urls[i];
+                const progress = ((i / urls.length) * 100).toFixed(0);
+                document.getElementById('loadingProgress').style.width = progress + '%';
+                document.getElementById('loadingText').textContent = `尝试下载 (${i + 1}/${urls.length})...`;
+                document.getElementById('loadingDetail').textContent = source.name + ' - ' + (source.size || '未知大小');
                 
-                // 使用fetch下载模型，支持进度显示
-                const response = await fetch(source.url, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/octet-stream'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                try {
+                    await tryLoadModel(url, source);
+                    return; // 成功则返回
+                } catch (error) {
+                    console.warn(`源 ${i + 1} 失败:`, error);
+                    continue;
                 }
-                
-                const contentLength = response.headers.get('content-length');
-                const total = contentLength ? parseInt(contentLength) : 0;
-                const reader = response.body.getReader();
-                const chunks = [];
-                let received = 0;
-                
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    chunks.push(value);
-                    received += value.length;
-                    
-                    if (total > 0) {
-                        const percent = ((received / total) * 100).toFixed(0);
-                        document.getElementById('loadingProgress').style.width = percent + '%';
-                        document.getElementById('loadingDetail').textContent = 
-                            `已下载 ${(received/1024/1024).toFixed(1)}MB / ${(total/1024/1024).toFixed(1)}MB`;
-                    }
-                }
-                
-                // 合并数据
-                const arrayBuffer = new Uint8Array(received);
-                let position = 0;
-                for (const chunk of chunks) {
-                    arrayBuffer.set(chunk, position);
-                    position += chunk.length;
-                }
-                
-                document.getElementById('loadingText').textContent = '正在初始化模型...';
-                document.getElementById('loadingDetail').textContent = '这可能需要几秒钟';
-                document.getElementById('loadingProgress').style.width = '100%';
-                
-                // 验证文件大小（至少1MB）
-                if (arrayBuffer.byteLength < 1024 * 1024) {
-                    throw new Error('下载的文件太小，可能不是有效的ONNX模型');
-                }
-                
-                // 创建ONNX会话
-                const ortConfig = {
-                    executionProviders: ['wasm'],
-                    graphOptimizationLevel: 'all',
-                    wasmOptions: { 
-                        numThreads: Math.min(navigator.hardwareConcurrency || 4, 4),
-                        simd: true 
-                    }
-                };
-                
-                session = await ort.InferenceSession.create(arrayBuffer.buffer, ortConfig);
-                
-                isYOLO11 = source.isYOLO11 || false;
-                
-                console.log('Model inputs:', session.inputNames);
-                console.log('Model outputs:', session.outputNames);
-                
-                modelLoaded = true;
-                useYOLO = true;
-                
-                // 保存到缓存
-                await saveModelToCache(arrayBuffer.buffer, 'yolo11n.onnx');
-                
-                document.getElementById('splash').classList.add('hidden');
-                updateAlgoUI();
-                showToast(`✅ ${source.name}模型加载成功！`);
-                
-            } catch (error) {
-                console.error('模型加载失败:', error);
-                document.getElementById('loadingText').textContent = '下载失败';
-                document.getElementById('loadingDetail').textContent = error.message || '网络错误或文件不存在';
-                
-                setTimeout(() => {
-                    if (confirm('模型下载失败，是否切换到传统CV模式？')) {
-                        skipToCV();
-                    } else {
-                        document.getElementById('modelSelector').style.display = 'block';
-                        document.getElementById('loadingStatus').style.display = 'none';
-                        document.getElementById('loadingBar').style.display = 'none';
-                        document.getElementById('loadingProgress').style.width = '0%';
-                    }
-                }, 2000);
             }
+            
+            // 所有源都失败
+            document.getElementById('loadingText').textContent = '下载失败';
+            document.getElementById('loadingDetail').textContent = '所有源均不可用';
+            
+            setTimeout(() => {
+                if (confirm('模型下载失败，是否切换到传统CV模式？')) {
+                    skipToCV();
+                } else {
+                    document.getElementById('modelSelector').style.display = 'block';
+                    document.getElementById('loadingStatus').style.display = 'none';
+                    document.getElementById('loadingBar').style.display = 'none';
+                    document.getElementById('loadingProgress').style.width = '0%';
+                }
+            }, 2000);
+        }
+        
+        async function tryLoadModel(url, source) {
+            const response = await fetch(url, {
+                headers: { 'Accept': 'application/octet-stream' }
+            });
+            
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            const contentLength = response.headers.get('content-length');
+            const total = contentLength ? parseInt(contentLength) : 0;
+            const reader = response.body.getReader();
+            const chunks = [];
+            let received = 0;
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                chunks.push(value);
+                received += value.length;
+                
+                if (total > 0) {
+                    const percent = ((received / total) * 100).toFixed(0);
+                    document.getElementById('loadingProgress').style.width = percent + '%';
+                    document.getElementById('loadingDetail').textContent = 
+                        `已下载 ${(received/1024/1024).toFixed(1)}MB / ${(total/1024/1024).toFixed(1)}MB`;
+                }
+            }
+            
+            // 合并数据
+            const arrayBuffer = new Uint8Array(received);
+            let position = 0;
+            for (const chunk of chunks) {
+                arrayBuffer.set(chunk, position);
+                position += chunk.length;
+            }
+            
+            document.getElementById('loadingText').textContent = '正在初始化模型...';
+            document.getElementById('loadingDetail').textContent = '这可能需要几秒钟';
+            
+            // 创建ONNX会话
+            const ortConfig = {
+                executionProviders: ['wasm'],
+                graphOptimizationLevel: 'all',
+                wasmOptions: { 
+                    numThreads: Math.min(navigator.hardwareConcurrency || 4, 4),
+                    simd: true 
+                }
+            };
+            
+            session = await ort.InferenceSession.create(arrayBuffer.buffer, ortConfig);
+            
+            // 检查模型类型
+            isYOLO11 = source.isYOLO11 || false;
+            
+            // 验证模型输入输出
+            console.log('Model inputs:', session.inputNames);
+            console.log('Model outputs:', session.outputNames);
+            
+            modelLoaded = true;
+            useYOLO = true;
+            
+            // 保存到缓存
+            await saveModelToCache(arrayBuffer.buffer, 'yolo11n.onnx');
+            
+            document.getElementById('splash').classList.add('hidden');
+            updateAlgoUI();
+            showToast(`✅ ${source.name}模型加载成功！`);
         }
         
         async function handleModelFile(event) {
@@ -538,21 +547,16 @@
                 return;
             }
             
+            // 检测是否为YOLO11（通过文件名）
             isYOLO11 = file.name.toLowerCase().includes('yolo11');
             
             document.getElementById('modelSelector').style.display = 'none';
             document.getElementById('loadingStatus').style.display = 'block';
-            document.getElementById('loadingBar').style.display = 'block';
             document.getElementById('loadingText').textContent = '正在加载本地模型...';
             document.getElementById('loadingDetail').textContent = file.name;
             
             try {
                 const arrayBuffer = await file.arrayBuffer();
-                
-                // 验证文件大小
-                if (arrayBuffer.byteLength < 1024 * 1024) {
-                    throw new Error('文件太小，可能不是有效的ONNX模型');
-                }
                 
                 const ortConfig = {
                     executionProviders: ['wasm'],
@@ -562,6 +566,7 @@
                 
                 session = await ort.InferenceSession.create(arrayBuffer, ortConfig);
                 
+                // 验证
                 console.log('Local model inputs:', session.inputNames);
                 console.log('Local model outputs:', session.outputNames);
                 
@@ -576,12 +581,10 @@
                 
             } catch (error) {
                 console.error('本地模型加载失败:', error);
-                const errorMsg = error?.message || error?.toString() || '未知错误';
-                showToast('❌ 模型加载失败：' + errorMsg);
+                showToast('❌ 模型加载失败：' + error.message);
                 
                 document.getElementById('modelSelector').style.display = 'block';
                 document.getElementById('loadingStatus').style.display = 'none';
-                document.getElementById('loadingBar').style.display = 'none';
             }
         }
         
@@ -661,6 +664,7 @@
                 const size = Math.ceil(sigma * 6) | 1;
                 const half = Math.floor(size / 2);
                 
+                // 创建核
                 const kernel = new Float32Array(size);
                 let sum = 0;
                 for (let i = 0; i < size; i++) {
@@ -670,6 +674,7 @@
                 }
                 for (let i = 0; i < size; i++) kernel[i] /= sum;
                 
+                // 水平
                 const temp = new Float32Array(width * height);
                 for (let y = 0; y < height; y++) {
                     for (let x = 0; x < width; x++) {
@@ -682,6 +687,7 @@
                     }
                 }
                 
+                // 垂直
                 for (let y = 0; y < height; y++) {
                     for (let x = 0; x < width; x++) {
                         let sum = 0;
@@ -820,6 +826,7 @@
                     const minArea = Math.PI * (params.minDiameter / 2) ** 2;
                     const maxArea = Math.PI * (params.maxDiameter / 2) ** 2;
                     
+                    // 对比度调整
                     let imageData = originalImageData;
                     if (params.contrast !== 1.0) {
                         const tempCanvas = document.createElement('canvas');
@@ -837,18 +844,22 @@
                         gray[i / 4] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
                     }
                     
+                    // 去噪
                     let processed = gray;
                     if (params.denoise > 0) {
                         processed = ImageProcessing.gaussianBlur(gray, width, height, params.denoise);
                     }
                     
+                    // 阈值处理
                     const C = 255 - params.sensitivity * 2;
                     let binary = ImageProcessing.adaptiveThreshold(processed, width, height, 20, C);
                     
+                    // 查找菌落
                     let detected = ImageProcessing.findColonies(
                         binary, width, height, minArea, maxArea, 0.5
                     );
                     
+                    // ROI过滤
                     if (roiCenter && roiRadius) {
                         detected = detected.filter(c => {
                             const dx = c.x - roiCenter.x;
@@ -857,6 +868,7 @@
                         });
                     }
                     
+                    // NMS
                     if (params.mergeDist > 0) {
                         detected = nonMaxSuppression(detected, params.mergeDist);
                     }
@@ -926,13 +938,11 @@
                     const contrast = parseFloat(document.getElementById('contrast').value);
                     
                     const tensor = await preprocessImage(currentImage, inputSize, contrast);
-                    const feeds = {};
-                    feeds[session.inputNames[0]] = tensor;
-                    
+                    const feeds = { images: tensor };
                     const results = await session.run(feeds);
                     
-                    const outputName = session.outputNames[0];
-                    const output = results[outputName];
+                    // 处理输出（YOLO11和YOLO8格式相同）
+                    const output = results.output0 || results[Object.keys(results)[0]];
                     const detections = parseYOLOOutput(output, confThreshold, iouThreshold, inputSize);
                     
                     const scaleX = currentImage.width / inputSize;
@@ -953,6 +963,7 @@
                         };
                     });
                     
+                    // ROI过滤
                     if (roiCenter && roiRadius) {
                         detected = detected.filter(c => {
                             const dx = c.x - roiCenter.x;
@@ -1015,11 +1026,15 @@
             const data = output.data;
             const dims = output.dims;
             
+            // 处理不同的输出格式
+            let numClasses, numBoxes;
             let boxes = [];
             
+            // 标准YOLO格式: [1, 84, 8400] 或 [1, 5+classes, num_boxes]
             if (dims.length === 3) {
-                const numClasses = dims[1] - 4;
-                const numBoxes = dims[2];
+                // [batch, features, boxes]
+                numClasses = dims[1] - 4;
+                numBoxes = dims[2];
                 
                 for (let i = 0; i < numBoxes; i++) {
                     const cx = data[i];
@@ -1042,8 +1057,9 @@
                     }
                 }
             } else if (dims.length === 2) {
-                const numBoxes = dims[0];
-                const numClasses = dims[1] - 4;
+                // 某些模型可能输出 [num_boxes, 5+classes]
+                numBoxes = dims[0];
+                numClasses = dims[1] - 4;
                 
                 for (let i = 0; i < numBoxes; i++) {
                     const offset = i * dims[1];
@@ -1466,12 +1482,14 @@
         }
         
         function resetToDefault() {
+            // YOLO参数
             document.getElementById('confThreshold').value = 0.25;
             document.getElementById('confValue').textContent = '0.25';
             document.getElementById('iouThreshold').value = 0.45;
             document.getElementById('iouValue').textContent = '0.45';
             document.getElementById('inputSize').value = '640';
             
+            // CV参数
             document.getElementById('cvSensitivity').value = 50;
             document.getElementById('cvSensValue').textContent = '50';
             document.getElementById('cvMinDiameter').value = 8;
@@ -1479,6 +1497,7 @@
             document.getElementById('cvMaxDiameter').value = 80;
             document.getElementById('cvMaxDiamValue').textContent = '80';
             
+            // 通用参数
             document.getElementById('contrast').value = 1.0;
             document.getElementById('contrastValue').textContent = '1.0';
             document.getElementById('denoise').value = 1;
