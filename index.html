@@ -4,13 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f172a">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>菌落计数器 · 离线版</title>
-    
-    <!-- ONNX Runtime Web -->
+    <title>菌落计数器 · YOLO11版</title>
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/ort.min.js"></script>
-    
     <style>
         :root {
             --primary: #3b82f6;
@@ -26,33 +21,34 @@
             --text-muted: #94a3b8;
             --roi-color: rgba(255, 215, 0, 0.3);
         }
-        
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
-        
         .splash { position: fixed; inset: 0; background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s; }
         .splash.hidden { opacity: 0; pointer-events: none; }
         .splash-icon { font-size: 100px; margin-bottom: 20px; animation: bounce 2s infinite; }
         @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
         .splash-text { font-size: 1.8rem; font-weight: 700; margin-bottom: 10px; }
-        .splash-subtitle { color: var(--text-muted); margin-bottom: 30px; max-width: 80%; text-align: center; line-height: 1.5; }
+        .splash-subtitle { color: var(--text-muted); margin-bottom: 30px; max-width: 80%; text-align: center; }
         .loading-bar { width: 200px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; margin-bottom: 20px; }
         .loading-progress { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
-        
         .splash-actions { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
         .splash-btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
         .splash-btn-primary { background: var(--primary); color: white; }
-        .splash-btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
         .splash-btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); }
-        .splash-btn-secondary:hover { background: rgba(255,255,255,0.2); }
-        
+        .model-selector { background: var(--card); border-radius: 12px; padding: 20px; margin-top: 20px; max-width: 500px; width: 90%; }
+        .model-selector-title { font-size: 1rem; font-weight: 600; margin-bottom: 15px; color: var(--text); }
+        .model-option { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .model-option:hover { border-color: var(--primary); }
+        .model-option.selected { border-color: var(--primary); background: rgba(59, 130, 246, 0.1); }
+        .model-option-icon { font-size: 1.5rem; }
+        .model-option-info { flex: 1; text-align: left; }
+        .model-option-name { font-weight: 600; font-size: 0.9rem; }
+        .model-option-desc { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
         .app { max-width: 100vw; min-height: 100vh; display: flex; flex-direction: column; }
         header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 20px; text-align: center; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3); position: sticky; top: 0; z-index: 100; }
         h1 { font-size: 1.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .version-badge { background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; }
-        
         main { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 20px; max-width: 1200px; margin: 0 auto; width: 100%; }
-        
         .upload-card { background: var(--card); border-radius: 24px; padding: 40px 30px; text-align: center; border: 2px dashed var(--secondary); transition: all 0.3s; cursor: pointer; }
         .upload-card:hover, .upload-card.active { border-color: var(--primary); background: rgba(59, 130, 246, 0.1); transform: translateY(-2px); }
         .upload-icon { font-size: 72px; margin-bottom: 20px; opacity: 0.9; }
@@ -63,15 +59,11 @@
         .btn-group { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
         .btn { padding: 14px 28px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
         .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5); }
         .btn-secondary { background: var(--secondary); color: white; }
-        .btn-secondary:hover { background: #475569; }
         input[type="file"] { display: none; }
-        
         .viewer { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.5s; }
         .viewer.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
         .control-panel { background: var(--card); border-radius: 20px; padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .control-section { display: flex; flex-direction: column; gap: 12px; }
         .section-title { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
@@ -82,9 +74,7 @@
         input[type="range"] { width: 100%; height: 6px; -webkit-appearance: none; background: var(--bg); border-radius: 3px; outline: none; }
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: var(--primary); border-radius: 50%; cursor: pointer; transition: transform 0.2s; }
         input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
-        
         select { width: 100%; padding: 8px; border-radius: 6px; background: var(--bg); color: var(--text); border: 1px solid var(--secondary); font-size: 0.9rem; }
-        
         .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
         .btn-small { padding: 10px 16px; font-size: 0.85rem; }
         .btn-success { background: var(--success); color: white; }
@@ -92,18 +82,12 @@
         .btn-warning { background: var(--warning); color: white; }
         .btn-info { background: var(--info); color: white; }
         .btn-outline { background: transparent; border: 1px solid var(--secondary); color: var(--text); }
-        
         .mode-indicator { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(59, 130, 246, 0.2); color: var(--primary); border-radius: 20px; font-size: 0.9rem; font-weight: 600; }
-        .mode-indicator.manual { background: rgba(16, 185, 129, 0.2); color: var(--success); }
-        .mode-indicator.roi { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
-        
         .image-wrapper { position: relative; background: var(--card); border-radius: 20px; overflow: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.4); max-height: 70vh; }
         .canvas-container { position: relative; display: inline-block; min-width: 100%; }
         #mainCanvas { display: block; width: auto; height: auto; background: #1e293b; max-width: none; }
         .overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        
         .roi-marker { position: absolute; border: 3px solid gold; border-radius: 50%; background: var(--roi-color); pointer-events: none; box-shadow: 0 0 0 2px rgba(0,0,0,0.3); display: none; }
-        
         .colony-marker { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; z-index: 10; transition: all 0.2s; }
         .marker-center { width: 6px; height: 6px; background: #00ff88; border: 1px solid white; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.5); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
         .marker-circle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid #ff4757; border-radius: 50%; opacity: 0.7; }
@@ -113,7 +97,6 @@
         .colony-marker.manual .marker-circle { border-color: #ffd700; }
         .marker-tooltip { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); color: white; padding: 6px 10px; border-radius: 6px; font-size: 11px; white-space: nowrap; opacity: 0; transition: opacity 0.2s; pointer-events: none; margin-bottom: 5px; z-index: 30; }
         .colony-marker:hover .marker-tooltip { opacity: 1; }
-        
         .stats-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
         .stat-box { background: var(--card); border-radius: 16px; padding: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s; }
         .stat-box:hover { transform: translateY(-2px); border-color: var(--primary); }
@@ -122,102 +105,71 @@
         .stat-box.success .stat-number { color: var(--success); }
         .stat-box.warning .stat-number { color: var(--warning); }
         .stat-box.info .stat-number { color: var(--info); }
-        
         .loading-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 9998; }
         .loading-overlay.active { display: flex; }
         .spinner { width: 60px; height: 60px; border: 4px solid rgba(59, 130, 246, 0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .loading-text { margin-top: 20px; font-size: 1.1rem; color: var(--text); }
         .loading-subtext { margin-top: 10px; font-size: 0.9rem; color: var(--text-muted); }
-        
         .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--card); color: var(--text); padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); opacity: 0; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 10000; display: flex; align-items: center; gap: 10px; font-weight: 500; max-width: 90%; text-align: center; }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-        
         .algo-info { background: rgba(59, 130, 246, 0.1); border-left: 4px solid var(--primary); padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 0.85rem; color: var(--text-muted); }
         .param-tip { font-size: 0.75rem; color: var(--success); margin-top: 4px; }
-        
         .model-status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 4px 10px; border-radius: 12px; background: var(--bg); }
         .model-status.ready { color: var(--success); }
         .model-status.loading { color: var(--warning); animation: pulse 1.5s infinite; }
-        .model-status.error { color: var(--danger); }
         .model-status.local { color: var(--info); }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        
-        .model-selector { background: var(--card); border-radius: 12px; padding: 20px; margin-top: 20px; max-width: 500px; width: 90%; }
-        .model-selector-title { font-size: 1rem; font-weight: 600; margin-bottom: 15px; color: var(--text); }
-        .model-option { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
-        .model-option:hover { border-color: var(--primary); }
-        .model-option.selected { border-color: var(--primary); background: rgba(59, 130, 246, 0.1); }
-        .model-option-icon { font-size: 1.5rem; }
-        .model-option-info { flex: 1; text-align: left; }
-        .model-option-name { font-weight: 600; font-size: 0.9rem; }
-        .model-option-desc { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
-        
-        .fallback-notice { background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); border-radius: 8px; padding: 12px; margin-top: 15px; font-size: 0.85rem; color: var(--text-muted); }
-        
-        .debug-info { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: #0f0; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; max-width: 300px; z-index: 9999; display: none; }
-        .debug-info.show { display: block; }
-        
-        @media (max-width: 768px) { h1 { font-size: 1.3rem; } .upload-title { font-size: 1.2rem; } .control-panel { grid-template-columns: 1fr; } .stats-panel { grid-template-columns: repeat(2, 1fr); } .splash-actions { flex-direction: column; width: 100%; padding: 0 20px; } .splash-btn { width: 100%; justify-content: center; } }
+        @media (max-width: 768px) { h1 { font-size: 1.3rem; } .upload-title { font-size: 1.2rem; } .control-panel { grid-template-columns: 1fr; } .stats-panel { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>
 <body>
-    <!-- 调试信息面板 -->
-    <div class="debug-info" id="debugInfo"></div>
-    
     <div class="splash" id="splash">
         <div class="splash-icon">🔬</div>
-        <div class="splash-text">菌落计数器 · 离线版</div>
-        <div class="splash-subtitle" id="splashSubtitle">准备加载模型...</div>
+        <div class="splash-text">菌落计数器 · YOLO11版</div>
+        <div class="splash-subtitle" id="splashSubtitle">选择模型加载方式</div>
         
         <div class="loading-bar" id="loadingBar" style="display: none;">
             <div class="loading-progress" id="loadingProgress" style="width: 0%"></div>
         </div>
         
         <div class="model-selector" id="modelSelector">
-            <div class="model-selector-title">📦 选择模型加载方式</div>
+            <div class="model-selector-title">📦 选择模型来源</div>
             
-            <div class="model-option selected" onclick="selectModelSource('local')" id="optionLocal">
-                <div class="model-option-icon">💻</div>
+            <div class="model-option selected" onclick="selectModelSource('yolo11')" id="optionYolo11">
+                <div class="model-option-icon">🚀</div>
                 <div class="model-option-info">
-                    <div class="model-option-name">本地上传（推荐）</div>
-                    <div class="model-option-desc">上传 .onnx 模型文件，无需网络</div>
+                    <div class="model-option-name">YOLO11n（推荐）</div>
+                    <div class="model-option-desc">最新YOLO11模型，更小更快更准，约5.4MB</div>
                 </div>
             </div>
             
-            <div class="model-option" onclick="selectModelSource('url')" id="optionUrl">
-                <div class="model-option-icon">🌐</div>
+            <div class="model-option" onclick="selectModelSource('local')" id="optionLocal">
+                <div class="model-option-icon">💻</div>
                 <div class="model-option-info">
-                    <div class="model-option-name">URL下载</div>
-                    <div class="model-option-desc">从可访问的URL下载模型</div>
+                    <div class="model-option-name">本地上传</div>
+                    <div class="model-option-desc">已下载的 .onnx 模型文件</div>
                 </div>
             </div>
             
             <div class="model-option" onclick="selectModelSource('cv')" id="optionCv">
                 <div class="model-option-icon">⚫</div>
                 <div class="model-option-info">
-                    <div class="model-option-name">仅使用传统CV（无需模型）</div>
-                    <div class="model-option-desc">纯JavaScript图像处理，永久可用</div>
+                    <div class="model-option-name">纯JS图像处理（无需模型）</div>
+                    <div class="model-option-desc">传统CV算法，永久可用</div>
                 </div>
-            </div>
-            
-            <div class="fallback-notice" id="fallbackNotice" style="display: none;">
-                ⚠️ 加载失败，建议切换到传统CV模式
             </div>
             
             <div class="splash-actions" style="margin-top: 20px;">
                 <button class="splash-btn splash-btn-primary" onclick="confirmModelSource()">
-                    <span>✓</span><span>确认选择</span>
+                    <span>⬇️</span><span id="primaryBtnText">加载YOLO11n</span>
+                </button>
+                <button class="splash-btn splash-btn-secondary" onclick="skipToCV()">
+                    <span>⚫</span><span>使用CV模式</span>
                 </button>
             </div>
             
             <input type="file" id="modelFileInput" accept=".onnx" style="display: none;" onchange="handleModelFile(event)">
-            
-            <!-- URL输入框（默认隐藏） -->
-            <div id="urlInputContainer" style="display: none; margin-top: 15px;">
-                <input type="text" id="modelUrlInput" placeholder="输入模型URL（.onnx文件直链）" 
-                       style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--secondary); background: var(--bg); color: var(--text);">
-            </div>
         </div>
         
         <div id="loadingStatus" style="display: none; margin-top: 20px; text-align: center;">
@@ -230,16 +182,13 @@
     
     <div class="app">
         <header>
-            <h1><span>🔬</span><span>菌落计数器 Pro</span><span class="version-badge" id="versionBadge">CV模式</span></h1>
+            <h1><span>🔬</span><span>菌落计数器 Pro</span><span class="version-badge" id="versionBadge">等待中</span></h1>
             <div style="margin-top: 8px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-                <span class="model-status local" id="modelStatus">
-                    <span>⚫</span><span>传统CV算法就绪</span>
+                <span class="model-status loading" id="modelStatus">
+                    <span>⏳</span><span>等待模型加载...</span>
                 </span>
-                <button class="btn-small btn-outline" onclick="toggleDebug()" style="padding: 4px 12px; font-size: 0.75rem;">
-                    调试信息
-                </button>
-                <button class="btn-small btn-outline" onclick="switchModel()" id="switchModelBtn" style="padding: 4px 12px; font-size: 0.75rem;">
-                    切换模式
+                <button class="btn-small btn-outline" onclick="switchModel()" id="switchModelBtn" style="display: none; padding: 4px 12px; font-size: 0.75rem;">
+                    切换模型
                 </button>
             </div>
         </header>
@@ -248,9 +197,9 @@
             <div class="upload-card" id="uploadCard">
                 <div class="upload-icon">📤</div>
                 <div class="upload-title">拖放图片或点击上传</div>
-                <div class="upload-subtitle" id="uploadSubtitle">支持拍照上传 · 自动菌落计数</div>
+                <div class="upload-subtitle">JPG / PNG / WEBP · 自动菌落计数</div>
                 <div class="upload-tips">
-                    <div class="tip-item"><span id="algoIcon">⚫</span><span id="algoText">传统CV算法</span></div>
+                    <div class="tip-item"><span id="algoIcon">⏳</span><span id="algoText">等待模型加载</span></div>
                     <div class="tip-item"><span>💡</span><span>光线均匀</span></div>
                     <div class="tip-item"><span>🎯</span><span>可使用ROI</span></div>
                 </div>
@@ -264,7 +213,7 @@
             
             <div class="viewer" id="viewer">
                 <div class="control-panel">
-                    <!-- YOLO参数（默认隐藏） -->
+                    <!-- YOLO参数 -->
                     <div class="control-section" id="yoloParams" style="display: none;">
                         <div class="section-title">🤖 YOLO检测参数</div>
                         <div class="slider-group">
@@ -281,65 +230,49 @@
                             <div class="slider-header"><span class="slider-label">输入尺寸</span></div>
                             <select id="inputSize">
                                 <option value="640" selected>640x640（推荐）</option>
-                                <option value="320">320x320（快速）</option>
+                                <option value="320">320x320（更快）</option>
+                                <option value="1280">1280x1280（更准）</option>
                             </select>
                         </div>
-                        <div class="algo-info">
-                            使用YOLO深度学习模型进行菌落检测
-                        </div>
+                        <div class="algo-info" id="yoloAlgoInfo">使用YOLO11n深度学习模型检测菌落</div>
                     </div>
                     
-                    <!-- 传统CV参数（默认显示） -->
-                    <div class="control-section" id="cvParams">
+                    <!-- CV参数 -->
+                    <div class="control-section" id="cvParams" style="display: none;">
                         <div class="section-title">⚙️ 传统CV检测参数</div>
                         <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">亮度阈值</span><span class="slider-value" id="thresholdValue">128</span></div>
-                            <input type="range" id="threshold" min="50" max="250" value="128" step="5">
-                            <div class="param-tip">菌落亮度阈值，根据图片调整</div>
+                            <div class="slider-header"><span class="slider-label">检测模式</span></div>
+                            <select id="cvMode">
+                                <option value="adaptive" selected>自适应阈值</option>
+                                <option value="otsu">Otsu自动阈值</option>
+                                <option value="bright">亮菌落</option>
+                                <option value="dark">暗菌落</option>
+                            </select>
                         </div>
                         <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">最小菌落面积</span><span class="slider-value" id="minAreaValue">10</span></div>
-                            <input type="range" id="minArea" min="5" max="100" value="10" step="5">
-                            <div class="param-tip">过滤太小的噪声点</div>
+                            <div class="slider-header"><span class="slider-label">灵敏度</span><span class="slider-value" id="cvSensValue">50</span></div>
+                            <input type="range" id="cvSensitivity" min="10" max="100" value="50" step="5">
                         </div>
                         <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">最大菌落面积</span><span class="slider-value" id="maxAreaValue">500</span></div>
-                            <input type="range" id="maxArea" min="100" max="2000" value="500" step="50">
-                            <div class="param-tip">过滤过大的杂质</div>
+                            <div class="slider-header"><span class="slider-label">最小直径</span><span class="slider-value" id="cvMinDiamValue">8</span></div>
+                            <input type="range" id="cvMinDiameter" min="3" max="30" value="8" step="1">
                         </div>
                         <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">圆形度阈值</span><span class="slider-value" id="circularityValue">0.7</span></div>
-                            <input type="range" id="circularity" min="0.3" max="1.0" value="0.7" step="0.05">
-                            <div class="param-tip">越接近1越圆，菌落通常0.6-0.9</div>
+                            <div class="slider-header"><span class="slider-label">最大直径</span><span class="slider-value" id="cvMaxDiamValue">80</span></div>
+                            <input type="range" id="cvMaxDiameter" min="30" max="200" value="80" step="5">
                         </div>
-                        <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">膨胀/腐蚀迭代</span><span class="slider-value" id="morphValue">1</span></div>
-                            <input type="range" id="morphIterations" min="0" max="5" value="1" step="1">
-                            <div class="param-tip">形态学操作，连接断裂菌落</div>
-                        </div>
-                        <div class="algo-info">
-                            使用JavaScript实现图像处理：灰度→阈值→形态学→轮廓分析→圆形度过滤
-                        </div>
+                        <div class="algo-info">使用纯JavaScript图像处理算法</div>
                     </div>
                     
                     <div class="control-section">
                         <div class="section-title">🖼️ 预处理 / ROI</div>
                         <div class="slider-group">
                             <div class="slider-header"><span class="slider-label">对比度增强</span><span class="slider-value" id="contrastValue">1.0</span></div>
-                            <input type="range" id="contrast" min="0.5" max="3.0" value="1.0" step="0.1">
+                            <input type="range" id="contrast" min="0.8" max="3.0" value="1.0" step="0.1">
                         </div>
                         <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">高斯模糊半径</span><span class="slider-value" id="blurValue">1</span></div>
-                            <input type="range" id="blurRadius" min="0" max="5" value="1" step="1">
-                            <div class="param-tip">去噪，0表示不模糊</div>
-                        </div>
-                        <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">反相模式</span></div>
-                            <select id="invertMode">
-                                <option value="auto" selected>自动检测</option>
-                                <option value="normal">正常（菌落亮背景暗）</option>
-                                <option value="inverted">反相（菌落暗背景亮）</option>
-                            </select>
+                            <div class="slider-header"><span class="slider-label">去噪强度</span><span class="slider-value" id="denoiseValue">1</span></div>
+                            <input type="range" id="denoise" min="0" max="5" value="1" step="1">
                         </div>
                         <div class="action-buttons">
                             <button class="btn btn-warning btn-small" id="selectRoiBtn">🎯 选择培养皿</button>
@@ -351,9 +284,8 @@
                     <div class="control-section">
                         <div class="section-title">🧹 后处理 / 操作</div>
                         <div class="slider-group">
-                            <div class="slider-header"><span class="slider-label">合并距离</span><span class="slider-value" id="mergeDistValue">15</span></div>
-                            <input type="range" id="mergeDist" min="5" max="50" value="15" step="5">
-                            <div class="param-tip">合并重叠菌落的距离阈值</div>
+                            <div class="slider-header"><span class="slider-label">合并距离</span><span class="slider-value" id="mergeDistValue">12</span></div>
+                            <input type="range" id="mergeDist" min="0" max="40" value="12" step="2">
                         </div>
                         <div class="slider-group">
                             <div class="slider-header"><span class="slider-label">图像缩放</span><span class="slider-value" id="zoomValue">1.00</span></div>
@@ -399,27 +331,45 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // ==================== 调试功能 ====================
-        function log(msg) {
-            console.log(msg);
-            const debug = document.getElementById('debugInfo');
-            debug.innerHTML += msg + '<br>';
-            debug.scrollTop = debug.scrollHeight;
-        }
+        // ==================== 模型配置（支持YOLO11） ====================
         
-        function toggleDebug() {
-            document.getElementById('debugInfo').classList.toggle('show');
-        }
+        const MODEL_SOURCES = {
+            yolo11: {
+                name: 'YOLO11n',
+                type: 'url',
+                // 你提供的模型链接
+                url: 'https://www.kaggle.com/models/ultralytics/yolo11/frameworks/tfJs/variations/yolo11n/versions/1?tfjs-format=onnx&tfjs-path=model.onnx',
+                // 备用：如果Kaggle链接失效，使用HuggingFace
+                backupUrls: [
+                    'https://huggingface.co/ultralytics/yolo11/resolve/main/yolo11n.onnx',
+                    'https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n.onnx'
+                ],
+                size: '5.4MB',
+                description: '最新YOLO11n模型',
+                isYOLO11: true  // 标记为YOLO11，需要特殊处理
+            },
+            local: {
+                name: '本地上传',
+                type: 'file',
+                url: null
+            },
+            cv: {
+                name: '传统CV',
+                type: 'cv',
+                url: null
+            }
+        };
         
-        // ==================== 模型加载配置 ====================
-        let currentModelSource = 'cv'; // 默认CV模式
+        let currentModelSource = 'yolo11';
         let session = null;
         let modelLoaded = false;
         let useYOLO = false;
+        let isYOLO11 = false;  // 标记当前是否为YOLO11模型
         
         // ==================== 全局状态 ====================
+        
         let currentImage = null;
-        let originalImageData = null; // 保存原始图像数据
+        let originalImageData = null;
         let colonies = [];
         let isAddMode = false;
         let showCircles = true;
@@ -431,7 +381,7 @@
         const uploadCard = document.getElementById('uploadCard');
         const viewer = document.getElementById('viewer');
         const canvas = document.getElementById('mainCanvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true }); // 优化频繁读取
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         const overlayLayer = document.getElementById('overlayLayer');
         const roiVisual = document.getElementById('roiVisual');
         const imageWrapper = document.getElementById('imageWrapper');
@@ -448,34 +398,144 @@
             });
             document.getElementById('option' + source.charAt(0).toUpperCase() + source.slice(1)).classList.add('selected');
             
-            // 显示/隐藏URL输入框
-            document.getElementById('urlInputContainer').style.display = source === 'url' ? 'block' : 'none';
-            
-            if (source === 'local') {
-                setTimeout(() => {
-                    document.getElementById('modelFileInput').click();
-                }, 100);
+            // 更新按钮文字
+            const btnText = document.getElementById('primaryBtnText');
+            if (source === 'yolo11') {
+                btnText.textContent = '加载YOLO11n';
+            } else if (source === 'local') {
+                btnText.textContent = '选择模型文件';
+                setTimeout(() => document.getElementById('modelFileInput').click(), 100);
+            } else {
+                btnText.textContent = '进入CV模式';
             }
         }
         
         function confirmModelSource() {
             if (currentModelSource === 'cv') {
-                // 直接进入CV模式
-                useYOLO = false;
-                modelLoaded = false;
-                document.getElementById('splash').classList.add('hidden');
-                updateAlgoUI();
-                showToast('✅ 已进入传统CV模式，可直接上传图片分析');
+                skipToCV();
             } else if (currentModelSource === 'local') {
                 document.getElementById('modelFileInput').click();
-            } else if (currentModelSource === 'url') {
-                const url = document.getElementById('modelUrlInput').value.trim();
-                if (!url) {
-                    showToast('❌ 请输入模型URL');
-                    return;
-                }
-                loadModelFromUrl(url, '自定义URL');
+            } else {
+                loadModelFromSource();
             }
+        }
+        
+        function skipToCV() {
+            useYOLO = false;
+            modelLoaded = false;
+            isYOLO11 = false;
+            document.getElementById('splash').classList.add('hidden');
+            updateAlgoUI();
+            showToast('✅ 已进入传统CV模式');
+        }
+        
+        async function loadModelFromSource() {
+            const source = MODEL_SOURCES[currentModelSource];
+            const urls = [source.url, ...(source.backupUrls || [])];
+            
+            document.getElementById('modelSelector').style.display = 'none';
+            document.getElementById('loadingStatus').style.display = 'block';
+            document.getElementById('loadingBar').style.display = 'block';
+            
+            // 尝试所有可用URL
+            for (let i = 0; i < urls.length; i++) {
+                const url = urls[i];
+                const progress = ((i / urls.length) * 100).toFixed(0);
+                document.getElementById('loadingProgress').style.width = progress + '%';
+                document.getElementById('loadingText').textContent = `尝试下载 (${i + 1}/${urls.length})...`;
+                document.getElementById('loadingDetail').textContent = source.name + ' - ' + (source.size || '未知大小');
+                
+                try {
+                    await tryLoadModel(url, source);
+                    return; // 成功则返回
+                } catch (error) {
+                    console.warn(`源 ${i + 1} 失败:`, error);
+                    continue;
+                }
+            }
+            
+            // 所有源都失败
+            document.getElementById('loadingText').textContent = '下载失败';
+            document.getElementById('loadingDetail').textContent = '所有源均不可用';
+            
+            setTimeout(() => {
+                if (confirm('模型下载失败，是否切换到传统CV模式？')) {
+                    skipToCV();
+                } else {
+                    document.getElementById('modelSelector').style.display = 'block';
+                    document.getElementById('loadingStatus').style.display = 'none';
+                    document.getElementById('loadingBar').style.display = 'none';
+                    document.getElementById('loadingProgress').style.width = '0%';
+                }
+            }, 2000);
+        }
+        
+        async function tryLoadModel(url, source) {
+            const response = await fetch(url, {
+                headers: { 'Accept': 'application/octet-stream' }
+            });
+            
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            const contentLength = response.headers.get('content-length');
+            const total = contentLength ? parseInt(contentLength) : 0;
+            const reader = response.body.getReader();
+            const chunks = [];
+            let received = 0;
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                chunks.push(value);
+                received += value.length;
+                
+                if (total > 0) {
+                    const percent = ((received / total) * 100).toFixed(0);
+                    document.getElementById('loadingProgress').style.width = percent + '%';
+                    document.getElementById('loadingDetail').textContent = 
+                        `已下载 ${(received/1024/1024).toFixed(1)}MB / ${(total/1024/1024).toFixed(1)}MB`;
+                }
+            }
+            
+            // 合并数据
+            const arrayBuffer = new Uint8Array(received);
+            let position = 0;
+            for (const chunk of chunks) {
+                arrayBuffer.set(chunk, position);
+                position += chunk.length;
+            }
+            
+            document.getElementById('loadingText').textContent = '正在初始化模型...';
+            document.getElementById('loadingDetail').textContent = '这可能需要几秒钟';
+            
+            // 创建ONNX会话
+            const ortConfig = {
+                executionProviders: ['wasm'],
+                graphOptimizationLevel: 'all',
+                wasmOptions: { 
+                    numThreads: Math.min(navigator.hardwareConcurrency || 4, 4),
+                    simd: true 
+                }
+            };
+            
+            session = await ort.InferenceSession.create(arrayBuffer.buffer, ortConfig);
+            
+            // 检查模型类型
+            isYOLO11 = source.isYOLO11 || false;
+            
+            // 验证模型输入输出
+            console.log('Model inputs:', session.inputNames);
+            console.log('Model outputs:', session.outputNames);
+            
+            modelLoaded = true;
+            useYOLO = true;
+            
+            // 保存到缓存
+            await saveModelToCache(arrayBuffer.buffer, 'yolo11n.onnx');
+            
+            document.getElementById('splash').classList.add('hidden');
+            updateAlgoUI();
+            showToast(`✅ ${source.name}模型加载成功！`);
         }
         
         async function handleModelFile(event) {
@@ -486,6 +546,9 @@
                 showToast('❌ 请选择 .onnx 格式的模型文件');
                 return;
             }
+            
+            // 检测是否为YOLO11（通过文件名）
+            isYOLO11 = file.name.toLowerCase().includes('yolo11');
             
             document.getElementById('modelSelector').style.display = 'none';
             document.getElementById('loadingStatus').style.display = 'block';
@@ -502,100 +565,36 @@
                 };
                 
                 session = await ort.InferenceSession.create(arrayBuffer, ortConfig);
+                
+                // 验证
+                console.log('Local model inputs:', session.inputNames);
+                console.log('Local model outputs:', session.outputNames);
+                
                 modelLoaded = true;
                 useYOLO = true;
                 
+                await saveModelToCache(arrayBuffer, file.name);
+                
                 document.getElementById('splash').classList.add('hidden');
                 updateAlgoUI();
-                showToast(`✅ 模型加载成功：${file.name}`);
-                
-                // 保存到缓存
-                await saveModelToCache(arrayBuffer, file.name);
+                showToast(`✅ 本地模型加载成功：${file.name}`);
                 
             } catch (error) {
                 console.error('本地模型加载失败:', error);
-                log('模型加载失败: ' + error.message);
-                showToast('❌ 模型加载失败，已切换到CV模式');
+                showToast('❌ 模型加载失败：' + error.message);
                 
-                useYOLO = false;
-                modelLoaded = false;
-                document.getElementById('splash').classList.add('hidden');
-                updateAlgoUI();
-            }
-        }
-        
-        async function loadModelFromUrl(url, sourceName) {
-            document.getElementById('modelSelector').style.display = 'none';
-            document.getElementById('loadingStatus').style.display = 'block';
-            document.getElementById('loadingBar').style.display = 'block';
-            document.getElementById('loadingText').textContent = '正在下载模型...';
-            
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
-                const contentLength = response.headers.get('content-length');
-                const total = contentLength ? parseInt(contentLength) : 0;
-                const reader = response.body.getReader();
-                const chunks = [];
-                let received = 0;
-                
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    chunks.push(value);
-                    received += value.length;
-                    
-                    if (total > 0) {
-                        const percent = ((received / total) * 100).toFixed(0);
-                        document.getElementById('loadingProgress').style.width = percent + '%';
-                        document.getElementById('loadingDetail').textContent = 
-                            `已下载 ${(received/1024/1024).toFixed(1)}MB`;
-                    }
-                }
-                
-                const arrayBuffer = new Uint8Array(received);
-                let position = 0;
-                for (const chunk of chunks) {
-                    arrayBuffer.set(chunk, position);
-                    position += chunk.length;
-                }
-                
-                document.getElementById('loadingText').textContent = '正在初始化...';
-                
-                const ortConfig = {
-                    executionProviders: ['wasm'],
-                    graphOptimizationLevel: 'all',
-                    wasmOptions: { numThreads: 2, simd: true }
-                };
-                
-                session = await ort.InferenceSession.create(arrayBuffer.buffer, ortConfig);
-                modelLoaded = true;
-                useYOLO = true;
-                
-                document.getElementById('splash').classList.add('hidden');
-                updateAlgoUI();
-                showToast(`✅ ${sourceName}模型加载成功`);
-                
-            } catch (error) {
-                console.error('URL加载失败:', error);
-                showToast('❌ 下载失败，已切换到CV模式');
-                useYOLO = false;
-                document.getElementById('splash').classList.add('hidden');
-                updateAlgoUI();
+                document.getElementById('modelSelector').style.display = 'block';
+                document.getElementById('loadingStatus').style.display = 'none';
             }
         }
         
         // ==================== IndexedDB缓存 ====================
         
-        const DB_NAME = 'ColonyCounterDB';
-        const STORE_NAME = 'models';
-        
         async function saveModelToCache(arrayBuffer, name) {
             try {
-                const request = indexedDB.open(DB_NAME, 1);
+                const request = indexedDB.open('ColonyCounterDB', 1);
                 request.onupgradeneeded = (e) => {
-                    e.target.result.createObjectStore(STORE_NAME, { keyPath: 'name' });
+                    e.target.result.createObjectStore('models', { keyPath: 'name' });
                 };
                 
                 const db = await new Promise((resolve, reject) => {
@@ -603,12 +602,12 @@
                     request.onerror = () => reject(request.error);
                 });
                 
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                const store = tx.objectStore(STORE_NAME);
+                const tx = db.transaction('models', 'readwrite');
+                const store = tx.objectStore('models');
                 await store.put({ name, data: arrayBuffer, timestamp: Date.now() });
-                log('模型已缓存');
+                console.log('模型已缓存');
             } catch (e) {
-                log('缓存失败: ' + e.message);
+                console.warn('缓存失败:', e);
             }
         }
         
@@ -616,24 +615,27 @@
         
         function updateAlgoUI() {
             if (useYOLO && modelLoaded) {
-                versionBadge.textContent = 'YOLO';
+                const modelName = isYOLO11 ? 'YOLO11' : 'YOLO';
+                versionBadge.textContent = modelName;
                 modelStatus.className = 'model-status ready';
-                modelStatus.innerHTML = '<span>✅</span><span>YOLO模型就绪</span>';
+                modelStatus.innerHTML = `<span>✅</span><span>${modelName}n就绪</span>`;
                 document.getElementById('algoIcon').textContent = '🤖';
-                document.getElementById('algoText').textContent = 'YOLO深度学习';
-                document.getElementById('statAutoLabel').textContent = 'YOLO检测';
+                document.getElementById('algoText').textContent = `${modelName}深度学习`;
+                document.getElementById('statAutoLabel').textContent = `${modelName}检测`;
                 document.getElementById('yoloParams').style.display = 'flex';
                 document.getElementById('cvParams').style.display = 'none';
+                document.getElementById('yoloAlgoInfo').textContent = `使用${modelName}n深度学习模型检测菌落`;
             } else {
                 versionBadge.textContent = 'CV模式';
                 modelStatus.className = 'model-status local';
-                modelStatus.innerHTML = '<span>⚫</span><span>传统CV算法就绪</span>';
+                modelStatus.innerHTML = '<span>⚫</span><span>传统CV算法</span>';
                 document.getElementById('algoIcon').textContent = '⚫';
                 document.getElementById('algoText').textContent = '图像处理算法';
                 document.getElementById('statAutoLabel').textContent = 'CV检测';
                 document.getElementById('yoloParams').style.display = 'none';
                 document.getElementById('cvParams').style.display = 'flex';
             }
+            document.getElementById('switchModelBtn').style.display = 'inline-block';
         }
         
         function switchModel() {
@@ -641,161 +643,99 @@
             document.getElementById('modelSelector').style.display = 'block';
             document.getElementById('loadingStatus').style.display = 'none';
             document.getElementById('loadingBar').style.display = 'none';
+            document.getElementById('loadingProgress').style.width = '0%';
         }
         
-        // ==================== 核心：传统CV算法（完全重写） ====================
+        // ==================== 图像处理工具（CV模式） ====================
         
-        // 图像处理工具函数
-        const ImageUtils = {
-            // 转换为灰度图
+        const ImageProcessing = {
             toGrayscale: (imageData) => {
                 const { data, width, height } = imageData;
-                const gray = new Uint8Array(width * height);
+                const gray = new Float32Array(width * height);
                 for (let i = 0; i < data.length; i += 4) {
-                    // 标准灰度转换
                     gray[i / 4] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
                 }
                 return { data: gray, width, height };
             },
             
-            // 高斯模糊
-            gaussianBlur: (grayImage, radius) => {
-                if (radius <= 0) return grayImage;
+            gaussianBlur: (src, width, height, sigma) => {
+                if (sigma <= 0) return src;
+                const dst = new Float32Array(width * height);
+                const size = Math.ceil(sigma * 6) | 1;
+                const half = Math.floor(size / 2);
                 
-                const { data, width, height } = grayImage;
-                const output = new Uint8Array(width * height);
-                
-                // 创建高斯核
-                const size = radius * 2 + 1;
+                // 创建核
                 const kernel = new Float32Array(size);
-                const sigma = radius / 3;
                 let sum = 0;
-                
                 for (let i = 0; i < size; i++) {
-                    const x = i - radius;
+                    const x = i - half;
                     kernel[i] = Math.exp(-(x * x) / (2 * sigma * sigma));
                     sum += kernel[i];
                 }
-                
-                // 归一化
                 for (let i = 0; i < size; i++) kernel[i] /= sum;
                 
-                // 水平模糊
+                // 水平
                 const temp = new Float32Array(width * height);
                 for (let y = 0; y < height; y++) {
                     for (let x = 0; x < width; x++) {
-                        let val = 0;
-                        for (let k = -radius; k <= radius; k++) {
+                        let sum = 0;
+                        for (let k = -half; k <= half; k++) {
                             const px = Math.min(width - 1, Math.max(0, x + k));
-                            val += data[y * width + px] * kernel[k + radius];
+                            sum += src[y * width + px] * kernel[k + half];
                         }
-                        temp[y * width + x] = val;
+                        temp[y * width + x] = sum;
                     }
                 }
                 
-                // 垂直模糊
+                // 垂直
                 for (let y = 0; y < height; y++) {
                     for (let x = 0; x < width; x++) {
-                        let val = 0;
-                        for (let k = -radius; k <= radius; k++) {
+                        let sum = 0;
+                        for (let k = -half; k <= half; k++) {
                             const py = Math.min(height - 1, Math.max(0, y + k));
-                            val += temp[py * width + x] * kernel[k + radius];
+                            sum += temp[py * width + x] * kernel[k + half];
                         }
-                        output[y * width + x] = Math.round(val);
+                        dst[y * width + x] = sum;
                     }
                 }
                 
-                return { data: output, width, height };
+                return dst;
             },
             
-            // 阈值处理
-            threshold: (grayImage, thresh, invert = false) => {
-                const { data, width, height } = grayImage;
-                const binary = new Uint8Array(width * height);
+            adaptiveThreshold: (src, width, height, blockSize, C) => {
+                const dst = new Uint8Array(width * height);
+                const half = Math.floor(blockSize / 2);
                 
-                for (let i = 0; i < data.length; i++) {
-                    if (invert) {
-                        binary[i] = data[i] < thresh ? 255 : 0;
-                    } else {
-                        binary[i] = data[i] > thresh ? 255 : 0;
-                    }
-                }
-                
-                return { data: binary, width, height };
-            },
-            
-            // 形态学膨胀
-            dilate: (binaryImage, iterations) => {
-                let { data, width, height } = binaryImage;
-                
-                for (let iter = 0; iter < iterations; iter++) {
-                    const newData = new Uint8Array(width * height);
-                    
-                    for (let y = 0; y < height; y++) {
-                        for (let x = 0; x < width; x++) {
-                            let maxVal = 0;
-                            // 3x3核
-                            for (let dy = -1; dy <= 1; dy++) {
-                                for (let dx = -1; dx <= 1; dx++) {
-                                    const ny = y + dy;
-                                    const nx = x + dx;
-                                    if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
-                                        maxVal = Math.max(maxVal, data[ny * width + nx]);
-                                    }
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let sum = 0, count = 0;
+                        for (let dy = -half; dy <= half; dy++) {
+                            for (let dx = -half; dx <= half; dx++) {
+                                const ny = y + dy, nx = x + dx;
+                                if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+                                    sum += src[ny * width + nx];
+                                    count++;
                                 }
                             }
-                            newData[y * width + x] = maxVal;
                         }
+                        const mean = sum / count;
+                        const idx = y * width + x;
+                        dst[idx] = src[idx] > (mean - C) ? 255 : 0;
                     }
-                    
-                    data = newData;
                 }
-                
-                return { data, width, height };
+                return dst;
             },
             
-            // 形态学腐蚀
-            erode: (binaryImage, iterations) => {
-                let { data, width, height } = binaryImage;
-                
-                for (let iter = 0; iter < iterations; iter++) {
-                    const newData = new Uint8Array(width * height);
-                    
-                    for (let y = 0; y < height; y++) {
-                        for (let x = 0; x < width; x++) {
-                            let minVal = 255;
-                            for (let dy = -1; dy <= 1; dy++) {
-                                for (let dx = -1; dx <= 1; dx++) {
-                                    const ny = y + dy;
-                                    const nx = x + dx;
-                                    if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
-                                        minVal = Math.min(minVal, data[ny * width + nx]);
-                                    }
-                                }
-                            }
-                            newData[y * width + x] = minVal;
-                        }
-                    }
-                    
-                    data = newData;
-                }
-                
-                return { data, width, height };
-            },
-            
-            // 查找轮廓（简化版 - 基于连通域）
-            findContours: (binaryImage) => {
-                const { data, width, height } = binaryImage;
+            findColonies: (binary, width, height, minArea, maxArea, minRoundness) => {
                 const visited = new Uint8Array(width * height);
-                const contours = [];
+                const colonies = [];
                 
                 for (let y = 0; y < height; y++) {
                     for (let x = 0; x < width; x++) {
                         const idx = y * width + x;
-                        if (data[idx] === 255 && !visited[idx]) {
-                            // 找到新连通域，使用洪水填充
-                            const contour = [];
+                        if (binary[idx] === 255 && !visited[idx]) {
                             const stack = [idx];
+                            const pixels = [];
                             visited[idx] = 1;
                             
                             let minX = x, maxX = x, minY = y, maxY = y;
@@ -804,93 +744,90 @@
                                 const curr = stack.pop();
                                 const cx = curr % width;
                                 const cy = Math.floor(curr / width);
+                                pixels.push({ x: cx, y: cy });
                                 
-                                contour.push({ x: cx, y: cy });
-                                
-                                // 更新边界
                                 minX = Math.min(minX, cx);
                                 maxX = Math.max(maxX, cx);
                                 minY = Math.min(minY, cy);
                                 maxY = Math.max(maxY, cy);
                                 
-                                // 检查4邻域
-                                const neighbors = [
-                                    curr - 1, curr + 1,
-                                    curr - width, curr + width
-                                ];
-                                
+                                const neighbors = [curr - 1, curr + 1, curr - width, curr + width];
                                 for (const n of neighbors) {
                                     const nx = n % width;
                                     const ny = Math.floor(n / width);
-                                    
                                     if (nx >= 0 && nx < width && ny >= 0 && ny < height &&
-                                        data[n] === 255 && !visited[n]) {
+                                        binary[n] === 255 && !visited[n]) {
                                         visited[n] = 1;
                                         stack.push(n);
                                     }
                                 }
                             }
                             
-                            if (contour.length > 10) { // 过滤太小的噪声
-                                contours.push({
-                                    points: contour,
-                                    area: contour.length,
-                                    bbox: { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
-                                });
+                            const area = pixels.length;
+                            if (area < minArea || area > maxArea) continue;
+                            
+                            let sumX = 0, sumY = 0;
+                            for (const p of pixels) {
+                                sumX += p.x;
+                                sumY += p.y;
                             }
+                            const centerX = sumX / area;
+                            const centerY = sumY / area;
+                            
+                            const distances = pixels.map(p => 
+                                Math.sqrt((p.x - centerX) ** 2 + (p.y - centerY) ** 2)
+                            );
+                            const meanRadius = distances.reduce((a, b) => a + b, 0) / distances.length;
+                            const variance = distances.reduce((sum, d) => 
+                                sum + (d - meanRadius) ** 2, 0) / distances.length;
+                            const roundness = 1 - Math.min(1, variance / (meanRadius * meanRadius));
+                            
+                            if (roundness < minRoundness) continue;
+                            
+                            colonies.push({
+                                x: centerX,
+                                y: centerY,
+                                radius: meanRadius,
+                                area: area,
+                                confidence: roundness,
+                                manual: false
+                            });
                         }
                     }
                 }
-                
-                return contours;
-            },
-            
-            // 计算圆形度
-            calculateCircularity: (contour) => {
-                const { area, bbox } = contour;
-                const radius = Math.sqrt(area / Math.PI);
-                const perimeter = 2 * Math.PI * radius;
-                
-                // 简化的圆形度计算：4π×面积/周长²
-                // 这里用边界框近似
-                const boxArea = bbox.width * bbox.height;
-                const circularity = area / boxArea; // 越圆越接近π/4≈0.785
-                
-                return circularity;
+                return colonies;
             }
         };
         
-        // 主分析函数
+        // ==================== CV分析 ====================
+        
         function analyzeCV() {
             if (!currentImage || !originalImageData) {
                 showToast('❌ 没有图像数据');
                 return;
             }
             
-            log('开始CV分析...');
             document.getElementById('loadingOverlay').classList.add('active');
             document.getElementById('overlayLoadingText').textContent = 'CV分析中...';
             document.getElementById('overlayLoadingSub').textContent = '图像预处理 → 阈值分割 → 轮廓检测';
             
-            // 使用setTimeout让UI更新
             setTimeout(() => {
                 try {
                     const params = {
-                        threshold: parseInt(document.getElementById('threshold').value),
-                        minArea: parseInt(document.getElementById('minArea').value),
-                        maxArea: parseInt(document.getElementById('maxArea').value),
-                        circularity: parseFloat(document.getElementById('circularity').value),
-                        morphIterations: parseInt(document.getElementById('morphIterations').value),
+                        mode: document.getElementById('cvMode').value,
+                        sensitivity: parseInt(document.getElementById('cvSensitivity').value),
+                        minDiameter: parseInt(document.getElementById('cvMinDiameter').value),
+                        maxDiameter: parseInt(document.getElementById('cvMaxDiameter').value),
                         contrast: parseFloat(document.getElementById('contrast').value),
-                        blurRadius: parseInt(document.getElementById('blurRadius').value),
-                        invertMode: document.getElementById('invertMode').value,
+                        denoise: parseInt(document.getElementById('denoise').value),
                         mergeDist: parseInt(document.getElementById('mergeDist').value)
                     };
                     
-                    log(`参数: 阈值=${params.threshold}, 面积=${params.minArea}-${params.maxArea}, 圆度=${params.circularity}`);
+                    const minArea = Math.PI * (params.minDiameter / 2) ** 2;
+                    const maxArea = Math.PI * (params.maxDiameter / 2) ** 2;
                     
-                    // 1. 获取图像数据（应用对比度）
-                    let imageData;
+                    // 对比度调整
+                    let imageData = originalImageData;
                     if (params.contrast !== 1.0) {
                         const tempCanvas = document.createElement('canvas');
                         tempCanvas.width = originalImageData.width;
@@ -899,131 +836,50 @@
                         tCtx.filter = `contrast(${params.contrast})`;
                         tCtx.drawImage(currentImage, 0, 0);
                         imageData = tCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-                    } else {
-                        imageData = originalImageData;
                     }
                     
-                    // 2. 转灰度
-                    let gray = ImageUtils.toGrayscale(imageData);
-                    log(`灰度图: ${gray.width}x${gray.height}`);
-                    
-                    // 3. 高斯模糊去噪
-                    if (params.blurRadius > 0) {
-                        gray = ImageUtils.gaussianBlur(gray, params.blurRadius);
-                        log('高斯模糊完成');
+                    const { data, width, height } = imageData;
+                    const gray = new Float32Array(width * height);
+                    for (let i = 0; i < data.length; i += 4) {
+                        gray[i / 4] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
                     }
                     
-                    // 4. 自动判断是否需要反相
-                    let needInvert = false;
-                    if (params.invertMode === 'auto') {
-                        // 计算图像中心区域的平均亮度
-                        const centerX = Math.floor(gray.width / 2);
-                        const centerY = Math.floor(gray.height / 2);
-                        const sampleSize = 50;
-                        let sum = 0, count = 0;
-                        
-                        for (let y = centerY - sampleSize; y < centerY + sampleSize; y++) {
-                            for (let x = centerX - sampleSize; x < centerX + sampleSize; x++) {
-                                if (x >= 0 && x < gray.width && y >= 0 && y < gray.height) {
-                                    sum += gray.data[y * gray.width + x];
-                                    count++;
-                                }
-                            }
-                        }
-                        
-                        const avgBrightness = sum / count;
-                        // 如果背景较亮（培养皿），菌落较暗，需要反相
-                        needInvert = avgBrightness > 128;
-                        log(`自动判断: 平均亮度=${avgBrightness.toFixed(1)}, 反相=${needInvert}`);
-                    } else {
-                        needInvert = params.invertMode === 'inverted';
+                    // 去噪
+                    let processed = gray;
+                    if (params.denoise > 0) {
+                        processed = ImageProcessing.gaussianBlur(gray, width, height, params.denoise);
                     }
                     
-                    // 5. 阈值处理
-                    let binary = ImageUtils.threshold(gray, params.threshold, needInvert);
-                    log('阈值处理完成');
+                    // 阈值处理
+                    const C = 255 - params.sensitivity * 2;
+                    let binary = ImageProcessing.adaptiveThreshold(processed, width, height, 20, C);
                     
-                    // 6. 形态学操作（先膨胀后腐蚀 = 闭运算，连接断裂区域）
-                    if (params.morphIterations > 0) {
-                        binary = ImageUtils.dilate(binary, params.morphIterations);
-                        binary = ImageUtils.erode(binary, params.morphIterations);
-                        log('形态学操作完成');
-                    }
+                    // 查找菌落
+                    let detected = ImageProcessing.findColonies(
+                        binary, width, height, minArea, maxArea, 0.5
+                    );
                     
-                    // 7. 查找轮廓
-                    const contours = ImageUtils.findContours(binary);
-                    log(`找到 ${contours.length} 个原始轮廓`);
-                    
-                    // 8. 过滤和转换为菌落对象
-                    let detected = [];
-                    for (let i = 0; i < contours.length; i++) {
-                        const contour = contours[i];
-                        
-                        // 面积过滤
-                        if (contour.area < params.minArea || contour.area > params.maxArea) {
-                            continue;
-                        }
-                        
-                        // 圆形度过滤
-                        const circularity = ImageUtils.calculateCircularity(contour);
-                        if (circularity < params.circularity) {
-                            continue;
-                        }
-                        
-                        // 计算中心点和等效半径
-                        let sumX = 0, sumY = 0;
-                        for (const p of contour.points) {
-                            sumX += p.x;
-                            sumY += p.y;
-                        }
-                        
-                        const centerX = sumX / contour.points.length;
-                        const centerY = sumY / contour.points.length;
-                        const radius = Math.sqrt(contour.area / Math.PI);
-                        
-                        detected.push({
-                            id: i,
-                            x: centerX,
-                            y: centerY,
-                            radius: radius,
-                            area: contour.area,
-                            circularity: circularity,
-                            confidence: circularity, // 用圆形度作为置信度
-                            manual: false
-                        });
-                    }
-                    
-                    log(`过滤后剩余 ${detected.length} 个候选`);
-                    
-                    // 9. ROI过滤
+                    // ROI过滤
                     if (roiCenter && roiRadius) {
                         detected = detected.filter(c => {
                             const dx = c.x - roiCenter.x;
                             const dy = c.y - roiCenter.y;
                             return (dx*dx + dy*dy) <= (roiRadius * roiRadius);
                         });
-                        log(`ROI过滤后剩余 ${detected.length} 个`);
                     }
                     
-                    // 10. NMS合并
-                    detected = nonMaxSuppression(detected, params.mergeDist);
-                    log(`NMS后剩余 ${detected.length} 个`);
+                    // NMS
+                    if (params.mergeDist > 0) {
+                        detected = nonMaxSuppression(detected, params.mergeDist);
+                    }
                     
                     colonies = detected;
-                    
-                    // 显示结果
                     renderMarkers();
                     updateStats();
-                    
-                    // 显示调试图像（可选）
-                    // visualizeProcessing(binary);
-                    
                     showToast(`✅ CV算法检测到 ${colonies.length} 个菌落`);
-                    log('分析完成');
                     
                 } catch (err) {
                     console.error(err);
-                    log('错误: ' + err.message);
                     showToast('❌ 分析失败: ' + err.message);
                 }
                 
@@ -1031,36 +887,30 @@
             }, 100);
         }
         
-        // NMS合并
         function nonMaxSuppression(detections, minDist) {
             if (detections.length < 2) return detections;
-            
             detections.sort((a, b) => b.confidence - a.confidence);
             const result = [];
             const suppressed = new Array(detections.length).fill(false);
             
             for (let i = 0; i < detections.length; i++) {
                 if (suppressed[i]) continue;
-                
                 result.push(detections[i]);
                 
                 for (let j = i + 1; j < detections.length; j++) {
                     if (suppressed[j]) continue;
-                    
                     const dx = detections[i].x - detections[j].x;
                     const dy = detections[i].y - detections[j].y;
                     const dist = Math.sqrt(dx*dx + dy*dy);
-                    
-                    if (dist < minDist || dist < (detections[i].radius + detections[j].radius)) {
+                    if (dist < minDist) {
                         suppressed[j] = true;
                     }
                 }
             }
-            
             return result;
         }
         
-        // ==================== YOLO算法 ====================
+        // ==================== YOLO/YOLO11分析 ====================
         
         async function analyzeYOLO() {
             if (!currentImage) {
@@ -1069,7 +919,7 @@
             }
             
             if (!modelLoaded || !session) {
-                showToast('⏳ YOLO模型未就绪，切换到CV模式');
+                showToast('⏳ 模型未就绪，切换到CV模式');
                 useYOLO = false;
                 updateAlgoUI();
                 analyzeCV();
@@ -1077,8 +927,8 @@
             }
             
             document.getElementById('loadingOverlay').classList.add('active');
-            document.getElementById('overlayLoadingText').textContent = 'YOLO分析中...';
-            document.getElementById('overlayLoadingSub').textContent = '神经网络推理';
+            document.getElementById('overlayLoadingText').textContent = isYOLO11 ? 'YOLO11分析中...' : 'YOLO分析中...';
+            document.getElementById('overlayLoadingSub').textContent = '神经网络推理 + NMS后处理';
             
             setTimeout(async () => {
                 try {
@@ -1087,10 +937,11 @@
                     const inputSize = parseInt(document.getElementById('inputSize').value);
                     const contrast = parseFloat(document.getElementById('contrast').value);
                     
-                    const tensor = await preprocessImage(currentImage, inputSize, contrast, 0);
+                    const tensor = await preprocessImage(currentImage, inputSize, contrast);
                     const feeds = { images: tensor };
                     const results = await session.run(feeds);
                     
+                    // 处理输出（YOLO11和YOLO8格式相同）
                     const output = results.output0 || results[Object.keys(results)[0]];
                     const detections = parseYOLOOutput(output, confThreshold, iouThreshold, inputSize);
                     
@@ -1112,6 +963,7 @@
                         };
                     });
                     
+                    // ROI过滤
                     if (roiCenter && roiRadius) {
                         detected = detected.filter(c => {
                             const dx = c.x - roiCenter.x;
@@ -1125,7 +977,9 @@
                     
                     renderMarkers();
                     updateStats();
-                    showToast(`✅ YOLO检测到 ${colonies.length} 个菌落`);
+                    
+                    const modelName = isYOLO11 ? 'YOLO11' : 'YOLO';
+                    showToast(`✅ ${modelName}检测到 ${colonies.length} 个菌落`);
                     
                 } catch (err) {
                     console.error(err);
@@ -1137,7 +991,7 @@
             }, 100);
         }
         
-        async function preprocessImage(img, inputSize, contrast, brightness) {
+        async function preprocessImage(img, inputSize, contrast) {
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = inputSize;
             tempCanvas.height = inputSize;
@@ -1151,7 +1005,7 @@
             
             tCtx.fillStyle = '#808080';
             tCtx.fillRect(0, 0, inputSize, inputSize);
-            tCtx.filter = `contrast(${contrast}) brightness(${100 + brightness}%)`;
+            tCtx.filter = `contrast(${contrast})`;
             tCtx.drawImage(img, padX, padY, newWidth, newHeight);
             
             const imageData = tCtx.getImageData(0, 0, inputSize, inputSize);
@@ -1171,28 +1025,62 @@
         function parseYOLOOutput(output, confThreshold, iouThreshold, inputSize) {
             const data = output.data;
             const dims = output.dims;
-            const numClasses = dims[1] - 4;
-            const numBoxes = dims[2];
             
+            // 处理不同的输出格式
+            let numClasses, numBoxes;
             let boxes = [];
-            for (let i = 0; i < numBoxes; i++) {
-                const cx = data[i];
-                const cy = data[numBoxes + i];
-                const w = data[2 * numBoxes + i];
-                const h = data[3 * numBoxes + i];
+            
+            // 标准YOLO格式: [1, 84, 8400] 或 [1, 5+classes, num_boxes]
+            if (dims.length === 3) {
+                // [batch, features, boxes]
+                numClasses = dims[1] - 4;
+                numBoxes = dims[2];
                 
-                let maxConf = 0;
-                for (let c = 0; c < numClasses; c++) {
-                    const conf = data[(4 + c) * numBoxes + i];
-                    if (conf > maxConf) maxConf = conf;
+                for (let i = 0; i < numBoxes; i++) {
+                    const cx = data[i];
+                    const cy = data[numBoxes + i];
+                    const w = data[2 * numBoxes + i];
+                    const h = data[3 * numBoxes + i];
+                    
+                    let maxConf = 0;
+                    for (let c = 0; c < numClasses; c++) {
+                        const conf = data[(4 + c) * numBoxes + i];
+                        if (conf > maxConf) maxConf = conf;
+                    }
+                    
+                    if (maxConf > confThreshold) {
+                        const x1 = (cx - w / 2) * inputSize;
+                        const y1 = (cy - h / 2) * inputSize;
+                        const x2 = (cx + w / 2) * inputSize;
+                        const y2 = (cy + h / 2) * inputSize;
+                        boxes.push({ x1, y1, x2, y2, confidence: maxConf });
+                    }
                 }
+            } else if (dims.length === 2) {
+                // 某些模型可能输出 [num_boxes, 5+classes]
+                numBoxes = dims[0];
+                numClasses = dims[1] - 4;
                 
-                if (maxConf > confThreshold) {
-                    const x1 = (cx - w / 2) * inputSize;
-                    const y1 = (cy - h / 2) * inputSize;
-                    const x2 = (cx + w / 2) * inputSize;
-                    const y2 = (cy + h / 2) * inputSize;
-                    boxes.push({ x1, y1, x2, y2, confidence: maxConf });
+                for (let i = 0; i < numBoxes; i++) {
+                    const offset = i * dims[1];
+                    const cx = data[offset];
+                    const cy = data[offset + 1];
+                    const w = data[offset + 2];
+                    const h = data[offset + 3];
+                    
+                    let maxConf = 0;
+                    for (let c = 0; c < numClasses; c++) {
+                        const conf = data[offset + 4 + c];
+                        if (conf > maxConf) maxConf = conf;
+                    }
+                    
+                    if (maxConf > confThreshold) {
+                        const x1 = (cx - w / 2) * inputSize;
+                        const y1 = (cy - h / 2) * inputSize;
+                        const x2 = (cx + w / 2) * inputSize;
+                        const y2 = (cy + h / 2) * inputSize;
+                        boxes.push({ x1, y1, x2, y2, confidence: maxConf });
+                    }
                 }
             }
             
@@ -1228,7 +1116,6 @@
                     }
                 }
             }
-            
             return picked;
         }
         
@@ -1238,10 +1125,7 @@
             canvas.width = img.width;
             canvas.height = img.height;
             ctx.drawImage(img, 0, 0);
-            
-            // 保存原始图像数据
             originalImageData = ctx.getImageData(0, 0, img.width, img.height);
-            
             canvas.dataset.origWidth = img.width;
             canvas.dataset.origHeight = img.height;
             
@@ -1287,8 +1171,7 @@
                 const tooltip = document.createElement('div');
                 tooltip.className = 'marker-tooltip';
                 const confText = colony.confidence ? ` | ${(colony.confidence * 100).toFixed(0)}%` : '';
-                const areaText = colony.area ? ` | A:${colony.area}` : '';
-                tooltip.textContent = `#${idx + 1} | r=${Math.round(colony.radius)}${confText}${areaText}`;
+                tooltip.textContent = `#${idx + 1} | r=${Math.round(colony.radius)}${confText}`;
                 marker.appendChild(tooltip);
                 
                 marker.onclick = (e) => { e.stopPropagation(); removeColony(idx); };
@@ -1318,12 +1201,9 @@
             showToast('🗑️ 已删除');
         }
         
-        // ==================== 事件处理 ====================
+        // ==================== 事件绑定 ====================
         
         document.addEventListener('DOMContentLoaded', () => {
-            // 默认进入CV模式
-            updateAlgoUI();
-            
             document.getElementById('fileInput').addEventListener('change', handleFile);
             document.getElementById('cameraInput').addEventListener('change', handleFile);
             
@@ -1338,14 +1218,14 @@
                 if (e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]); 
             });
             
-            // 滑块事件
-            ['threshold', 'minArea', 'maxArea', 'circularity', 'morphIterations', 
-             'contrast', 'blurRadius', 'mergeDist', 'confThreshold', 'iouThreshold'].forEach(id => {
+            ['sensitivity', 'minDiameter', 'maxDiameter', 'contrast', 'denoise', 
+             'mergeDist', 'confThreshold', 'iouThreshold', 'cvSensitivity', 
+             'cvMinDiameter', 'cvMaxDiameter'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.addEventListener('input', (e) => {
-                        const displayId = id + 'Value';
-                        const displayEl = document.getElementById(displayId);
+                        const displayId = id.replace('cv', '').replace('Diameter', 'Diam') + 'Value';
+                        const displayEl = document.getElementById(displayId) || document.getElementById(id + 'Value');
                         if (displayEl) displayEl.textContent = e.target.value;
                     });
                 }
@@ -1356,7 +1236,6 @@
                 applyZoom();
             });
             
-            // 按钮
             document.getElementById('analyzeBtn').addEventListener('click', () => {
                 if (useYOLO && modelLoaded) analyzeYOLO();
                 else analyzeCV();
@@ -1371,7 +1250,6 @@
             document.getElementById('exportImgBtn').addEventListener('click', exportImage);
             document.getElementById('resetParamsBtn').addEventListener('click', resetToDefault);
             
-            // Canvas事件
             canvas.addEventListener('click', handleCanvasClick);
             canvas.addEventListener('mousedown', handleCanvasMouseDown);
             canvas.addEventListener('mousemove', handleCanvasMouseMove);
@@ -1392,19 +1270,12 @@
                 showToast('❌ 请选择图片'); 
                 return; 
             }
-            
-            log('加载图片: ' + file.name);
-            
             const reader = new FileReader();
             reader.onload = (e) => { 
                 const img = new Image(); 
                 img.onload = () => { 
                     currentImage = img; 
                     displayImage(img);
-                    
-                    log(`图片尺寸: ${img.width}x${img.height}`);
-                    
-                    // 自动分析
                     if (useYOLO && modelLoaded) analyzeYOLO();
                     else analyzeCV();
                 }; 
@@ -1416,7 +1287,6 @@
             viewer.classList.add('active');
         }
         
-        // ROI功能
         function enterRoiMode() { 
             if (!currentImage) return; 
             isRoiMode = true; 
@@ -1573,7 +1443,7 @@
             if (!isAddMode) return;
             const { x, y } = getImageCoordsFromEvent(e);
             const avgRadius = colonies.length > 0 ? 
-                colonies.reduce((sum, c) => sum + c.radius, 0) / colonies.length : 15;
+                colonies.reduce((sum, c) => sum + c.radius, 0) / colonies.length : 10;
             
             colonies.push({ 
                 id: colonies.length, 
@@ -1612,23 +1482,28 @@
         }
         
         function resetToDefault() {
-            // CV参数默认值
-            document.getElementById('threshold').value = 128;
-            document.getElementById('thresholdValue').textContent = '128';
-            document.getElementById('minArea').value = 10;
-            document.getElementById('minAreaValue').textContent = '10';
-            document.getElementById('maxArea').value = 500;
-            document.getElementById('maxAreaValue').textContent = '500';
-            document.getElementById('circularity').value = 0.7;
-            document.getElementById('circularityValue').textContent = '0.7';
-            document.getElementById('morphIterations').value = 1;
-            document.getElementById('morphValue').textContent = '1';
+            // YOLO参数
+            document.getElementById('confThreshold').value = 0.25;
+            document.getElementById('confValue').textContent = '0.25';
+            document.getElementById('iouThreshold').value = 0.45;
+            document.getElementById('iouValue').textContent = '0.45';
+            document.getElementById('inputSize').value = '640';
+            
+            // CV参数
+            document.getElementById('cvSensitivity').value = 50;
+            document.getElementById('cvSensValue').textContent = '50';
+            document.getElementById('cvMinDiameter').value = 8;
+            document.getElementById('cvMinDiamValue').textContent = '8';
+            document.getElementById('cvMaxDiameter').value = 80;
+            document.getElementById('cvMaxDiamValue').textContent = '80';
+            
+            // 通用参数
             document.getElementById('contrast').value = 1.0;
             document.getElementById('contrastValue').textContent = '1.0';
-            document.getElementById('blurRadius').value = 1;
-            document.getElementById('blurValue').textContent = '1';
-            document.getElementById('mergeDist').value = 15;
-            document.getElementById('mergeDistValue').textContent = '15';
+            document.getElementById('denoise').value = 1;
+            document.getElementById('denoiseValue').textContent = '1';
+            document.getElementById('mergeDist').value = 12;
+            document.getElementById('mergeDistValue').textContent = '12';
             
             if (currentImage) {
                 const containerWidth = imageWrapper.clientWidth;
@@ -1638,7 +1513,8 @@
                 document.getElementById('zoomValue').textContent = fitScale.toFixed(2);
                 applyZoom();
                 
-                analyzeCV();
+                if (useYOLO && modelLoaded) analyzeYOLO();
+                else analyzeCV();
             }
         }
         
@@ -1670,7 +1546,7 @@
             });
             
             const link = document.createElement('a'); 
-            link.download = `colonies_${useYOLO ? 'yolo' : 'cv'}_${Date.now()}.png`; 
+            link.download = `colonies_${isYOLO11 ? 'yolo11' : (useYOLO ? 'yolo' : 'cv')}_${Date.now()}.png`; 
             link.href = exportCanvas.toDataURL('image/png'); 
             link.click();
             
