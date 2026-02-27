@@ -112,10 +112,17 @@
         // 读取本地模型文件
         function loadLocalModel(event) {
             const file = event.target.files[0];
-            if (!file || !file.name.endsWith('.onnx')) {
+            if (!file) {
+                showToast('❌ 未选择文件');
+                return;
+            }
+
+            if (!file.name.endsWith('.onnx')) {
                 showToast('❌ 请上传 .onnx 格式的模型');
                 return;
             }
+
+            console.log('上传的文件类型:', file.type);  // 输出文件类型，确保是有效的 .onnx 文件
 
             const reader = new FileReader();
             reader.onload = async function() {
