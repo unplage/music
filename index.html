@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f172a">
-    <meta name="description" content="AI人体检测器 - 基于YOLO11深度学习">
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi8J+nqOWwgeW4uOacuuWKqOeUuOaWryIsInNob3J0X25hbWUiOiLwn6eo5bCB5bi45py65Yqo55S4Iiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwZjE3MmEiLCJ0aGVtZV9jb2xvciI6IiMzYjgyZjYifQ==">
     <title>AI人体检测器 · YOLO11版</title>
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/ort.min.js"></script>
     <style>
+        /* ... 保持原有样式不变 ... */
         :root {
             --primary: #3b82f6;
             --primary-dark: #1d4ed8;
@@ -50,6 +48,9 @@
         .model-option-info { flex: 1; text-align: left; }
         .model-option-name { font-weight: 600; font-size: 0.95rem; }
         .model-option-desc { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+        .error-box { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger); border-radius: 8px; padding: 12px; margin-top: 15px; font-size: 0.85rem; color: #fca5a5; display: none; }
+        .error-box.show { display: block; }
+        .retry-btn { background: var(--warning); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-top: 10px; font-size: 0.85rem; }
         
         /* Main App */
         .app { max-width: 100vw; min-height: 100vh; display: flex; flex-direction: column; }
@@ -173,14 +174,6 @@
                 </div>
             </div>
             
-            <div class="model-option" onclick="selectModelSource('yolo11-face')" id="optionYoloFace">
-                <div class="model-option-icon">😊</div>
-                <div class="model-option-info">
-                    <div class="model-option-name">YOLO11n-Face（人脸）</div>
-                    <div class="model-option-desc">专门人脸检测模型（需额外下载）</div>
-                </div>
-            </div>
-            
             <div class="model-option" onclick="selectModelSource('local')" id="optionLocal">
                 <div class="model-option-icon">💻</div>
                 <div class="model-option-info">
@@ -196,6 +189,13 @@
                 <button class="splash-btn splash-btn-secondary" onclick="skipToDemo()">
                     <span>▶️</span><span>先试用</span>
                 </button>
+            </div>
+            
+            <div class="error-box" id="errorBox">
+                <strong>❌ 下载失败</strong>
+                <div id="errorMessage"></div>
+                <button class="retry-btn" onclick="retryWithProxy()">使用代理重试</button>
+                <button class="retry-btn" onclick="switchToLocal()" style="margin-left: 10px; background: var(--info);">本地上传</button>
             </div>
             
             <input type="file" id="modelFileInput" accept=".onnx" style="display: none;" onchange="handleModelFile(event)">
@@ -268,7 +268,6 @@
                         <div class="slider-group">
                             <div class="slider-header">
                                 <span class="slider-label">输入尺寸</span>
-                                <span class="slider-value" id="inputSizeValue">640</span>
                             </div>
                             <select id="inputSize" style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg); color: var(--text); border: 1px solid var(--secondary);">
                                 <option value="320">320×320（最快）</option>
@@ -407,22 +406,20 @@
             }
         }
         
-        // ==================== 模型配置 ====================
+        // ==================== 模型配置（修复版） ====================
         const MODEL_SOURCES = {
             yolo11: {
                 name: 'YOLO11n',
+                // 主URL：GitHub直链（注意：URL末尾不能有空格！）
                 url: 'https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n.onnx',
+                // 备用URL：使用jsDelivr CDN（国内访问更快）
+                backupUrls: [
+                    'https://cdn.jsdelivr.net/gh/ultralytics/assets@main/releases/v8.3.0/yolo11n.onnx',
+                    'https://fastly.jsdelivr.net/gh/ultralytics/assets@main/releases/v8.3.0/yolo11n.onnx'
+                ],
                 size: '5.4MB',
-                type: 'person', // 人体检测
+                type: 'person',
                 classes: ['person'],
-                personClassId: 0 // COCO中person是第0类
-            },
-            'yolo11-face': {
-                name: 'YOLO11n-Face',
-                url: null, // 需要用户自己提供
-                size: '5.4MB',
-                type: 'face',
-                classes: ['face'],
                 personClassId: 0
             },
             local: {
@@ -435,10 +432,11 @@
         let session = null;
         let modelLoaded = false;
         let currentModelConfig = null;
+        let useProxy = false; // 标记是否使用代理
         
         // ==================== 全局状态 ====================
         let currentImage = null;
-        let detections = []; // 存储检测结果
+        let detections = [];
         let isRealtime = false;
         let videoStream = null;
         
@@ -452,21 +450,18 @@
         function selectModelSource(source) {
             currentModelSource = source;
             document.querySelectorAll('.model-option').forEach(el => el.classList.remove('selected'));
-            document.getElementById('option' + source.charAt(0).toUpperCase() + source.slice(1).replace('-', '')).classList.add('selected');
+            document.getElementById('option' + source.charAt(0).toUpperCase() + source.slice(1)).classList.add('selected');
             
             const btnText = document.getElementById('primaryBtnText');
             if (source === 'yolo11') btnText.textContent = '加载YOLO11n';
-            else if (source === 'yolo11-face') {
-                btnText.textContent = '上传人脸模型';
-                setTimeout(() => document.getElementById('modelFileInput').click(), 100);
-            } else {
+            else {
                 btnText.textContent = '选择模型文件';
                 setTimeout(() => document.getElementById('modelFileInput').click(), 100);
             }
         }
         
         function confirmModelSource() {
-            if (currentModelSource === 'local' || currentModelSource === 'yolo11-face') {
+            if (currentModelSource === 'local') {
                 document.getElementById('modelFileInput').click();
             } else {
                 loadModel();
@@ -478,60 +473,188 @@
             showToast('👋 请先加载模型以开始检测');
         }
         
+        // ==================== 核心修复：增强版模型加载 ====================
         async function loadModel() {
             const source = MODEL_SOURCES[currentModelSource];
             currentModelConfig = source;
+            
+            // 隐藏错误框
+            document.getElementById('errorBox').classList.remove('show');
             
             document.getElementById('modelSelector').style.display = 'none';
             document.getElementById('loadingStatus').style.display = 'block';
             document.getElementById('loadingBar').style.display = 'block';
             
-            try {
-                // 检查缓存
-                const cached = await getModelFromCache(source.name);
-                if (cached) {
-                    await initializeModel(cached, source);
-                    return;
-                }
+            // 尝试所有可用URL
+            const urls = [source.url, ...(source.backupUrls || [])];
+            let lastError = null;
+            
+            for (let i = 0; i < urls.length; i++) {
+                const url = urls[i];
+                const isBackup = i > 0;
                 
-                // 下载模型
-                document.getElementById('loadingText').textContent = '正在下载模型...';
-                
-                const response = await fetch(source.url);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
-                const contentLength = response.headers.get('content-length');
-                const total = contentLength ? parseInt(contentLength) : 0;
-                const reader = response.body.getReader();
-                const chunks = [];
-                let received = 0;
-                
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    chunks.push(value);
-                    received += value.length;
+                try {
+                    document.getElementById('loadingText').textContent = 
+                        isBackup ? `尝试备用源 ${i}/${urls.length-1}...` : '正在下载模型...';
+                    document.getElementById('loadingDetail').textContent = 
+                        `源: ${url.substring(0, 50)}...`;
                     
-                    if (total > 0) {
-                        const percent = ((received / total) * 100).toFixed(0);
-                        document.getElementById('loadingProgress').style.width = percent + '%';
-                        document.getElementById('loadingDetail').textContent = 
-                            `已下载 ${(received/1024/1024).toFixed(1)}MB / ${(total/1024/1024).toFixed(1)}MB`;
+                    // 添加超时控制
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+                    
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        signal: controller.signal,
+                        headers: {
+                            'Accept': 'application/octet-stream, application/octet-stream'
+                        }
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
+                    
+                    // 验证内容类型
+                    const contentType = response.headers.get('content-type');
+                    console.log('Content-Type:', contentType);
+                    
+                    // 获取数据
+                    const contentLength = response.headers.get('content-length');
+                    const total = contentLength ? parseInt(contentLength) : 0;
+                    
+                    // 检查是否为HTML（可能是404页面）
+                    if (contentType && contentType.includes('text/html')) {
+                        throw new Error('收到HTML响应，可能是404或需要登录');
+                    }
+                    
+                    const reader = response.body.getReader();
+                    const chunks = [];
+                    let received = 0;
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        chunks.push(value);
+                        received += value.length;
+                        
+                        if (total > 0) {
+                            const percent = ((received / total) * 100).toFixed(0);
+                            document.getElementById('loadingProgress').style.width = percent + '%';
+                            document.getElementById('loadingDetail').textContent = 
+                                `已下载 ${(received/1024/1024).toFixed(1)}MB / ${(total/1024/1024).toFixed(1)}MB`;
+                        }
+                    }
+                    
+                    // 合并数据
+                    const arrayBuffer = new Uint8Array(received);
+                    let position = 0;
+                    for (const chunk of chunks) {
+                        arrayBuffer.set(chunk, position);
+                        position += chunk.length;
+                    }
+                    
+                    // 验证文件大小（至少1MB）
+                    if (arrayBuffer.byteLength < 1024 * 1024) {
+                        throw new Error('文件太小，可能不是有效的ONNX模型（<1MB）');
+                    }
+                    
+                    // 成功，初始化模型
+                    await initializeModel(arrayBuffer.buffer, source);
+                    return; // 成功则退出
+                    
+                } catch (error) {
+                    console.warn(`源 ${i+1} 失败:`, error);
+                    lastError = error;
+                    continue; // 尝试下一个源
                 }
-                
-                const arrayBuffer = new Uint8Array(received);
-                let position = 0;
-                for (const chunk of chunks) {
-                    arrayBuffer.set(chunk, position);
-                    position += chunk.length;
-                }
-                
-                await initializeModel(arrayBuffer.buffer, source);
-                
-            } catch (error) {
-                handleError(error);
             }
+            
+            // 所有源都失败
+            handleLoadError(lastError || new Error('所有下载源均不可用'));
+        }
+        
+        // 使用代理重试
+        async function retryWithProxy() {
+            useProxy = true;
+            const source = MODEL_SOURCES['yolo11'];
+            
+            // 使用CORS代理服务（注意：这些公共代理可能不稳定，建议自己搭建）
+            const proxyUrls = [
+                'https://corsproxy.io/?' + encodeURIComponent(source.url),
+                'https://api.allorigins.win/raw?url=' + encodeURIComponent(source.url),
+                'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(source.url)
+            ];
+            
+            document.getElementById('errorBox').classList.remove('show');
+            document.getElementById('loadingStatus').style.display = 'block';
+            document.getElementById('loadingBar').style.display = 'block';
+            document.getElementById('loadingProgress').style.width = '0%';
+            
+            for (let i = 0; i < proxyUrls.length; i++) {
+                try {
+                    document.getElementById('loadingText').textContent = `尝试代理 ${i+1}/${proxyUrls.length}...`;
+                    
+                    const response = await fetch(proxyUrls[i], { method: 'GET' });
+                    
+                    if (!response.ok) continue;
+                    
+                    const arrayBuffer = await response.arrayBuffer();
+                    
+                    if (arrayBuffer.byteLength < 1024 * 1024) continue;
+                    
+                    await initializeModel(arrayBuffer, source);
+                    return;
+                    
+                } catch (e) {
+                    console.warn('代理失败:', e);
+                    continue;
+                }
+            }
+            
+            showToast('❌ 代理也失败了，请本地上传模型');
+            switchToLocal();
+        }
+        
+        function switchToLocal() {
+            document.getElementById('errorBox').classList.remove('show');
+            selectModelSource('local');
+            document.getElementById('modelFileInput').click();
+        }
+        
+        function handleLoadError(error) {
+            console.error('模型加载失败:', error);
+            
+            document.getElementById('loadingStatus').style.display = 'none';
+            document.getElementById('loadingBar').style.display = 'none';
+            document.getElementById('modelSelector').style.display = 'block';
+            
+            const errorBox = document.getElementById('errorBox');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            let errorText = '';
+            
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                errorText = `
+                    <p><strong>网络错误：</strong>无法连接到GitHub</p>
+                    <p>可能原因：</p>
+                    <ul style="margin: 5px 0; padding-left: 20px;">
+                        <li>防火墙或网络限制</li>
+                        <li>需要科学上网</li>
+                        <li>GitHub被屏蔽</li>
+                    </ul>
+                    <p>建议：使用"本地上传"或点击"使用代理重试"</p>
+                `;
+            } else if (error.name === 'AbortError') {
+                errorText = '下载超时（30秒），请检查网络速度';
+            } else {
+                errorText = error.message || '未知错误';
+            }
+            
+            errorMessage.innerHTML = errorText;
+            errorBox.classList.add('show');
         }
         
         async function handleModelFile(event) {
@@ -544,21 +667,35 @@
             }
             
             document.getElementById('modelSelector').style.display = 'none';
+            document.getElementById('errorBox').classList.remove('show');
             document.getElementById('loadingStatus').style.display = 'block';
             document.getElementById('loadingBar').style.display = 'block';
-            document.getElementById('loadingText').textContent = '正在加载模型...';
+            document.getElementById('loadingText').textContent = '正在加载本地模型...';
             
             try {
                 const arrayBuffer = await file.arrayBuffer();
+                
+                if (arrayBuffer.byteLength < 1024 * 1024) {
+                    throw new Error('文件太小，可能不是有效的ONNX模型');
+                }
+                
                 const config = {
-                    name: file.name,
+                    name: file.name.replace('.onnx', ''),
                     type: 'custom',
                     classes: ['person'],
                     personClassId: 0
                 };
+                
                 await initializeModel(arrayBuffer, config);
             } catch (error) {
-                handleError(error);
+                document.getElementById('loadingText').textContent = '加载失败';
+                document.getElementById('loadingDetail').textContent = error.message;
+                
+                setTimeout(() => {
+                    document.getElementById('modelSelector').style.display = 'block';
+                    document.getElementById('loadingStatus').style.display = 'none';
+                    document.getElementById('loadingBar').style.display = 'none';
+                }, 2000);
             }
         }
         
@@ -567,29 +704,41 @@
             document.getElementById('loadingDetail').textContent = '这可能需要几秒钟';
             document.getElementById('loadingProgress').style.width = '100%';
             
-            const ortConfig = {
-                executionProviders: ['wasm'],
-                graphOptimizationLevel: 'all',
-                wasmOptions: { 
-                    numThreads: Math.min(navigator.hardwareConcurrency || 4, 4),
-                    simd: true 
+            try {
+                const ortConfig = {
+                    executionProviders: ['wasm'],
+                    graphOptimizationLevel: 'all',
+                    wasmOptions: { 
+                        numThreads: Math.min(navigator.hardwareConcurrency || 4, 4),
+                        simd: true 
+                    }
+                };
+                
+                session = await ort.InferenceSession.create(arrayBuffer, ortConfig);
+                modelLoaded = true;
+                currentModelConfig = config;
+                
+                console.log('Model inputs:', session.inputNames);
+                console.log('Model outputs:', session.outputNames);
+                
+                // 缓存模型
+                try {
+                    await saveModelToCache(config.name, arrayBuffer);
+                } catch (e) {
+                    console.warn('缓存失败:', e);
                 }
-            };
-            
-            session = await ort.InferenceSession.create(arrayBuffer, ortConfig);
-            modelLoaded = true;
-            currentModelConfig = config;
-            
-            // 缓存模型
-            await saveModelToCache(config.name, arrayBuffer);
-            
-            // 更新UI
-            document.getElementById('splash').classList.add('hidden');
-            document.getElementById('versionBadge').textContent = config.name;
-            document.getElementById('modelStatus').innerHTML = `<span>✅</span><span>${config.name}就绪</span>`;
-            document.getElementById('realtimeBtn').style.display = 'inline-flex';
-            
-            showToast(`✅ ${config.name}加载成功！`);
+                
+                // 更新UI
+                document.getElementById('splash').classList.add('hidden');
+                document.getElementById('versionBadge').textContent = config.name;
+                document.getElementById('modelStatus').innerHTML = `<span>✅</span><span>${config.name}就绪</span>`;
+                document.getElementById('realtimeBtn').style.display = 'inline-flex';
+                
+                showToast(`✅ ${config.name}加载成功！`);
+                
+            } catch (error) {
+                throw new Error('模型初始化失败: ' + error.message);
+            }
         }
         
         // ==================== IndexedDB缓存 ====================
@@ -626,19 +775,6 @@
                 };
                 request.onerror = () => resolve(null);
             });
-        }
-        
-        function handleError(error) {
-            console.error(error);
-            document.getElementById('loadingText').textContent = '加载失败';
-            document.getElementById('loadingDetail').textContent = error.message;
-            
-            setTimeout(() => {
-                document.getElementById('modelSelector').style.display = 'block';
-                document.getElementById('loadingStatus').style.display = 'none';
-                document.getElementById('loadingBar').style.display = 'none';
-                document.getElementById('loadingProgress').style.width = '0%';
-            }, 2000);
         }
         
         // ==================== 图像处理 ====================
@@ -689,7 +825,6 @@
             
             document.getElementById('statImageSize').textContent = `${img.width}×${img.height}`;
             
-            // 自动缩放适应屏幕
             const containerWidth = document.getElementById('imageWrapper').clientWidth;
             const scale = Math.min(1, containerWidth / img.width);
             document.getElementById('zoomSlider').value = scale;
@@ -718,19 +853,15 @@
                 const iouThreshold = parseFloat(document.getElementById('iouThreshold').value);
                 const inputSize = parseInt(document.getElementById('inputSize').value);
                 
-                // 预处理
                 const tensor = await preprocessImage(img, inputSize);
                 const feeds = {};
                 feeds[session.inputNames[0]] = tensor;
                 
-                // 推理
                 const results = await session.run(feeds);
                 const output = results[session.outputNames[0]];
                 
-                // 解析结果 - 只保留person类（第0类）
                 const allDetections = parseYOLOOutput(output, confThreshold, iouThreshold, inputSize);
                 
-                // 过滤只保留person类
                 detections = allDetections.filter(d => d.classId === 0).map((d, idx) => ({
                     ...d,
                     id: idx,
@@ -741,11 +872,7 @@
                 tensor.dispose();
                 
                 const processTime = Math.round(performance.now() - startTime);
-                
-                // 更新统计
                 updateStats(processTime);
-                
-                // 渲染结果
                 renderDetections();
                 
                 showToast(`✅ 检测到 ${detections.length} 个人`);
@@ -764,11 +891,9 @@
             tempCanvas.height = inputSize;
             const tCtx = tempCanvas.getContext('2d');
             
-            // 填充灰色背景
             tCtx.fillStyle = '#808080';
             tCtx.fillRect(0, 0, inputSize, inputSize);
             
-            // 计算缩放
             const scale = Math.min(inputSize / img.width, inputSize / img.height);
             const newWidth = img.width * scale;
             const newHeight = img.height * scale;
@@ -780,7 +905,6 @@
             const imageData = tCtx.getImageData(0, 0, inputSize, inputSize);
             const data = imageData.data;
             
-            // 转换为CHW格式
             const red = [], green = [], blue = [];
             for (let i = 0; i < data.length; i += 4) {
                 red.push(data[i] / 255);
@@ -798,7 +922,6 @@
             const boxes = [];
             
             if (dims.length === 3) {
-                // [1, 84, 8400] 格式
                 const numClasses = dims[1] - 4;
                 const numBoxes = dims[2];
                 
@@ -808,7 +931,6 @@
                     const w = data[2 * numBoxes + i];
                     const h = data[3 * numBoxes + i];
                     
-                    // 找到置信度最高的类别
                     let maxConf = 0;
                     let classId = 0;
                     for (let c = 0; c < numClasses; c++) {
@@ -829,7 +951,6 @@
                 }
             }
             
-            // NMS
             return applyNMS(boxes, iouThreshold);
         }
         
@@ -873,13 +994,11 @@
             const showLabels = document.getElementById('showLabels').checked;
             const showConfidence = document.getElementById('showConfidence').checked;
             
-            // 计算缩放比例（从模型输入坐标到原始图像坐标）
             const inputSize = parseInt(document.getElementById('inputSize').value);
             const scaleX = canvas.width / inputSize;
             const scaleY = canvas.height / inputSize;
             
             detections.forEach((det, idx) => {
-                // 转换到原始图像坐标
                 const x1 = det.x1 * scaleX;
                 const y1 = det.y1 * scaleY;
                 const x2 = det.x2 * scaleX;
@@ -895,7 +1014,6 @@
                 box.style.width = (width * zoom) + 'px';
                 box.style.height = (height * zoom) + 'px';
                 
-                // 标签
                 if (showLabels) {
                     const label = document.createElement('div');
                     label.className = 'person-label';
@@ -903,7 +1021,6 @@
                     box.appendChild(label);
                 }
                 
-                // 置信度
                 if (showConfidence) {
                     const conf = document.createElement('div');
                     conf.className = 'person-confidence';
@@ -911,7 +1028,6 @@
                     box.appendChild(conf);
                 }
                 
-                // 点击事件
                 box.onclick = () => {
                     showToast(`👤 人员 #${idx + 1} | 置信度: ${(det.confidence * 100).toFixed(1)}%`);
                 };
@@ -930,7 +1046,6 @@
             document.getElementById('statAvgConfidence').textContent = avgConf + '%';
             document.getElementById('statProcessTime').textContent = processTime + 'ms';
             
-            // 计算FPS
             const fps = Math.round(1000 / (processTime || 1));
             document.getElementById('fpsStat').innerHTML = `<span>⚡</span><span>${fps} FPS</span>`;
         }
@@ -967,10 +1082,8 @@
             exportCanvas.height = currentImage.height;
             const eCtx = exportCanvas.getContext('2d');
             
-            // 绘制原图
             eCtx.drawImage(currentImage, 0, 0);
             
-            // 绘制检测框
             const inputSize = parseInt(document.getElementById('inputSize').value);
             const scaleX = currentImage.width / inputSize;
             const scaleY = currentImage.height / inputSize;
@@ -987,21 +1100,17 @@
                 const width = x2 - x1;
                 const height = y2 - y1;
                 
-                // 框
                 eCtx.strokeRect(x1, y1, width, height);
                 
-                // 标签背景
                 const label = `${idx + 1}. person ${(det.confidence * 100).toFixed(0)}%`;
                 const metrics = eCtx.measureText(label);
                 eCtx.fillStyle = 'rgba(0, 255, 136, 0.8)';
                 eCtx.fillRect(x1, y1 - 25, metrics.width + 10, 25);
                 
-                // 标签文字
                 eCtx.fillStyle = '#000';
                 eCtx.fillText(label, x1 + 5, y1 - 7);
             });
             
-            // 下载
             const link = document.createElement('a');
             link.download = `person_detection_${Date.now()}.png`;
             link.href = exportCanvas.toDataURL('image/png');
@@ -1036,11 +1145,12 @@
         function switchModel() {
             document.getElementById('splash').classList.remove('hidden');
             document.getElementById('modelSelector').style.display = 'block';
+            document.getElementById('errorBox').classList.remove('show');
             document.getElementById('loadingStatus').style.display = 'none';
             document.getElementById('loadingBar').style.display = 'none';
         }
         
-        // ==================== 实时检测（可选） ====================
+        // ==================== 实时检测 ====================
         async function startRealtimeDetection() {
             if (!modelLoaded) {
                 showToast('⏳ 请先加载模型');
@@ -1066,14 +1176,7 @@
                     
                     const realtimeLoop = async () => {
                         if (!isRealtime) return;
-                        
                         ctx.drawImage(video, 0, 0);
-                        
-                        // 每3帧检测一次以节省性能
-                        if (Date.now() % 3 === 0) {
-                            await detectPersonsRealtime(video);
-                        }
-                        
                         requestAnimationFrame(realtimeLoop);
                     };
                     
@@ -1085,26 +1188,6 @@
             }
         }
         
-        async function detectPersonsRealtime(video) {
-            // 简化版实时检测（降低分辨率以提高速度）
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = 320;
-            tempCanvas.height = 320;
-            const tCtx = tempCanvas.getContext('2d');
-            tCtx.drawImage(video, 0, 0, 320, 320);
-            
-            const imgData = tCtx.getImageData(0, 0, 320, 320);
-            // 这里可以添加实时推理逻辑，但为性能考虑建议降低频率
-        }
-        
-        function stopRealtime() {
-            isRealtime = false;
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-                videoStream = null;
-            }
-        }
-        
         // ==================== 工具函数 ====================
         function showToast(msg) {
             const toast = document.getElementById('toast');
@@ -1113,7 +1196,6 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
         
-        // 窗口大小改变时重新缩放
         window.addEventListener('resize', () => {
             if (currentImage) applyZoom();
         });
