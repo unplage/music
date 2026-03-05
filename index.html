@@ -99,6 +99,13 @@
             color: var(--text);
         }
 
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
         .tabs {
             display: flex;
             gap: 8px;
@@ -135,6 +142,18 @@
             color: white;
             border-color: var(--primary);
             box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.5);
+        }
+
+        .tab-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger);
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 700;
         }
 
         .tab-content {
@@ -237,6 +256,21 @@
             color: var(--text-muted);
         }
 
+        .chart-container {
+            background: var(--glass);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
         .input-group {
             margin-bottom: 20px;
         }
@@ -249,7 +283,7 @@
             font-weight: 500;
         }
 
-        input[type="number"], input[type="date"], input[type="text"], select, textarea {
+        input[type="number"], input[type="date"], input[type="text"], select {
             width: 100%;
             padding: 14px 16px;
             background: rgba(15, 23, 42, 0.6);
@@ -258,15 +292,9 @@
             color: var(--text);
             font-size: 1rem;
             transition: all 0.3s ease;
-            font-family: inherit;
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        input:focus, select:focus, textarea:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: var(--primary);
             background: rgba(15, 23, 42, 0.8);
@@ -292,18 +320,13 @@
             gap: 8px;
         }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
         .btn-primary {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
             box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.5);
         }
 
-        .btn-primary:hover:not(:disabled) {
+        .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.6);
         }
@@ -314,7 +337,7 @@
             border: 1px solid var(--border);
         }
 
-        .btn-secondary:hover:not(:disabled) {
+        .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.1);
             border-color: var(--primary);
         }
@@ -325,19 +348,19 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
-        .btn-danger:hover:not(:disabled) {
+        .btn-danger:hover {
             background: rgba(239, 68, 68, 0.2);
-        }
-
-        .btn-small {
-            padding: 8px 16px;
-            font-size: 0.875rem;
         }
 
         .btn-group {
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.875rem;
         }
 
         .config-item {
@@ -388,10 +411,10 @@
         }
 
         .weight-input {
-            width: 80px !important;
-            padding: 8px 12px !important;
+            width: 80px;
+            padding: 8px 12px;
             text-align: center;
-            font-size: 1rem !important;
+            font-size: 1rem;
         }
 
         .toggle-container {
@@ -412,8 +435,8 @@
             height: 28px;
             background: var(--border);
             border-radius: 14px;
+            cursor: pointer;
             transition: all 0.3s ease;
-            flex-shrink: 0;
         }
 
         .toggle.active {
@@ -502,7 +525,6 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            flex-wrap: wrap;
         }
 
         .history-tag {
@@ -512,10 +534,6 @@
             background: var(--primary);
             color: white;
             font-weight: 600;
-        }
-
-        .history-tag.rebalance {
-            background: var(--warning);
         }
 
         .history-detail {
@@ -528,16 +546,12 @@
             font-size: 1.25rem;
             font-weight: 700;
             color: var(--success);
-            margin-right: 16px;
-        }
-
-        .history-amount.sell {
-            color: var(--danger);
         }
 
         .history-actions {
             display: flex;
             gap: 8px;
+            margin-left: 16px;
         }
 
         .icon-btn {
@@ -552,7 +566,6 @@
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
-            font-size: 1rem;
         }
 
         .icon-btn:hover {
@@ -677,43 +690,155 @@
             margin-top: 8px;
         }
 
-        .notification {
+        .modal-overlay {
             position: fixed;
-            top: 24px;
-            right: 24px;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            transform: translateX(400px);
-            opacity: 0;
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            z-index: 2000;
-            max-width: 400px;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-            opacity: 1;
-        }
-
-        .notification-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            z-index: 1000;
+            padding: 20px;
         }
 
-        .notification.success .notification-icon { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-        .notification.error .notification-icon { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-        .notification.info .notification-icon { background: rgba(6, 182, 212, 0.1); color: var(--info); }
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .modal-desc {
+            color: var(--text-muted);
+            font-size: 0.9375rem;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .preset-card {
+            background: var(--glass);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .preset-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .preset-card.active {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .preset-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .preset-name {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .preset-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+            
+            h1 {
+                font-size: 1.75rem;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .history-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            
+            .history-actions {
+                margin-left: 0;
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 12px;
+            background: var(--text);
+            color: var(--bg);
+            font-size: 0.75rem;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
 
         .quick-actions {
             position: fixed;
@@ -761,7 +886,6 @@
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-muted);
-            font-size: 1.25rem;
         }
 
         .tag {
@@ -782,271 +906,43 @@
             color: var(--primary);
         }
 
-        .preset-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            margin-bottom: 32px;
-        }
-
-        .preset-card {
-            background: var(--glass);
-            border: 2px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-
-        .preset-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-        }
-
-        .preset-card.active {
-            border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.1);
-        }
-
-        .preset-icon {
-            font-size: 2rem;
-            margin-bottom: 12px;
-        }
-
-        .preset-name {
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .preset-desc {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        .section-title {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-
-        .timeline {
-            position: relative;
-            padding-left: 32px;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 8px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: var(--border);
-        }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: 24px;
-            padding: 20px;
-            background: var(--glass);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -28px;
-            top: 24px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--primary);
-            border: 2px solid var(--bg);
-        }
-
-        .timeline-date {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-
-        .timeline-content {
-            font-weight: 600;
-        }
-
-        .analysis-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 24px;
-        }
-
-        .analysis-card {
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-        }
-
-        .analysis-title {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: var(--text);
-        }
-
-        .metric-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .metric-row:last-child {
-            border-bottom: none;
-        }
-
-        .metric-label {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-        }
-
-        .metric-value {
-            font-weight: 700;
-            font-size: 1rem;
-        }
-
-        .metric-value.positive { color: var(--success); }
-        .metric-value.negative { color: var(--danger); }
-
-        .modal-overlay {
+        .notification {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(8px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 3000;
-            padding: 20px;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal {
+            top: 24px;
+            right: 24px;
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 32px;
-            max-width: 600px;
-            width: 100%;
-            max-height: 80vh;
-            overflow-y: auto;
-            animation: modalIn 0.3s ease;
-        }
-
-        @keyframes modalIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .draft-item {
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
+            border-radius: 16px;
+            padding: 20px 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 16px;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 2000;
+            max-width: 400px;
         }
 
-        .draft-info {
-            flex: 1;
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
         }
 
-        .draft-date {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            margin-bottom: 4px;
+        .notification-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
         }
 
-        .draft-preview {
-            font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 12px;
-            }
-            
-            h1 {
-                font-size: 1.75rem;
-            }
-            
-            .card {
-                padding: 20px;
-            }
-            
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .history-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-            
-            .history-actions {
-                margin-left: 0;
-                width: 100%;
-                justify-content: flex-end;
-            }
-
-            .rebalance-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .config-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-
-            .config-input {
-                width: 100%;
-                justify-content: space-between;
-            }
-
-            .analysis-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        .notification.success .notification-icon { background: rgba(16, 185, 129, 0.1); }
+        .notification.error .notification-icon { background: rgba(239, 68, 68, 0.1); }
+        .notification.info .notification-icon { background: rgba(6, 182, 212, 0.1); }
     </style>
 </head>
 <body>
@@ -1071,7 +967,7 @@
                 <div class="stat-card">
                     <div class="stat-header">
                         <div class="stat-icon">💵</div>
-                        <div class="stat-trend trend-up" id="assetsTrend">+0%</div>
+                        <div class="stat-trend trend-up" id="trendTag">+0%</div>
                     </div>
                     <div class="stat-value" id="totalAssets">¥0</div>
                     <div class="stat-label">总资产净值</div>
@@ -1079,15 +975,15 @@
                 <div class="stat-card">
                     <div class="stat-header">
                         <div class="stat-icon">📥</div>
-                        <div class="stat-trend trend-up" id="investTrend">+0</div>
+                        <div class="stat-trend trend-up" id="investedTrend">+0</div>
                     </div>
                     <div class="stat-value" id="totalInvested">¥0</div>
                     <div class="stat-label">累计投入</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-header">
-                        <div class="stat-icon">📈</div>
-                        <div class="stat-trend trend-up" id="returnTrend">+0%</div>
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-trend trend-down" id="returnTrend">-0%</div>
                     </div>
                     <div class="stat-value" id="totalReturn">¥0</div>
                     <div class="stat-label">累计收益</div>
@@ -1105,28 +1001,22 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">资产配置现状</div>
-                    <button class="btn btn-secondary btn-small" onclick="refreshDashboard()">🔄 刷新</button>
+                    <button class="btn btn-secondary btn-small" onclick="refreshDashboard()">刷新</button>
                 </div>
-                <div id="portfolioChart">
+                <div id="portfolioChart" class="chart-container">
                     <div class="empty-state">
                         <div class="empty-icon">📊</div>
                         <div>暂无数据，请先添加投资记录</div>
-                        <button class="btn btn-primary btn-small" onclick="switchTab('invest')" style="margin-top: 16px;">去投资</button>
                     </div>
                 </div>
             </div>
 
-            <div class="card" id="todoCard" style="display: none;">
-                <div class="card-title">⚠️ 待办事项</div>
-                <div id="todoList" style="margin-top: 16px;"></div>
-            </div>
-
             <div class="card">
-                <div class="card-title">📅 最近活动</div>
-                <div class="timeline" id="recentTimeline" style="margin-top: 20px;">
-                    <div class="empty-state" style="padding: 40px 0;">
-                        <div class="empty-icon">📅</div>
-                        <div>暂无最近活动</div>
+                <div class="card-title">待办事项</div>
+                <div id="todoList" style="margin-top: 16px;">
+                    <div style="padding: 20px; background: var(--glass); border-radius: 12px; border-left: 4px solid var(--warning);">
+                        <div style="font-weight: 600; margin-bottom: 4px;">⚠️ 再平衡提醒</div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">您的组合偏离度已超过5%，建议进行再平衡操作</div>
                     </div>
                 </div>
             </div>
@@ -1137,36 +1027,32 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">新增投资计划</div>
-                    <button class="btn btn-secondary btn-small" onclick="showDrafts()">📋 草稿箱</button>
                 </div>
                 
                 <div class="input-group">
-                    <label>投资日期 *</label>
+                    <label>投资日期</label>
                     <input type="date" id="investDate" required>
                 </div>
                 
                 <div class="input-group">
-                    <label>投资金额 (元) *</label>
+                    <label>投资金额 (元)</label>
                     <input type="number" id="investAmount" placeholder="例如：10000" min="0" step="0.01" required>
                     <div class="input-hint">建议定期定额投资，分散时间风险</div>
                 </div>
 
                 <div class="input-group">
                     <label>备注（可选）</label>
-                    <input type="text" id="investNote" placeholder="例如：2024年3月定投、年终奖投入等">
+                    <input type="text" id="investNote" placeholder="例如：2024年3月定投">
                 </div>
 
                 <div class="toggle-container" onclick="toggleCustomWeight('invest')">
                     <div class="toggle" id="investCustomToggle"></div>
-                    <span class="toggle-label">使用自定义权重配置（临时调整，不影响默认设置）</span>
+                    <span class="toggle-label">使用自定义权重配置</span>
                 </div>
 
                 <div id="investWeightPanel" style="display: none;">
-                    <div class="card" style="background: var(--glass); margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                            <div class="section-title" style="margin: 0;">权重配置</div>
-                            <button class="btn btn-secondary btn-small" onclick="resetInvestWeights()">重置</button>
-                        </div>
+                    <div class="card" style="background: var(--glass);">
+                        <div class="section-title">权重配置</div>
                         <div id="investWeightList"></div>
                         <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-weight: 700;">
                             <span>总权重</span>
@@ -1176,25 +1062,14 @@
                 </div>
 
                 <div class="btn-group">
-                    <button class="btn btn-primary" onclick="calculateInvestment()" id="calcInvestBtn">🧮 计算配置方案</button>
-                    <button class="btn btn-secondary" onclick="saveAsDraft()">💾 保存为草稿</button>
+                    <button class="btn btn-primary" onclick="calculateInvestment()">计算配置方案</button>
+                    <button class="btn btn-secondary" onclick="saveAsDraft()">保存为草稿</button>
                 </div>
 
                 <div id="investResult" style="display: none; margin-top: 32px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <div class="section-title" style="margin: 0;">分配方案预览</div>
-                        <button class="btn btn-secondary btn-small" onclick="exportPlan('invest')">📤 导出方案</button>
-                    </div>
+                    <div class="section-title" style="margin-bottom: 16px;">分配方案预览</div>
                     <div id="investAllocationGrid" class="rebalance-grid"></div>
-                    
-                    <div style="margin-top: 24px; padding: 20px; background: var(--glass); border-radius: 12px; border-left: 4px solid var(--info);">
-                        <div style="font-weight: 600; margin-bottom: 8px;">💡 投资提示</div>
-                        <div id="investTips" style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.6;"></div>
-                    </div>
-                    
-                    <button class="btn btn-primary" onclick="confirmInvestment()" id="confirmInvestBtn" style="margin-top: 24px; width: 100%;">
-                        ✓ 确认执行并记录
-                    </button>
+                    <button class="btn btn-primary" onclick="confirmInvestment()" style="margin-top: 24px; width: 100%;">确认执行</button>
                 </div>
             </div>
         </div>
@@ -1207,29 +1082,21 @@
                 </div>
 
                 <div class="input-group">
-                    <label>计算日期 *</label>
+                    <label>计算日期</label>
                     <input type="date" id="rebalanceDate" required>
                 </div>
 
-                <div class="section-title" style="margin: 24px 0 16px;">当前持仓市值（元）</div>
+                <div class="section-title" style="margin: 24px 0 16px;">当前持仓市值</div>
                 <div id="rebalanceHoldings"></div>
-
-                <div class="btn-group" style="margin-bottom: 20px;">
-                    <button class="btn btn-secondary btn-small" onclick="loadLastHoldings()">📥 载入上次持仓</button>
-                    <button class="btn btn-secondary btn-small" onclick="clearHoldings()">🗑 清空</button>
-                </div>
 
                 <div class="toggle-container" onclick="toggleCustomWeight('rebalance')">
                     <div class="toggle" id="rebalanceCustomToggle"></div>
-                    <span class="toggle-label">使用自定义目标权重（临时调整）</span>
+                    <span class="toggle-label">使用自定义目标权重</span>
                 </div>
 
                 <div id="rebalanceWeightPanel" style="display: none;">
-                    <div class="card" style="background: var(--glass); margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                            <div class="section-title" style="margin: 0;">目标权重配置</div>
-                            <button class="btn btn-secondary btn-small" onclick="resetRebalanceWeights()">重置</button>
-                        </div>
+                    <div class="card" style="background: var(--glass);">
+                        <div class="section-title">目标权重配置</div>
                         <div id="rebalanceWeightList"></div>
                         <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-weight: 700;">
                             <span>总权重</span>
@@ -1238,13 +1105,16 @@
                     </div>
                 </div>
 
-                <button class="btn btn-primary" onclick="calculateRebalance()" id="calcRebalanceBtn" style="width: 100%;">⚖️ 生成再平衡方案</button>
+                <div class="btn-group" style="margin-top: 24px;">
+                    <button class="btn btn-primary" onclick="calculateRebalance()">生成再平衡方案</button>
+                    <button class="btn btn-secondary" onclick="loadLastHoldings()">载入上次持仓</button>
+                </div>
 
                 <div id="rebalanceResult" style="display: none; margin-top: 32px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <div class="section-title" style="margin: 0;">调仓建议</div>
                         <div style="font-size: 0.875rem; color: var(--text-muted);">
-                            预计交易费用: <span id="estimatedFee" style="color: var(--text); font-weight: 600;">¥0</span>
+                            预计交易费用: <span id="tradeFee">¥0</span>
                         </div>
                     </div>
                     <div id="rebalanceCards" class="rebalance-grid"></div>
@@ -1254,10 +1124,7 @@
                         <div id="rebalanceAdvice" style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.6;"></div>
                     </div>
 
-                    <div class="btn-group" style="margin-top: 24px;">
-                        <button class="btn btn-primary" onclick="confirmRebalance()" id="confirmRebalanceBtn" style="flex: 1;">✓ 确认并记录</button>
-                        <button class="btn btn-secondary" onclick="exportPlan('rebalance')">📤 导出方案</button>
-                    </div>
+                    <button class="btn btn-primary" onclick="confirmRebalance()" style="margin-top: 24px; width: 100%;">确认并记录</button>
                 </div>
             </div>
         </div>
@@ -1266,18 +1133,18 @@
         <div id="analysis" class="tab-content">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">投资组合深度分析</div>
-                    <select id="analysisPeriod" onchange="updateAnalysis()" style="width: auto; padding: 8px 16px; font-size: 0.875rem; background: var(--glass); border: 1px solid var(--border); border-radius: 8px; color: var(--text);">
-                        <option value="all">📅 全部时间</option>
-                        <option value="year">📆 本年度</option>
-                        <option value="quarter">📊 本季度</option>
-                        <option value="month">📈 本月</option>
+                    <div class="card-title">投资组合分析</div>
+                    <select id="analysisPeriod" onchange="updateAnalysis()" style="width: auto; padding: 8px 16px; font-size: 0.875rem;">
+                        <option value="all">全部时间</option>
+                        <option value="year">本年度</option>
+                        <option value="quarter">本季度</option>
+                        <option value="month">本月</option>
                     </select>
                 </div>
                 <div id="analysisContent">
                     <div class="empty-state">
                         <div class="empty-icon">📈</div>
-                        <div>数据不足，无法生成分析报告<br><small style="color: var(--text-muted);">请至少完成一次投资和再平衡操作</small></div>
+                        <div>数据不足，无法生成分析报告</div>
                     </div>
                 </div>
             </div>
@@ -1297,12 +1164,7 @@
 
                 <div class="search-box">
                     <span class="search-icon">🔍</span>
-                    <input type="text" id="historySearch" placeholder="搜索历史记录（日期、金额、备注）..." onkeyup="searchHistory()">
-                </div>
-
-                <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
-                    <button class="btn btn-secondary btn-small" onclick="exportHistory()">📤 导出历史</button>
-                    <button class="btn btn-secondary btn-small" onclick="showStats()">📊 统计图表</button>
+                    <input type="text" id="historySearch" placeholder="搜索历史记录..." onkeyup="searchHistory()">
                 </div>
 
                 <div id="historyList" class="history-list">
@@ -1318,7 +1180,7 @@
         <div id="settings" class="tab-content">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">🎯 资产配置方案管理</div>
+                    <div class="card-title">资产配置方案</div>
                 </div>
 
                 <div class="preset-grid" style="margin-bottom: 32px;">
@@ -1344,39 +1206,26 @@
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
-                    <input type="text" id="newSchemeName" placeholder="新方案名称..." style="flex: 1; min-width: 200px;">
-                    <button class="btn btn-primary btn-small" onclick="saveAsNewScheme()">💾 保存为新方案</button>
-                </div>
-
-                <div id="savedSchemes" style="margin-bottom: 24px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
-
                 <div class="section-title" style="margin-bottom: 16px;">自定义配置</div>
                 <div id="settingsWeightList"></div>
 
-                <div style="margin-top: 24px; padding: 16px; background: var(--glass); border-radius: 12px; border-left: 4px solid var(--warning);">
-                    <div style="font-weight: 600; margin-bottom: 4px;">⚠️ 提示</div>
-                    <div style="font-size: 0.875rem; color: var(--text-muted);">权重总和必须严格等于100%，否则无法保存</div>
-                </div>
-
-                <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="saveSettings()">✓ 保存为默认配置</button>
-                    <button class="btn btn-secondary" onclick="exportSettings()">📤 导出配置</button>
-                    <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 导入配置</button>
-                    <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importSettings(this)">
+                <div style="margin-top: 24px; display: flex; gap: 12px;">
+                    <button class="btn btn-primary" onclick="saveSettings()">保存配置</button>
+                    <button class="btn btn-secondary" onclick="exportSettings()">导出配置</button>
+                    <button class="btn btn-secondary" onclick="importSettings()">导入配置</button>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-title">⚙️ 应用设置</div>
+                <div class="card-title">应用设置</div>
                 
                 <div class="config-item">
                     <div class="config-info">
                         <div class="config-name">再平衡阈值</div>
-                        <div class="config-detail">当某个标的偏离度超过此值时提醒再平衡（默认5%）</div>
+                        <div class="config-detail">当某个标的偏离度超过此值时提醒</div>
                     </div>
                     <div class="config-input">
-                        <input type="number" id="rebalanceThreshold" value="5" min="1" max="50" step="0.5" class="weight-input">
+                        <input type="number" id="rebalanceThreshold" value="5" min="1" max="20" style="width: 80px; text-align: center;">
                         <span>%</span>
                     </div>
                 </div>
@@ -1384,57 +1233,35 @@
                 <div class="config-item">
                     <div class="config-info">
                         <div class="config-name">交易费用率</div>
-                        <div class="config-detail">计算再平衡成本时使用（默认0.1%）</div>
+                        <div class="config-detail">计算再平衡成本时使用</div>
                     </div>
                     <div class="config-input">
-                        <input type="number" id="feeRate" value="0.1" min="0" max="5" step="0.01" class="weight-input">
+                        <input type="number" id="feeRate" value="0.1" min="0" max="1" step="0.01" style="width: 80px; text-align: center;">
                         <span>%</span>
                     </div>
                 </div>
 
                 <div class="config-item">
                     <div class="config-info">
-                        <div class="config-name">自动备份</div>
-                        <div class="config-detail">每次操作后自动导出数据到JSON文件</div>
+                        <div class="config-name">数据备份</div>
+                        <div class="config-detail">自动导出数据到本地文件</div>
                     </div>
                     <div class="config-input">
-                        <div class="toggle active" id="autoBackupToggle" onclick="toggleAutoBackup()"></div>
-                    </div>
-                </div>
-
-                <div class="config-item">
-                    <div class="config-info">
-                        <div class="config-name">数据管理</div>
-                        <div class="config-detail">导出所有数据或清空数据库</div>
-                    </div>
-                    <div class="config-input">
-                        <button class="btn btn-secondary btn-small" onclick="exportAllData()">📤 导出全部数据</button>
-                        <button class="btn btn-danger btn-small" onclick="clearAllData()" style="margin-left: 8px;">🗑 清空数据</button>
+                        <div class="toggle active" onclick="toggleAutoBackup()"></div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- 草稿箱模态框 -->
-    <div id="draftModal" class="modal-overlay" onclick="if(event.target === this) closeDraftModal()">
-        <div class="modal">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <h3 style="font-size: 1.5rem; font-weight: 700;">📋 草稿箱</h3>
-                <button onclick="closeDraftModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">×</button>
-            </div>
-            <div id="draftList"></div>
         </div>
     </div>
 
     <!-- 快速操作按钮 -->
     <div class="quick-actions">
-        <button class="fab" onclick="quickInvest()" title="快速投资 (Ctrl+I)">+</button>
+        <button class="fab tooltip" data-tip="新增投资" onclick="switchTab('invest'); window.scrollTo(0,0);">+</button>
     </div>
 
     <!-- 通知 -->
     <div id="notification" class="notification">
-        <div class="notification-icon" id="notifIcon">✓</div>
+        <div class="notification-icon">✓</div>
         <div>
             <div style="font-weight: 700;" id="notifTitle">成功</div>
             <div style="font-size: 0.875rem; color: var(--text-muted);" id="notifMsg">操作已完成</div>
@@ -1444,14 +1271,14 @@
     <script>
         // 数据定义
         const ASSETS = {
-            '标普500': { code: 'SPY', color: '#6366f1', region: 'US', desc: '美国大盘股' },
-            '纳斯达克100': { code: 'QQQ', color: '#8b5cf6', region: 'US', desc: '美国科技股' },
-            '日经225': { code: 'EWJ', color: '#ec4899', region: 'APAC', desc: '日本股市' },
-            '德国DAX': { code: 'EWG', color: '#f43f5e', region: 'EU', desc: '德国股市' },
-            '印度Nifty50': { code: 'INDA', color: '#f59e0b', region: 'APAC', desc: '印度股市' },
-            '越南VNIndex': { code: 'VNM', color: '#10b981', region: 'APAC', desc: '越南股市' },
-            'REITs': { code: 'VNQ', color: '#3b82f6', region: 'US', desc: '房地产信托' },
-            '中债备用': { code: 'CHBond', color: '#64748b', region: 'CN', desc: '中国债券' }
+            '标普500': { code: 'SPY', color: '#6366f1', region: 'US' },
+            '纳斯达克100': { code: 'QQQ', color: '#8b5cf6', region: 'US' },
+            '日经225': { code: 'EWJ', color: '#ec4899', region: 'APAC' },
+            '德国DAX': { code: 'EWG', color: '#f43f5e', region: 'EU' },
+            '印度Nifty50': { code: 'INDA', color: '#f59e0b', region: 'APAC' },
+            '越南VNIndex': { code: 'VNM', color: '#10b981', region: 'APAC' },
+            'REITs': { code: 'VNQ', color: '#3b82f6', region: 'US' },
+            '中债备用': { code: 'CHBond', color: '#64748b', region: 'CN' }
         };
 
         const PRESETS = {
@@ -1461,80 +1288,41 @@
             equal: { '标普500': 0.125, '纳斯达克100': 0.125, '日经225': 0.125, '德国DAX': 0.125, '印度Nifty50': 0.125, '越南VNIndex': 0.125, 'REITs': 0.125, '中债备用': 0.125 }
         };
 
-        let currentWeights = JSON.parse(JSON.stringify(PRESETS.default));
+        let currentWeights = { ...PRESETS.default };
         let tempInvestWeights = null;
         let tempRebalanceWeights = null;
         let db = null;
-        let lastInvestPlan = null;
-        let lastRebalancePlan = null;
-        let currentHistoryFilter = 'all';
-        let allHistoryData = [];
+        let allHistoryItems = [];
 
         // 初始化
         document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('investDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('rebalanceDate').value = new Date().toISOString().split('T')[0];
             
-            const saved = localStorage.getItem('portfolioConfig');
-            if (saved) {
-                try {
-                    const config = JSON.parse(saved);
-                    currentWeights = config.weights || currentWeights;
-                    if (config.threshold) document.getElementById('rebalanceThreshold').value = config.threshold;
-                    if (config.feeRate) document.getElementById('feeRate').value = config.feeRate;
-                } catch (e) {
-                    console.error('Failed to load config:', e);
-                }
+            await initDB();
+            initWeightEditors();
+            
+            // 尝试加载保存的配置
+            const savedWeights = localStorage.getItem('userWeights');
+            if (savedWeights) {
+                currentWeights = JSON.parse(savedWeights);
+                initWeightEditors();
             }
             
-            try {
-                await initDB();
-                initWeightEditors();
-                loadSavedSchemes();
-                updateDashboard();
-                showNotif('success', '✓ 应用已就绪', '数据加载完成');
-            } catch (e) {
-                console.error('Failed to initialize:', e);
-                showNotif('error', '✗ 初始化失败', '请检查浏览器是否支持IndexedDB');
-            }
+            updateDashboard();
         });
 
-        // IndexedDB 初始化 - 修复版本
+        // IndexedDB 初始化
         function initDB() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open('PortfolioDB', 1);
-                
-                request.onerror = () => {
-                    console.error('IndexedDB open error:', request.error);
-                    reject(request.error);
-                };
-                
-                request.onsuccess = () => {
-                    db = request.result;
-                    console.log('IndexedDB initialized successfully');
-                    resolve(db);
-                };
-                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => { db = request.result; resolve(db); };
                 request.onupgradeneeded = (e) => {
-                    console.log('IndexedDB upgrade needed');
                     const db = e.target.result;
-                    
-                    if (!db.objectStoreNames.contains('investments')) {
-                        db.createObjectStore('investments', {keyPath: 'id', autoIncrement: true});
-                        console.log('Created investments store');
-                    }
-                    if (!db.objectStoreNames.contains('rebalances')) {
-                        db.createObjectStore('rebalances', {keyPath: 'id', autoIncrement: true});
-                        console.log('Created rebalances store');
-                    }
-                    if (!db.objectStoreNames.contains('drafts')) {
-                        db.createObjectStore('drafts', {keyPath: 'id', autoIncrement: true});
-                        console.log('Created drafts store');
-                    }
-                    if (!db.objectStoreNames.contains('schemes')) {
-                        db.createObjectStore('schemes', {keyPath: 'name'});
-                        console.log('Created schemes store');
-                    }
+                    db.createObjectStore('investments', { keyPath: 'id', autoIncrement: true });
+                    db.createObjectStore('rebalances', { keyPath: 'id', autoIncrement: true });
+                    db.createObjectStore('holdings', { keyPath: 'date' });
                 };
             });
         }
@@ -1543,34 +1331,20 @@
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            const tabs = document.querySelectorAll('.tab');
-            const index = ['dashboard', 'invest', 'rebalance', 'analysis', 'history', 'settings'].indexOf(tab);
-            if (index >= 0) tabs[index].classList.add('active');
-            
+            event.target.classList.add('active');
             document.getElementById(tab).classList.add('active');
             
             if (tab === 'dashboard') updateDashboard();
             if (tab === 'history') loadHistory();
-            if (tab === 'analysis') updateAnalysis();
             if (tab === 'rebalance') initRebalanceInputs();
-            if (tab === 'settings') {
-                initWeightEditors();
-                loadSavedSchemes();
-            }
-        }
-
-        function quickInvest() {
-            switchTab('invest');
-            window.scrollTo({top: 0, behavior: 'smooth'});
-            document.getElementById('investAmount').focus();
         }
 
         // 初始化权重编辑器
         function initWeightEditors() {
             createWeightList('settings', currentWeights);
-            createWeightList('invest', tempInvestWeights || currentWeights);
-            createWeightList('rebalance', tempRebalanceWeights || currentWeights);
+            createWeightList('invest', currentWeights);
+            createWeightList('rebalance', currentWeights);
+            
             updateWeightTotal('settings');
         }
 
@@ -1586,20 +1360,14 @@
                     <div class="config-info">
                         <div class="config-color" style="background: ${info.color}"></div>
                         <div>
-                            <div class="config-name">${name} <span style="color: var(--text-muted); font-size: 0.875rem; font-weight: 400;">(${info.code})</span></div>
-                            <div class="config-detail">${info.desc} · ${getRegionName(info.region)}</div>
+                            <div class="config-name">${name} <span style="color: var(--text-muted); font-size: 0.875rem;">(${info.code})</span></div>
+                            <div class="config-detail">${getRegionName(info.region)}</div>
                         </div>
                     </div>
                     <div class="config-input">
-                        <input type="number" 
-                               class="weight-input" 
-                               value="${(weights[name] * 100).toFixed(1)}" 
-                               step="0.1" 
-                               min="0" 
-                               max="100"
-                               onchange="handleWeightChange('${prefix}', '${name}', this.value)"
-                               id="${prefix}Weight_${name}">
-                        <span style="color: var(--text-muted);">%</span>
+                        <input type="number" class="weight-input" value="${(weights[name] * 100).toFixed(1)}" 
+                               step="0.1" min="0" max="100" onchange="handleWeightChange('${prefix}', '${name}', this.value)">
+                        <span>%</span>
                     </div>
                 `;
                 container.appendChild(item);
@@ -1608,37 +1376,34 @@
 
         function handleWeightChange(prefix, name, value) {
             const num = parseFloat(value) || 0;
-            const weight = num / 100;
-            
             if (prefix === 'settings') {
-                currentWeights[name] = weight;
+                currentWeights[name] = num / 100;
                 updateWeightTotal('settings');
             } else if (prefix === 'invest') {
-                if (!tempInvestWeights) tempInvestWeights = JSON.parse(JSON.stringify(currentWeights));
-                tempInvestWeights[name] = weight;
+                if (!tempInvestWeights) tempInvestWeights = { ...currentWeights };
+                tempInvestWeights[name] = num / 100;
                 updateWeightTotal('invest');
             } else if (prefix === 'rebalance') {
-                if (!tempRebalanceWeights) tempRebalanceWeights = JSON.parse(JSON.stringify(currentWeights));
-                tempRebalanceWeights[name] = weight;
+                if (!tempRebalanceWeights) tempRebalanceWeights = { ...currentWeights };
+                tempRebalanceWeights[name] = num / 100;
                 updateWeightTotal('rebalance');
             }
         }
 
         function updateWeightTotal(prefix) {
-            const weights = prefix === 'settings' ? currentWeights : 
-                           prefix === 'invest' ? (tempInvestWeights || currentWeights) : 
+            const weights = prefix === 'settings' ? currentWeights :
+                           prefix === 'invest' ? (tempInvestWeights || currentWeights) :
                            (tempRebalanceWeights || currentWeights);
             const total = Object.values(weights).reduce((a, b) => a + b, 0);
             const el = document.getElementById(`${prefix}WeightTotal`);
-            if (el) {
-                el.textContent = (total * 100).toFixed(1) + '%';
-                el.style.color = Math.abs(total - 1) < 0.001 ? 'var(--success)' : 'var(--danger)';
-            }
+            if (!el) return total;
+            el.textContent = (total * 100).toFixed(1) + '%';
+            el.style.color = Math.abs(total - 1) < 0.001 ? 'var(--success)' : 'var(--danger)';
             return total;
         }
 
         function getRegionName(code) {
-            const map = {US: '美国', EU: '欧洲', APAC: '亚太', CN: '中国'};
+            const map = { US: '美国', EU: '欧洲', APAC: '亚太', CN: '中国' };
             return map[code] || code;
         }
 
@@ -1646,193 +1411,77 @@
         function toggleCustomWeight(type) {
             const toggle = document.getElementById(`${type}CustomToggle`);
             const panel = document.getElementById(`${type}WeightPanel`);
+            toggle.classList.toggle('active');
+            panel.style.display = toggle.classList.contains('active') ? 'block' : 'none';
             
-            if (toggle.classList.contains('active')) {
-                toggle.classList.remove('active');
-                panel.style.display = 'none';
-                if (type === 'invest') tempInvestWeights = null;
-                if (type === 'rebalance') tempRebalanceWeights = null;
-            } else {
-                toggle.classList.add('active');
-                panel.style.display = 'block';
-                if (type === 'invest') {
-                    tempInvestWeights = JSON.parse(JSON.stringify(currentWeights));
-                    createWeightList('invest', tempInvestWeights);
-                    updateWeightTotal('invest');
-                }
-                if (type === 'rebalance') {
-                    tempRebalanceWeights = JSON.parse(JSON.stringify(currentWeights));
-                    createWeightList('rebalance', tempRebalanceWeights);
-                    updateWeightTotal('rebalance');
-                }
-            }
+            if (type === 'invest') tempInvestWeights = toggle.classList.contains('active') ? { ...currentWeights } : null;
+            if (type === 'rebalance') tempRebalanceWeights = toggle.classList.contains('active') ? { ...currentWeights } : null;
         }
 
-        function resetInvestWeights() {
-            tempInvestWeights = JSON.parse(JSON.stringify(currentWeights));
-            createWeightList('invest', tempInvestWeights);
-            updateWeightTotal('invest');
-        }
-
-        function resetRebalanceWeights() {
-            tempRebalanceWeights = JSON.parse(JSON.stringify(currentWeights));
-            createWeightList('rebalance', tempRebalanceWeights);
-            updateWeightTotal('rebalance');
-        }
-
-        // 预设方案
+        // 加载预设
         function loadPreset(name) {
-            currentWeights = JSON.parse(JSON.stringify(PRESETS[name]));
-            createWeightList('settings', currentWeights);
-            updateWeightTotal('settings');
-            
+            currentWeights = { ...PRESETS[name] };
+            initWeightEditors();
             document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            showNotif('success', '✓ 预设已加载', `已应用"${name}"配置方案`);
+            const index = ['default', 'conservative', 'aggressive', 'equal'].indexOf(name);
+            if (index !== -1) document.querySelectorAll('.preset-card')[index].classList.add('active');
+            showNotif('success', '预设已加载', `已应用"${name}"配置方案`);
         }
 
-        // 保存方案 - 修复版本
-        function saveAsNewScheme() {
-            const name = document.getElementById('newSchemeName').value.trim();
-            if (!name) {
-                showNotif('error', '✗ 错误', '请输入方案名称');
+        // 保存草稿
+        function saveAsDraft() {
+            const amount = document.getElementById('investAmount').value;
+            const date = document.getElementById('investDate').value;
+            const note = document.getElementById('investNote').value;
+            const isCustom = document.getElementById('investCustomToggle').classList.contains('active');
+            const weights = isCustom && tempInvestWeights ? tempInvestWeights : currentWeights;
+            if (!amount || !date) {
+                showNotif('error', '错误', '请填写日期和金额');
                 return;
             }
-            
-            const total = updateWeightTotal('settings');
-            if (Math.abs(total - 1) > 0.001) {
-                showNotif('error', '✗ 权重错误', `当前总和为${(total*100).toFixed(1)}%，必须等于100%`);
-                return;
-            }
-            
-            const tx = db.transaction(['schemes'], 'readwrite');
-            const store = tx.objectStore('schemes');
-            
-            const request = store.put({
-                name: name,
-                weights: JSON.parse(JSON.stringify(currentWeights)),
-                createdAt: new Date().toISOString()
-            });
-            
-            request.onsuccess = () => {
-                document.getElementById('newSchemeName').value = '';
-                loadSavedSchemes();
-                showNotif('success', '✓ 已保存', `方案"${name}"已保存`);
-            };
-            
-            request.onerror = () => {
-                showNotif('error', '✗ 保存失败', '请重试');
-            };
+            const draft = { date, amount, note, isCustom, weights: { ...weights }, timestamp: Date.now() };
+            localStorage.setItem('investDraft', JSON.stringify(draft));
+            showNotif('success', '草稿已保存', '可以在下次继续编辑');
         }
 
-        // 加载保存的方案 - 修复版本
-        function loadSavedSchemes() {
-            const tx = db.transaction(['schemes'], 'readonly');
-            const store = tx.objectStore('schemes');
-            const request = store.getAll();
-            
-            request.onsuccess = () => {
-                const schemes = request.result;
-                const container = document.getElementById('savedSchemes');
-                
-                if (schemes.length === 0) {
-                    container.innerHTML = '<span style="color: var(--text-muted); font-size: 0.875rem;">暂无自定义方案</span>';
-                    return;
-                }
-                
-                container.innerHTML = schemes.map(s => `
-                    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(6, 182, 212, 0.1); border: 1px solid var(--info); border-radius: 20px; color: var(--info); font-size: 0.875rem; font-weight: 600;">
-                        <span style="cursor: pointer;" onclick="applyScheme('${s.name}')">${s.name}</span>
-                        <span style="cursor: pointer; opacity: 0.6; font-weight: 700;" onclick="deleteScheme('${s.name}')">×</span>
-                    </div>
-                `).join('');
-            };
-        }
+        // 计算投资
+        let lastInvestPlan = null;
 
-        function applyScheme(name) {
-            const tx = db.transaction(['schemes'], 'readonly');
-            const store = tx.objectStore('schemes');
-            const request = store.get(name);
-            
-            request.onsuccess = () => {
-                const scheme = request.result;
-                if (scheme) {
-                    currentWeights = JSON.parse(JSON.stringify(scheme.weights));
-                    createWeightList('settings', currentWeights);
-                    updateWeightTotal('settings');
-                    showNotif('success', '✓ 已应用', `已切换至"${name}"方案`);
-                }
-            };
-        }
-
-        function deleteScheme(name) {
-            if (!confirm(`确定删除方案"${name}"？`)) return;
-            
-            const tx = db.transaction(['schemes'], 'readwrite');
-            const store = tx.objectStore('schemes');
-            const request = store.delete(name);
-            
-            request.onsuccess = () => {
-                loadSavedSchemes();
-            };
-        }
-
-        function saveSettings() {
-            const total = updateWeightTotal('settings');
-            if (Math.abs(total - 1) > 0.001) {
-                showNotif('error', '✗ 无法保存', '权重总和必须等于100%');
-                return;
-            }
-            
-            const config = {
-                weights: currentWeights,
-                threshold: parseFloat(document.getElementById('rebalanceThreshold').value),
-                feeRate: parseFloat(document.getElementById('feeRate').value),
-                autoBackup: document.getElementById('autoBackupToggle').classList.contains('active')
-            };
-            
-            localStorage.setItem('portfolioConfig', JSON.stringify(config));
-            showNotif('success', '✓ 配置已保存', '默认配置已更新');
-        }
-
-        // 投资功能 - 修复确认按钮无反应问题
         function calculateInvestment() {
             const amount = parseFloat(document.getElementById('investAmount').value);
             const date = document.getElementById('investDate').value;
-            const note = document.getElementById('investNote').value;
-            
-            if (!amount || amount <= 0 || !date) {
-                showNotif('error', '✗ 输入错误', '请填写有效的日期和金额');
+            if (!amount || !date) {
+                showNotif('error', '输入错误', '请填写完整的日期和金额');
                 return;
             }
-            
-            const useCustom = document.getElementById('investCustomToggle').classList.contains('active');
-            const weights = useCustom && tempInvestWeights ? tempInvestWeights : currentWeights;
+
+            const weights = document.getElementById('investCustomToggle').classList.contains('active' && tempInvestWeights) ? 
+                           tempInvestWeights : currentWeights;
             const total = Object.values(weights).reduce((a, b) => a + b, 0);
             
             if (Math.abs(total - 1) > 0.001) {
-                showNotif('error', '✗ 配置错误', `权重总和为${(total*100).toFixed(1)}%，必须等于100%`);
+                showNotif('error', '配置错误', `权重总和为${(total * 100).toFixed(1)}%，必须等于100%`);
                 return;
             }
-            
-            const allocations = {};
+
+            const plan = {};
             const grid = document.getElementById('investAllocationGrid');
             grid.innerHTML = '';
 
             Object.entries(weights).forEach(([name, weight]) => {
                 const alloc = amount * weight;
-                allocations[name] = alloc;
+                plan[name] = alloc;
                 
                 const card = document.createElement('div');
                 card.className = 'rebalance-card';
                 card.innerHTML = `
                     <div class="rebalance-header">
                         <div class="rebalance-name">${name}</div>
-                        <div class="rebalance-action buy">买入</div>
+                        <div class="rebalance-action hold">买入</div>
                     </div>
                     <div class="rebalance-value">¥${alloc.toFixed(2)}</div>
                     <div class="rebalance-bar">
-                        <div class="rebalance-progress target animate-fill" style="width: ${weight * 100}%; background: ${ASSETS[name].color}"></div>
+                        <div class="rebalance-progress target animate-fill" style="width: ${weight * 100}%"></div>
                     </div>
                     <div class="rebalance-stats">
                         <span>权重 ${(weight * 100).toFixed(1)}%</span>
@@ -1842,524 +1491,253 @@
                 grid.appendChild(card);
             });
 
-            const tips = generateInvestTips(weights, amount);
-            document.getElementById('investTips').innerHTML = tips;
-            
-            // 保存投资计划到全局变量
             lastInvestPlan = {
-                date: date,
-                amount: amount,
-                allocations: allocations,
-                weights: JSON.parse(JSON.stringify(weights)),
-                note: note,
-                isCustom: useCustom,
-                timestamp: Date.now()
+                date,
+                amount,
+                allocations: plan,
+                weights: { ...weights },
+                note: document.getElementById('investNote').value,
+                isCustom: document.getElementById('investCustomToggle').classList.contains('active')
             };
-            
-            console.log('Investment plan calculated:', lastInvestPlan);
-            
+
             document.getElementById('investResult').style.display = 'block';
-            document.getElementById('investResult').scrollIntoView({behavior: 'smooth'});
+            document.getElementById('investResult').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function generateInvestTips(weights, amount) {
-            const regions = {};
-            Object.entries(weights).forEach(([name, w]) => {
-                const region = ASSETS[name].region;
-                regions[region] = (regions[region] || 0) + w;
-            });
+        // 确认投资
+        async function confirmInvestment() {
+            if (!lastInvestPlan) return;
             
-            let html = '<div style="margin-bottom: 8px;"><strong>地域分布：</strong>';
-            const regionNames = {US: '美国', EU: '欧洲', APAC: '亚太', CN: '中国'};
-            html += Object.entries(regions).map(([r, p]) => `${regionNames[r]} ${(p*100).toFixed(0)}%`).join(' · ');
-            html += '</div>';
+            const tx = db.transaction(['investments'], 'readwrite');
+            const store = tx.objectStore('investments');
+            await store.add({ ...lastInvestPlan, timestamp: Date.now() });
             
-            const topHolding = Object.entries(weights).sort((a,b) => b[1]-a[1])[0];
-            html += `<div>最大持仓：<strong>${topHolding[0]}</strong> ${(topHolding[1]*100).toFixed(1)}% · 建议单笔至少投入<strong>¥1000</strong>以降低交易成本占比</div>`;
+            showNotif('success', '投资已记录', `成功记录${lastInvestPlan.date}的投资计划`);
+            document.getElementById('investAmount').value = '';
+            document.getElementById('investNote').value = '';
+            document.getElementById('investResult').style.display = 'none';
+            lastInvestPlan = null;
             
-            return html;
+            document.getElementById('investCustomToggle').classList.remove('active');
+            document.getElementById('investWeightPanel').style.display = 'none';
+            tempInvestWeights = null;
+
+            updateDashboard();
         }
 
-        // 确认投资 - 关键修复：使用正确的IndexedDB事务处理
-        function confirmInvestment() {
-            if (!lastInvestPlan) {
-                showNotif('error', '✗ 错误', '请先计算投资方案');
-                return;
-            }
-            
-            console.log('Confirming investment:', lastInvestPlan);
-            
-            const btn = document.getElementById('confirmInvestBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> 保存中...';
-            
-            try {
-                const tx = db.transaction(['investments'], 'readwrite');
-                const store = tx.objectStore('investments');
-                
-                const request = store.add(lastInvestPlan);
-                
-                request.onsuccess = () => {
-                    console.log('Investment saved successfully, ID:', request.result);
-                    
-                    // 自动备份
-                    if (document.getElementById('autoBackupToggle').classList.contains('active')) {
-                        autoExport();
-                    }
-                    
-                    showNotif('success', '✓ 投资已记录', `成功记录 ${lastInvestPlan.date} 的投资 ¥${lastInvestPlan.amount.toFixed(2)}`);
-                    
-                    // 重置表单
-                    document.getElementById('investAmount').value = '';
-                    document.getElementById('investNote').value = '';
-                    document.getElementById('investResult').style.display = 'none';
-                    document.getElementById('investCustomToggle').classList.remove('active');
-                    document.getElementById('investWeightPanel').style.display = 'none';
-                    tempInvestWeights = null;
-                    lastInvestPlan = null;
-                    
-                    updateDashboard();
-                };
-                
-                request.onerror = (e) => {
-                    console.error('Failed to save investment:', e);
-                    showNotif('error', '✗ 保存失败', '无法保存到数据库，请检查浏览器存储权限');
-                };
-                
-                tx.oncomplete = () => {
-                    console.log('Transaction completed');
-                    btn.disabled = false;
-                    btn.innerHTML = '✓ 确认执行并记录';
-                };
-                
-                tx.onerror = (e) => {
-                    console.error('Transaction error:', e);
-                    btn.disabled = false;
-                    btn.innerHTML = '✓ 确认执行并记录';
-                };
-                
-            } catch (error) {
-                console.error('Error in confirmInvestment:', error);
-                showNotif('error', '✗ 系统错误', error.message);
-                btn.disabled = false;
-                btn.innerHTML = '✓ 确认执行并记录';
-            }
-        }
-
-        // 草稿功能 - 修复版本
-        function saveAsDraft() {
-            const amount = document.getElementById('investAmount').value;
-            const date = document.getElementById('investDate').value;
-            const note = document.getElementById('investNote').value;
-            
-            if (!amount && !note) {
-                showNotif('error', '✗ 空草稿', '请至少填写金额或备注');
-                return;
-            }
-            
-            const draft = {
-                date: date,
-                amount: parseFloat(amount) || 0,
-                note: note,
-                weights: tempInvestWeights || currentWeights,
-                savedAt: Date.now()
-            };
-            
-            const tx = db.transaction(['drafts'], 'readwrite');
-            const store = tx.objectStore('drafts');
-            const request = store.add(draft);
-            
-            request.onsuccess = () => {
-                showNotif('info', '💾 已保存草稿', '可在草稿箱中查看');
-            };
-            
-            request.onerror = () => {
-                showNotif('error', '✗ 保存失败', '请重试');
-            };
-        }
-
-        function showDrafts() {
-            const tx = db.transaction(['drafts'], 'readonly');
-            const store = tx.objectStore('drafts');
-            const request = store.getAll();
-            
-            request.onsuccess = () => {
-                const drafts = request.result;
-                const modal = document.getElementById('draftModal');
-                const list = document.getElementById('draftList');
-                
-                if (drafts.length === 0) {
-                    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>暂无草稿</div>';
-                } else {
-                    list.innerHTML = drafts.sort((a,b) => b.savedAt - a.savedAt).map(d => `
-                        <div class="draft-item">
-                            <div class="draft-info">
-                                <div class="draft-date">${new Date(d.savedAt).toLocaleString()} · ${d.date || '未设定日期'}</div>
-                                <div class="draft-preview">
-                                    ${d.amount > 0 ? `¥${d.amount.toFixed(2)}` : '未设定金额'} 
-                                    ${d.note ? '· ' + d.note : ''}
-                                    ${JSON.stringify(d.weights) !== JSON.stringify(currentWeights) ? '· ⚙️ 自定义权重' : ''}
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-primary btn-small" onclick="loadDraft(${d.id})">载入</button>
-                                <button class="icon-btn" onclick="deleteDraft(${d.id})">🗑</button>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-                
-                modal.classList.add('active');
-            };
-        }
-
-        function closeDraftModal() {
-            document.getElementById('draftModal').classList.remove('active');
-        }
-
-        function loadDraft(id) {
-            const tx = db.transaction(['drafts'], 'readonly');
-            const store = tx.objectStore('drafts');
-            const request = store.get(id);
-            
-            request.onsuccess = () => {
-                const draft = request.result;
-                if (!draft) return;
-                
-                document.getElementById('investDate').value = draft.date || new Date().toISOString().split('T')[0];
-                document.getElementById('investAmount').value = draft.amount || '';
-                document.getElementById('investNote').value = draft.note || '';
-                
-                if (draft.weights && JSON.stringify(draft.weights) !== JSON.stringify(currentWeights)) {
-                    tempInvestWeights = JSON.parse(JSON.stringify(draft.weights));
-                    document.getElementById('investCustomToggle').classList.add('active');
-                    document.getElementById('investWeightPanel').style.display = 'block';
-                    createWeightList('invest', tempInvestWeights);
-                    updateWeightTotal('invest');
-                }
-                
-                closeDraftModal();
-                showNotif('success', '✓ 草稿已载入', '请检查并确认投资信息');
-            };
-        }
-
-        function deleteDraft(id) {
-            const tx = db.transaction(['drafts'], 'readwrite');
-            const store = tx.objectStore('drafts');
-            const request = store.delete(id);
-            
-            request.onsuccess = () => {
-                showDrafts();
-            };
-        }
-
-        // 再平衡功能
+        // 初始化再平衡输入
         function initRebalanceInputs() {
             const container = document.getElementById('rebalanceHoldings');
             container.innerHTML = '';
             
-            Object.entries(ASSETS).forEach(([name, info]) => {
+            Object.keys(ASSETS).forEach(name => {
                 const div = document.createElement('div');
                 div.className = 'input-group';
-                div.style.marginBottom = '12px';
                 div.innerHTML = `
-                    <label style="display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 12px; height: 12px; border-radius: 50%; background: ${info.color};"></div>
-                        ${name} (${info.code})
-                        <span style="color: var(--text-muted); font-weight: 400; margin-left: auto;">${info.desc}</span>
-                    </label>
-                    <input type="number" id="holding_${name}" placeholder="0.00" step="0.01" min="0" style="padding: 12px 16px; font-size: 1rem;">
+                    <label>${name} (${ASSETS[name].code}) 当前市值</label>
+                    <input type="number" id="holding_${name}" placeholder="0.00" step="0.01" min="0">
                 `;
                 container.appendChild(div);
             });
         }
 
-        function clearHoldings() {
-            Object.keys(ASSETS).forEach(name => {
-                const input = document.getElementById(`holding_${name}`);
-                if (input) input.value = '';
-            });
-            showNotif('info', '✓ 已清空', '所有持仓数据已重置');
-        }
-
-        function loadLastHoldings() {
-            const tx = db.transaction(['rebalances'], 'readonly');
-            const store = tx.objectStore('rebalances');
-            const request = store.openCursor(null, 'prev');
-            
-            request.onsuccess = (e) => {
-                const cursor = e.target.result;
-                if (!cursor) {
-                    showNotif('error', '✗ 无数据', '没有找到历史持仓记录');
-                    return;
-                }
-                
-                const last = cursor.value;
-                Object.entries(last.currentHoldings || {}).forEach(([name, value]) => {
-                    const input = document.getElementById(`holding_${name}`);
-                    if (input) input.value = value.toFixed(2);
-                });
-                
-                showNotif('success', '✓ 已载入', `已载入 ${last.date} 的持仓数据`);
-            };
-        }
+        // 计算再平衡
+        let lastRebalancePlan = null;
 
         function calculateRebalance() {
             const holdings = {};
-            let totalValue = 0;
+            let total = 0;
             
             Object.keys(ASSETS).forEach(name => {
                 const val = parseFloat(document.getElementById(`holding_${name}`).value) || 0;
                 holdings[name] = val;
-                totalValue += val;
+                total += val;
             });
-            
-            if (totalValue === 0) {
-                showNotif('error', '✗ 输入错误', '请至少输入一项持仓市值');
+
+            if (total === 0) {
+                showNotif('error', '输入错误', '请至少输入一项持仓');
                 return;
             }
+
+            const targetWeights = document.getElementById('rebalanceCustomToggle').classList.contains('active' && tempRebalanceWeights) ? 
+                                 tempRebalanceWeights : currentWeights;
+            const weightTotal = Object.values(targetWeights).reduce((a, b) => a + b, 0);
             
-            const useCustom = document.getElementById('rebalanceCustomToggle').classList.contains('active');
-            const targetWeights = useCustom && tempRebalanceWeights ? tempRebalanceWeights : currentWeights;
-            const totalWeight = Object.values(targetWeights).reduce((a,b) => a+b, 0);
-            
-            if (Math.abs(totalWeight - 1) > 0.001) {
-                showNotif('error', '✗ 配置错误', '目标权重总和必须等于100%');
+            if (Math.abs(weightTotal - 1) > 0.001) {
+                showNotif('error', '配置错误', '目标权重总和必须等于100%');
                 return;
             }
-            
-            const feeRate = parseFloat(document.getElementById('feeRate').value) / 100 || 0.001;
-            const adjustments = [];
-            const cards = document.getElementById('rebalanceCards');
-            cards.innerHTML = '';
+
+            const plan = [];
+            const container = document.getElementById('rebalanceCards');
+            container.innerHTML = '';
             
             let maxDrift = 0;
-            let totalTradeAmount = 0;
-            let buyCount = 0;
-            let sellCount = 0;
-            
+            let totalTrade = 0;
+
             Object.entries(targetWeights).forEach(([name, targetWeight]) => {
                 const current = holdings[name] || 0;
-                const currentWeight = current / totalValue;
-                const target = totalValue * targetWeight;
+                const currentWeight = total > 0 ? current / total : 0;
+                const target = total * targetWeight;
                 const diff = target - current;
                 const drift = Math.abs(currentWeight - targetWeight);
                 maxDrift = Math.max(maxDrift, drift);
                 
                 let action = 'hold';
                 let actionText = '持有';
-                let actionClass = 'hold';
-                
                 if (diff > 1) {
                     action = 'buy';
                     actionText = `买入 ¥${diff.toFixed(2)}`;
-                    actionClass = 'buy';
-                    totalTradeAmount += diff;
-                    buyCount++;
+                    totalTrade += diff;
                 } else if (diff < -1) {
                     action = 'sell';
                     actionText = `卖出 ¥${Math.abs(diff).toFixed(2)}`;
-                    actionClass = 'sell';
-                    totalTradeAmount += Math.abs(diff);
-                    sellCount++;
+                    totalTrade += Math.abs(diff);
                 }
-                
-                adjustments.push({
-                    name,
-                    current,
-                    target,
-                    diff,
-                    action,
-                    drift,
-                    currentWeight,
-                    targetWeight
-                });
-                
+
+                plan.push({ name, current, target, diff, action, drift });
+
                 const card = document.createElement('div');
-                card.className = `rebalance-card ${actionClass}`;
+                card.className = `rebalance-card ${action}`;
                 card.innerHTML = `
                     <div class="rebalance-header">
                         <div class="rebalance-name">${name}</div>
-                        <div class="rebalance-action ${actionClass}">${actionText}</div>
+                        <div class="rebalance-action ${action}">${actionText}</div>
                     </div>
                     <div style="margin: 12px 0;">
                         <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 4px;">
-                            <span style="color: var(--text-muted);">当前: ¥${current.toFixed(2)} (${(currentWeight*100).toFixed(1)}%)</span>
-                            <span style="color: var(--primary);">目标: ${(targetWeight*100).toFixed(1)}%</span>
+                            <span style="color: var(--text-muted);">当前: ¥${current.toFixed(2)} (${(currentWeight * 100).toFixed(1)}%)</span>
+                            <span style="color: var(--primary);">目标: ${(targetWeight * 100).toFixed(1)}%</span>
                         </div>
                         <div class="rebalance-bar">
-                            <div class="rebalance-progress current" style="width: ${Math.min(currentWeight * 100, 100)}%"></div>
-                            <div class="rebalance-progress target" style="width: ${Math.min(targetWeight * 100, 100)}%; opacity: 0.7; background: ${ASSETS[name].color}"></div>
+                            <div class="rebalance-progress current" style="width: ${currentWeight * 100}%"></div>
+                            <div class="rebalance-progress target" style="width: ${targetWeight * 100}%; opacity: 0.7;"></div>
                         </div>
                     </div>
                     <div class="rebalance-stats">
-                        <span>偏离度: ${(drift*100).toFixed(2)}%</span>
+                        <span>偏离度: ${(drift * 100).toFixed(2)}%</span>
                         <span>${drift > 0.05 ? '⚠️ 需调整' : '✓ 正常'}</span>
                     </div>
                 `;
-                cards.appendChild(card);
+                container.appendChild(card);
             });
-            
-            const estimatedFee = totalTradeAmount * feeRate;
-            document.getElementById('estimatedFee').textContent = `¥${estimatedFee.toFixed(2)}`;
-            
-            const threshold = parseFloat(document.getElementById('rebalanceThreshold').value) / 100 || 0.05;
-            let advice = '';
-            
-            if (maxDrift < threshold) {
-                advice = `<div style="margin-bottom: 12px;"><strong>✓ 组合健康</strong></div>`;
-                advice += `当前最大偏离度为${(maxDrift*100).toFixed(1)}%，低于设定阈值${(threshold*100).toFixed(1)}%，建议继续持有，无需调整。`;
-            } else {
-                advice = `<div style="margin-bottom: 12px;"><strong>⚠️ 建议再平衡</strong></div>`;
-                advice += `最大偏离度达${(maxDrift*100).toFixed(1)}%，超过阈值。`;
-                if (sellCount > 0) advice += `<div style="margin-top: 8px;">🔴 卖出：${sellCount}个标的，回笼资金用于补仓</div>`;
-                if (buyCount > 0) advice += `<div style="margin-top: 8px;">🟢 买入：${buyCount}个标的，建议优先加仓偏离度大的标的</div>`;
-                advice += `<div style="margin-top: 8px; color: var(--text-muted);">预估交易成本：¥${estimatedFee.toFixed(2)}（费率${(feeRate*100).toFixed(2)}%）</div>`;
-            }
-            
+
+            const feeRate = parseFloat(document.getElementById('feeRate').value) / 100;
+            document.getElementById('tradeFee').textContent = `¥${(totalTrade * feeRate).toFixed(2)}`;
+
+            const advice = generateRebalanceAdvice(plan, maxDrift, totalTrade);
             document.getElementById('rebalanceAdvice').innerHTML = advice;
-            
+
             lastRebalancePlan = {
                 date: document.getElementById('rebalanceDate').value,
-                totalValue: totalValue,
-                currentHoldings: holdings,
-                adjustments: adjustments,
-                targetWeights: JSON.parse(JSON.stringify(targetWeights)),
+                totalValue: total,
+                holdings: { ...holdings },
+                plan: plan,
+                targetWeights: { ...targetWeights },
                 maxDrift: maxDrift,
-                isCustom: useCustom,
-                estimatedFee: estimatedFee,
-                timestamp: Date.now()
+                isCustom: document.getElementById('rebalanceCustomToggle').classList.contains('active')
             };
-            
+
             document.getElementById('rebalanceResult').style.display = 'block';
-            document.getElementById('rebalanceResult').scrollIntoView({behavior: 'smooth'});
         }
 
-        // 确认再平衡 - 修复版本
-        function confirmRebalance() {
-            if (!lastRebalancePlan) {
-                showNotif('error', '✗ 错误', '请先计算再平衡方案');
-                return;
+        function generateRebalanceAdvice(plan, maxDrift, totalTrade) {
+            const buys = plan.filter(p => p.action === 'buy');
+            const sells = plan.filter(p => p.action === 'sell');
+            
+            let html = `<div style="margin-bottom: 12px;"><strong>组合诊断：</strong>`;
+            if (maxDrift < 0.02) {
+                html += `组合配置非常健康，最大偏离仅${(maxDrift * 100).toFixed(1)}%，建议继续持有。</div>`;
+            } else if (maxDrift < 0.05) {
+                html += `组合略有偏离，最大偏离${(maxDrift * 100).toFixed(1)}%，可进行微调。</div>`;
+            } else {
+                html += `组合偏离较大，最大偏离${(maxDrift * 100).toFixed(1)}%，建议立即再平衡。</div>`;
             }
             
-            const btn = document.getElementById('confirmRebalanceBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> 保存中...';
-            
-            try {
-                const tx = db.transaction(['rebalances'], 'readwrite');
-                const store = tx.objectStore('rebalances');
-                
-                const request = store.add(lastRebalancePlan);
-                
-                request.onsuccess = () => {
-                    if (document.getElementById('autoBackupToggle').classList.contains('active')) {
-                        autoExport();
-                    }
-                    
-                    showNotif('success', '✓ 再平衡已记录', `已保存${lastRebalancePlan.date}的调仓方案`);
-                    
-                    document.getElementById('rebalanceResult').style.display = 'none';
-                    document.getElementById('rebalanceCustomToggle').classList.remove('active');
-                    document.getElementById('rebalanceWeightPanel').style.display = 'none';
-                    tempRebalanceWeights = null;
-                    lastRebalancePlan = null;
-                    
-                    clearHoldings();
-                    updateDashboard();
-                };
-                
-                request.onerror = () => {
-                    showNotif('error', '✗ 保存失败', '请重试');
-                };
-                
-                tx.oncomplete = () => {
-                    btn.disabled = false;
-                    btn.innerHTML = '✓ 确认并记录';
-                };
-                
-                tx.onerror = () => {
-                    btn.disabled = false;
-                    btn.innerHTML = '✓ 确认并记录';
-                };
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showNotif('error', '✗ 系统错误', error.message);
-                btn.disabled = false;
-                btn.innerHTML = '✓ 确认并记录';
+            if (sells.length > 0) {
+                html += `<div style="margin-bottom: 8px;">🔴 <strong>卖出操作：</strong>建议卖出 ${sells.map(s => s.name).join('、')}，共回笼资金 ¥${sells.reduce((a, b) => a + Math.abs(b.diff), 0).toFixed(2)}</div>`;
             }
+            if (buys.length > 0) {
+                html += `<div>🟢 <strong>买入操作：</strong>建议加仓 ${buys.map(b => b.name).join('、')}，共需资金 ¥${buys.reduce((a, b) => a + b.diff, 0).toFixed(2)}</div>`;
+            }
+            
+            return html;
         }
 
-        // 仪表盘更新
-        function updateDashboard() {
-            if (!db) {
-                console.log('DB not ready yet');
-                return;
-            }
+        // 确认再平衡
+        async function confirmRebalance() {
+            if (!lastRebalancePlan) return;
             
-            const tx1 = db.transaction(['investments'], 'readonly');
-            const invStore = tx1.objectStore('investments');
-            const invReq = invStore.getAll();
+            const tx = db.transaction(['rebalances', 'holdings'], 'readwrite');
+            await tx.objectStore('rebalances').add({ ...lastRebalancePlan, timestamp: Date.now() });
+            await tx.objectStore('holdings').put({
+                date: lastRebalancePlan.date,
+                holdings: lastRebalancePlan.holdings
+            });
             
-            invReq.onsuccess = () => {
-                const investments = invReq.result;
-                
-                const tx2 = db.transaction(['rebalances'], 'readonly');
-                const rebStore = tx2.objectStore('rebalances');
-                const rebReq = rebStore.getAll();
-                
-                rebReq.onsuccess = () => {
-                    const rebalances = rebReq.result;
-                    renderDashboard(investments, rebalances);
-                };
+            showNotif('success', '再平衡已记录', '调仓方案已保存到历史记录');
+            document.getElementById('rebalanceResult').style.display = 'none';
+            initRebalanceInputs();
+            updateDashboard();
+        }
+
+        // 载入上次持仓
+        async function loadLastHoldings() {
+            const tx = db.transaction(['holdings'], 'readonly');
+            const store = tx.objectStore('holdings');
+            const request = store.openCursor(null, 'prev');
+            
+            request.onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) {
+                    const data = cursor.value;
+                    Object.entries(data.holdings).forEach(([name, value]) => {
+                        const input = document.getElementById(`holding_${name}`);
+                        if (input) input.value = value.toFixed(2);
+                    });
+                    showNotif('info', '已载入', `载入了${data.date}的持仓数据`);
+                } else {
+                    showNotif('error', '无数据', '没有找到历史持仓记录');
+                }
             };
         }
 
-        function renderDashboard(investments, rebalances) {
-            if (investments.length === 0 && rebalances.length === 0) {
-                document.getElementById('portfolioChart').innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">📊</div>
-                        <div>暂无数据，请先添加投资记录</div>
-                        <button class="btn btn-primary btn-small" onclick="switchTab('invest')" style="margin-top: 16px;">去投资</button>
-                    </div>
-                `;
-                return;
-            }
+        // 更新仪表盘
+        async function updateDashboard() {
+            const investments = await getAll('investments');
+            const rebalances = await getAll('rebalances');
+            
+            if (investments.length === 0) return;
             
             const totalInvested = investments.reduce((sum, inv) => sum + inv.amount, 0);
-            document.getElementById('totalInvested').textContent = `¥${(totalInvested/10000).toFixed(2)}万`;
+            document.getElementById('totalInvested').textContent = `¥${totalInvested.toFixed(0)}`;
             
-            let currentHoldings = {};
-            const lastRebalance = rebalances.sort((a,b) => b.timestamp - a.timestamp)[0];
+            // 简化持仓计算：取最后一次再平衡，然后累加后续投资
+            const lastRebalance = rebalances.sort((a, b) => b.timestamp - a.timestamp)[0];
+            const recentInvests = lastRebalance ? 
+                investments.filter(i => i.timestamp > lastRebalance.timestamp) : investments;
             
-            if (lastRebalance) {
-                currentHoldings = JSON.parse(JSON.stringify(lastRebalance.currentHoldings));
-                lastRebalance.adjustments.forEach(adj => {
-                    if (adj.action === 'buy') currentHoldings[adj.name] = (currentHoldings[adj.name] || 0) + Math.abs(adj.diff);
-                    if (adj.action === 'sell') currentHoldings[adj.name] = Math.max(0, (currentHoldings[adj.name] || 0) - Math.abs(adj.diff));
-                });
-            }
-            
-            const afterLastRebalance = lastRebalance ? 
-                investments.filter(i => i.timestamp > lastRebalance.timestamp) : 
-                investments;
-            
-            afterLastRebalance.forEach(inv => {
+            let currentHoldings = lastRebalance ? { ...lastRebalance.holdings } : {};
+            recentInvests.forEach(inv => {
                 Object.entries(inv.allocations).forEach(([name, amount]) => {
                     currentHoldings[name] = (currentHoldings[name] || 0) + amount;
                 });
             });
             
-            const totalAssets = Object.values(currentHoldings).reduce((a,b) => a+b, 0);
-            document.getElementById('totalAssets').textContent = `¥${(totalAssets/10000).toFixed(2)}万`;
+            const totalAssets = Object.values(currentHoldings).reduce((a, b) => a + b, 0);
+            document.getElementById('totalAssets').textContent = `¥${totalAssets.toFixed(0)}`;
             
             const returns = totalAssets - totalInvested;
             const returnEl = document.getElementById('totalReturn');
-            returnEl.textContent = `${returns >= 0 ? '+' : ''}¥${Math.abs(returns/10000).toFixed(2)}万`;
+            returnEl.textContent = `${returns >= 0 ? '+' : ''}¥${returns.toFixed(0)}`;
             returnEl.style.color = returns >= 0 ? 'var(--success)' : 'var(--danger)';
             
+            // 更新趋势标签（简单示例）
+            document.getElementById('trendTag').textContent = returns >= 0 ? `+${((returns/totalInvested)*100).toFixed(1)}%` : `${((returns/totalInvested)*100).toFixed(1)}%`;
+            document.getElementById('investedTrend').textContent = `+${investments.length}`;
+            document.getElementById('returnTrend').textContent = returns >= 0 ? `+${((returns/totalInvested)*100).toFixed(1)}%` : `${((returns/totalInvested)*100).toFixed(1)}%`;
+            
+            // 计算偏离度
             let maxDrift = 0;
             if (totalAssets > 0) {
                 Object.entries(currentWeights).forEach(([name, target]) => {
@@ -2367,336 +1745,102 @@
                     maxDrift = Math.max(maxDrift, Math.abs(current - target));
                 });
             }
-            
-            const driftEl = document.getElementById('driftStatus');
-            driftEl.textContent = `${(maxDrift * 100).toFixed(1)}%`;
-            const threshold = parseFloat(document.getElementById('rebalanceThreshold').value) / 100 || 0.05;
-            
-            if (maxDrift > threshold) {
-                driftEl.style.color = 'var(--danger)';
-                document.getElementById('driftTrend').textContent = '需调整';
-                document.getElementById('driftTrend').className = 'stat-trend trend-down';
-                
-                document.getElementById('todoCard').style.display = 'block';
-                document.getElementById('todoList').innerHTML = `
-                    <div style="padding: 20px; background: rgba(245, 158, 11, 0.1); border-radius: 12px; border-left: 4px solid var(--warning);">
-                        <div style="font-weight: 600; margin-bottom: 8px; color: var(--warning);">⚠️ 再平衡提醒</div>
-                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 12px;">
-                            您的组合偏离度已达${(maxDrift*100).toFixed(1)}%，超过设定阈值${(threshold*100).toFixed(1)}%
-                        </div>
-                        <button class="btn btn-primary btn-small" onclick="switchTab('rebalance')">去再平衡</button>
-                    </div>
-                `;
-            } else {
-                driftEl.style.color = 'var(--success)';
-                document.getElementById('driftTrend').textContent = '正常';
-                document.getElementById('driftTrend').className = 'stat-trend trend-up';
-                document.getElementById('todoCard').style.display = 'none';
-            }
+            document.getElementById('driftStatus').textContent = `${(maxDrift * 100).toFixed(1)}%`;
+            document.getElementById('driftTrend').textContent = maxDrift > 0.05 ? '⚠️ 偏离' : '正常';
             
             renderPortfolioChart(currentHoldings, totalAssets);
-            renderRecentActivity(investments, rebalances);
         }
 
         function renderPortfolioChart(holdings, total) {
             const container = document.getElementById('portfolioChart');
             if (total === 0) return;
             
-            const byRegion = {};
-            const byAsset = {};
-            
+            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">';
             Object.entries(holdings).forEach(([name, value]) => {
-                const region = ASSETS[name].region;
-                byRegion[region] = (byRegion[region] || 0) + value;
-                byAsset[name] = value;
-            });
-            
-            const regionNames = {US: '美国市场', EU: '欧洲市场', APAC: '亚太市场', CN: '中国市场'};
-            const regionColors = {US: '#6366f1', EU: '#f43f5e', APAC: '#f59e0b', CN: '#10b981'};
-            
-            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">';
-            
-            html += '<div><div style="font-weight: 600; margin-bottom: 16px; color: var(--text-muted); font-size: 0.875rem;">地域分布</div>';
-            Object.entries(byRegion).sort((a,b) => b[1]-a[1]).forEach(([region, value]) => {
                 const percent = (value / total * 100).toFixed(1);
+                const target = currentWeights[name] * 100;
+                const diff = (percent - target).toFixed(1);
+                const color = ASSETS[name].color;
+                
                 html += `
-                    <div style="margin-bottom: 16px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                            <span style="font-weight: 500;">${regionNames[region]}</span>
-                            <span style="font-weight: 700; color: ${regionColors[region]}">${percent}%</span>
+                    <div style="background: var(--glass); padding: 16px; border-radius: 12px; border-left: 4px solid ${color};">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-weight: 600;">${name}</span>
+                            <span style="color: ${color}; font-weight: 700;">${percent}%</span>
                         </div>
-                        <div style="height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
-                            <div style="height: 100%; width: ${percent}%; background: ${regionColors[region]}; border-radius: 4px; transition: width 1s ease;"></div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 8px;">
+                            ¥${value.toFixed(2)}
                         </div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">¥${value.toFixed(2)}</div>
+                        <div style="height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
+                            <div style="height: 100%; width: ${percent}%; background: ${color}; transition: width 1s ease;"></div>
+                        </div>
+                        <div style="font-size: 0.75rem; margin-top: 6px; color: ${Math.abs(diff) > 5 ? 'var(--warning)' : 'var(--text-muted)'};">
+                            目标: ${target.toFixed(1)}% ${diff > 0 ? '+' : ''}${diff}%
+                        </div>
                     </div>
                 `;
             });
             html += '</div>';
-            
-            html += '<div><div style="font-weight: 600; margin-bottom: 16px; color: var(--text-muted); font-size: 0.875rem;">标的详情</div><div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">';
-            Object.entries(byAsset).sort((a,b) => b[1]-a[1]).forEach(([name, value]) => {
-                const percent = (value / total * 100).toFixed(1);
-                const target = currentWeights[name] * 100;
-                const diff = (percent - target).toFixed(1);
-                html += `
-                    <div style="background: var(--glass); padding: 12px; border-radius: 8px; border-left: 3px solid ${ASSETS[name].color};">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                            <span style="font-weight: 600; font-size: 0.875rem;">${name}</span>
-                            <span style="font-size: 0.75rem; color: ${Math.abs(diff) > 5 ? 'var(--warning)' : 'var(--text-muted)'}">${diff > 0 ? '+' : ''}${diff}%</span>
-                        </div>
-                        <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 2px;">${percent}%</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">¥${value.toFixed(0)}</div>
-                    </div>
-                `;
-            });
-            html += '</div></div></div>';
-            
             container.innerHTML = html;
-        }
-
-        function renderRecentActivity(investments, rebalances) {
-            const container = document.getElementById('recentTimeline');
-            const all = [
-                ...investments.map(i => ({...i, type: 'invest', title: '新增投资', icon: '💰'})),
-                ...rebalances.map(r => ({...r, type: 'rebalance', title: '组合再平衡', icon: '⚖️'}))
-            ].sort((a,b) => b.timestamp - a.timestamp).slice(0, 5);
-            
-            if (all.length === 0) {
-                container.innerHTML = '<div class="empty-state" style="padding: 40px 0;"><div class="empty-icon">📅</div>暂无最近活动</div>';
-                return;
-            }
-            
-            container.innerHTML = all.map(item => `
-                <div class="timeline-item">
-                    <div class="timeline-date">${new Date(item.timestamp).toLocaleString()}</div>
-                    <div class="timeline-content">
-                        <span style="margin-right: 8px;">${item.icon}</span>
-                        ${item.title} · 
-                        ${item.type === 'invest' ? 
-                            `¥${item.amount.toFixed(2)} ${item.note ? '(' + item.note + ')' : ''}` : 
-                            `总资产¥${item.totalValue.toFixed(2)} · 偏离度${(item.maxDrift*100).toFixed(1)}%`
-                        }
-                    </div>
-                </div>
-            `).join('');
         }
 
         function refreshDashboard() {
             updateDashboard();
-            showNotif('success', '✓ 已刷新', '仪表盘数据已更新');
+            showNotif('success', '已刷新', '仪表盘数据已更新');
         }
 
-        // 分析功能
+        // 分析页面更新（简化）
         function updateAnalysis() {
             const period = document.getElementById('analysisPeriod').value;
-            
-            const tx1 = db.transaction(['investments'], 'readonly');
-            const invStore = tx1.objectStore('investments');
-            const invReq = invStore.getAll();
-            
-            invReq.onsuccess = () => {
-                const investments = invReq.result;
-                
-                const tx2 = db.transaction(['rebalances'], 'readonly');
-                const rebStore = tx2.objectStore('rebalances');
-                const rebReq = rebStore.getAll();
-                
-                rebReq.onsuccess = () => {
-                    const rebalances = rebReq.result;
-                    renderAnalysis(investments, rebalances, period);
-                };
-            };
-        }
-
-        function renderAnalysis(investments, rebalances, period) {
-            if (investments.length === 0) {
-                document.getElementById('analysisContent').innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">📈</div>
-                        <div>数据不足，无法生成分析报告</div>
-                        <small style="color: var(--text-muted); display: block; margin-top: 8px;">请至少完成一次投资操作</small>
-                    </div>
-                `;
-                return;
-            }
-            
-            const now = Date.now();
-            const filters = {
-                month: 30 * 24 * 60 * 60 * 1000,
-                quarter: 90 * 24 * 60 * 60 * 1000,
-                year: 365 * 24 * 60 * 60 * 1000
-            };
-            
-            const filteredInv = period === 'all' ? investments : 
-                investments.filter(i => now - i.timestamp < filters[period]);
-            
-            const totalInvested = filteredInv.reduce((sum, i) => sum + i.amount, 0);
-            const avgInvest = filteredInv.length > 0 ? totalInvested / filteredInv.length : 0;
-            const investFreq = filteredInv.length > 1 ? 
-                (filteredInv[filteredInv.length-1].timestamp - filteredInv[0].timestamp) / (filteredInv.length - 1) / (24*60*60*1000) : 0;
-            
-            const rebalanceCount = rebalances.length;
-            const avgDrift = rebalances.length > 0 ? 
-                rebalances.reduce((sum, r) => sum + r.maxDrift, 0) / rebalances.length : 0;
-            
             document.getElementById('analysisContent').innerHTML = `
-                <div class="analysis-grid">
-                    <div class="analysis-card">
-                        <div class="analysis-title">📊 投资行为分析</div>
-                        <div class="metric-row">
-                            <span class="metric-label">投资次数</span>
-                            <span class="metric-value">${filteredInv.length}次</span>
-                        </div>
-                        <div class="metric-row">
-                            <span class="metric-label">累计投入</span>
-                            <span class="metric-value">¥${totalInvested.toFixed(2)}</span>
-                        </div>
-                        <div class="metric-row">
-                            <span class="metric-label">平均单笔</span>
-                            <span class="metric-value">¥${avgInvest.toFixed(2)}</span>
-                        </div>
-                        <div class="metric-row">
-                            <span class="metric-label">投资频率</span>
-                            <span class="metric-value">${investFreq > 0 ? `每${investFreq.toFixed(0)}天` : 'N/A'}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="analysis-card">
-                        <div class="analysis-title">⚖️ 再平衡分析</div>
-                        <div class="metric-row">
-                            <span class="metric-label">再平衡次数</span>
-                            <span class="metric-value">${rebalanceCount}次</span>
-                        </div>
-                        <div class="metric-row">
-                            <span class="metric-label">平均偏离度</span>
-                            <span class="metric-value">${(avgDrift*100).toFixed(2)}%</span>
-                        </div>
-                        <div class="metric-row">
-                            <span class="metric-label">纪律性评分</span>
-                            <span class="metric-value ${rebalanceCount >= filteredInv.length/3 ? 'positive' : 'negative'}">
-                                ${rebalanceCount >= filteredInv.length/3 ? '优秀' : '需加强'}
-                            </span>
-                        </div>
-                        <div class="metric-row">
-                            <span class="metric-label">最近操作</span>
-                            <span class="metric-value">${rebalances.length > 0 ? new Date(rebalances[rebalances.length-1].timestamp).toLocaleDateString() : '无'}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="analysis-card">
-                        <div class="analysis-title">🌍 地域配置分析</div>
-                        <div id="regionAnalysis"></div>
-                    </div>
-                    
-                    <div class="analysis-card">
-                        <div class="analysis-title">📈 时间分布</div>
-                        <div id="timeAnalysis"></div>
-                    </div>
+                <div style="padding: 20px; background: var(--glass); border-radius: 12px;">
+                    <p>分析功能开发中，当前选择时段：${period}</p>
+                    <p>累计投资：...</p>
+                    <p>年化收益率：...</p>
                 </div>
             `;
-            
-            const regionInvest = {US: 0, EU: 0, APAC: 0, CN: 0};
-            filteredInv.forEach(inv => {
-                Object.entries(inv.allocations).forEach(([name, amount]) => {
-                    const region = ASSETS[name].region;
-                    regionInvest[region] += amount;
-                });
-            });
-            
-            const regionNames = {US: '美国', EU: '欧洲', APAC: '亚太', CN: '中国'};
-            const regionColors = {US: '#6366f1', EU: '#f43f5e', APAC: '#f59e0b', CN: '#10b981'};
-            
-            document.getElementById('regionAnalysis').innerHTML = Object.entries(regionInvest)
-                .filter(([_,v]) => v > 0)
-                .sort((a,b) => b[1]-a[1])
-                .map(([region, amount]) => `
-                    <div style="margin-bottom: 12px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                            <span style="color: ${regionColors[region]}; font-weight: 600;">${regionNames[region]}</span>
-                            <span>¥${amount.toFixed(0)}</span>
-                        </div>
-                        <div style="height: 6px; background: var(--border); border-radius: 3px;">
-                            <div style="height: 100%; width: ${Math.min(amount/totalInvested*100*2, 100)}%; background: ${regionColors[region]}; border-radius: 3px;"></div>
-                        </div>
-                    </div>
-                `).join('');
-            
-            const byMonth = {};
-            filteredInv.forEach(inv => {
-                const month = new Date(inv.timestamp).toLocaleString('zh-CN', {year: 'numeric', month: 'short'});
-                byMonth[month] = (byMonth[month] || 0) + inv.amount;
-            });
-            
-            document.getElementById('timeAnalysis').innerHTML = Object.entries(byMonth)
-                .slice(-6)
-                .map(([month, amount]) => `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border);">
-                        <span style="color: var(--text-muted);">${month}</span>
-                        <span style="font-weight: 600;">¥${amount.toFixed(0)}</span>
-                    </div>
-                `).join('');
         }
 
         // 历史记录
-        function loadHistory() {
-            const tx1 = db.transaction(['investments'], 'readonly');
-            const invStore = tx1.objectStore('investments');
-            const invReq = invStore.getAll();
-            
-            invReq.onsuccess = () => {
-                const investments = invReq.result;
-                
-                const tx2 = db.transaction(['rebalances'], 'readonly');
-                const rebStore = tx2.objectStore('rebalances');
-                const rebReq = rebStore.getAll();
-                
-                rebReq.onsuccess = () => {
-                    const rebalances = rebReq.result;
-                    
-                    allHistoryData = [
-                        ...investments.map(i => ({...i, type: 'invest', displayDate: i.date})),
-                        ...rebalances.map(r => ({...r, type: 'rebalance', displayDate: r.date}))
-                    ].sort((a,b) => b.timestamp - a.timestamp);
-                    
-                    renderHistoryList(allHistoryData);
-                };
-            };
+        async function loadHistory() {
+            const investments = await getAll('investments');
+            const rebalances = await getAll('rebalances');
+            allHistoryItems = [
+                ...investments.map(i => ({ ...i, type: 'invest' })),
+                ...rebalances.map(r => ({ ...r, type: 'rebalance' }))
+            ];
+            allHistoryItems.sort((a, b) => b.timestamp - a.timestamp);
+            renderHistory(allHistoryItems, 'all');
         }
 
-        function renderHistoryList(data) {
+        function renderHistory(items, filter) {
             const container = document.getElementById('historyList');
+            const filtered = filter === 'all' ? items : items.filter(i => i.type === filter);
             
-            if (data.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📜</div>暂无历史记录</div>';
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📜</div>暂无记录</div>';
                 return;
             }
             
-            container.innerHTML = data.map(item => {
+            container.innerHTML = filtered.map(item => {
                 const isInvest = item.type === 'invest';
                 return `
-                    <div class="history-item" data-id="${item.id}" data-type="${item.type}">
+                    <div class="history-item">
                         <div class="history-main">
                             <div class="history-date">
-                                ${item.displayDate || new Date(item.timestamp).toLocaleDateString()}
-                                <span class="history-tag ${isInvest ? '' : 'rebalance'}">${isInvest ? '投资' : '再平衡'}</span>
+                                ${new Date(item.timestamp).toLocaleDateString()}
+                                <span class="history-tag">${isInvest ? '投资' : '再平衡'}</span>
                                 ${item.isCustom ? '<span class="tag tag-primary">自定义</span>' : ''}
                             </div>
                             <div class="history-detail">
                                 ${isInvest ? 
-                                    `投入 ¥${item.amount.toFixed(2)} · ${Object.keys(item.allocations).length}个标的 ${item.note ? '· ' + item.note : ''}` : 
-                                    `总资产 ¥${item.totalValue.toFixed(2)} · 偏离度 ${(item.maxDrift*100).toFixed(1)}% · ${item.adjustments.filter(a => a.action !== 'hold').length}项调整`
+                                    `投入 ¥${item.amount.toFixed(2)} ${item.note ? '| ' + item.note : ''}` : 
+                                    `总资产 ¥${item.totalValue.toFixed(2)} | 偏离度 ${(item.maxDrift * 100).toFixed(1)}%`
                                 }
                             </div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 16px;">
-                            <div class="history-amount ${!isInvest ? 'sell' : ''}">
-                                ${isInvest ? '+' : ''}¥${isInvest ? item.amount.toFixed(2) : item.estimatedFee.toFixed(2)}
-                            </div>
-                            <div class="history-actions">
-                                <button class="icon-btn" onclick="viewDetail('${item.type}', ${item.id})" title="查看详情">👁</button>
-                                <button class="icon-btn" onclick="deleteRecord('${item.type}', ${item.id})" title="删除">🗑</button>
-                            </div>
+                        <div class="history-actions">
+                            <button class="icon-btn tooltip" data-tip="删除" onclick="deleteRecord('${item.type}', ${item.id})">🗑</button>
                         </div>
                     </div>
                 `;
@@ -2704,269 +1848,125 @@
         }
 
         function filterHistory(type) {
-            currentHistoryFilter = type;
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
-            
-            const filtered = type === 'all' ? allHistoryData : allHistoryData.filter(i => i.type === type);
-            renderHistoryList(filtered);
+            renderHistory(allHistoryItems, type);
         }
 
         function searchHistory() {
             const term = document.getElementById('historySearch').value.toLowerCase();
-            const filtered = allHistoryData.filter(item => {
-                const searchStr = `${item.date} ${item.amount} ${item.note || ''} ${item.totalValue || ''}`.toLowerCase();
-                return searchStr.includes(term);
-            });
-            renderHistoryList(filtered);
-        }
-
-        function deleteRecord(type, id) {
-            if (!confirm('确定删除这条记录？此操作不可恢复。')) return;
-            
-            const storeName = type === 'invest' ? 'investments' : 'rebalances';
-            const tx = db.transaction([storeName], 'readwrite');
-            const store = tx.objectStore(storeName);
-            const request = store.delete(id);
-            
-            request.onsuccess = () => {
-                showNotif('success', '✓ 已删除', '记录已移除');
-                loadHistory();
-                updateDashboard();
-            };
-        }
-
-        function viewDetail(type, id) {
-            const item = allHistoryData.find(i => i.id === id && i.type === type);
-            if (!item) return;
-            
-            let content = '';
-            if (type === 'invest') {
-                content = `日期：${item.date}\n金额：¥${item.amount.toFixed(2)}\n备注：${item.note || '无'}\n\n分配详情：\n`;
-                Object.entries(item.allocations).forEach(([name, amount]) => {
-                    content += `${name}: ¥${amount.toFixed(2)} (${(amount/item.amount*100).toFixed(1)}%)\n`;
-                });
-            } else {
-                content = `日期：${item.date}\n总资产：¥${item.totalValue.toFixed(2)}\n最大偏离度：${(item.maxDrift*100).toFixed(2)}%\n\n调仓详情：\n`;
-                item.adjustments.filter(a => a.action !== 'hold').forEach(adj => {
-                    content += `${adj.name}: ${adj.action === 'buy' ? '买入' : '卖出'} ¥${Math.abs(adj.diff).toFixed(2)}\n`;
-                });
-            }
-            
-            alert(content);
-        }
-
-        // 导出功能
-        function exportPlan(type) {
-            const plan = type === 'invest' ? lastInvestPlan : lastRebalancePlan;
-            if (!plan) {
-                showNotif('error', '✗ 无数据', '请先计算方案');
-                return;
-            }
-            
-            const dataStr = JSON.stringify(plan, null, 2);
-            const blob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${type}_plan_${plan.date || new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            showNotif('success', '✓ 已导出', '方案已保存为JSON文件');
-        }
-
-        function exportHistory() {
-            const data = {
-                exportTime: new Date().toISOString(),
-                investments: allHistoryData.filter(i => i.type === 'invest'),
-                rebalances: allHistoryData.filter(i => i.type === 'rebalance'),
-                currentConfig: {
-                    weights: currentWeights,
-                    threshold: document.getElementById('rebalanceThreshold').value,
-                    feeRate: document.getElementById('feeRate').value
+            const filtered = allHistoryItems.filter(item => {
+                if (item.type === 'invest') {
+                    return (item.note && item.note.toLowerCase().includes(term)) || item.amount.toString().includes(term);
+                } else {
+                    return item.totalValue.toString().includes(term) || (item.maxDrift * 100).toFixed(1).includes(term);
                 }
-            };
-            
-            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `portfolio_history_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            showNotif('success', '✓ 已导出', '历史记录已导出');
+            });
+            const activeFilter = document.querySelector('.filter-btn.active')?.textContent.trim().toLowerCase() || '全部';
+            let typeFilter = activeFilter === '全部' ? 'all' : (activeFilter === '投资' ? 'invest' : 'rebalance');
+            if (typeFilter !== 'all') {
+                const filteredByType = filtered.filter(i => i.type === typeFilter);
+                renderHistory(filteredByType, typeFilter);
+            } else {
+                renderHistory(filtered, 'all');
+            }
         }
 
+        async function deleteRecord(type, id) {
+            if (!confirm('确定删除这条记录？')) return;
+            const tx = db.transaction([type === 'invest' ? 'investments' : 'rebalances'], 'readwrite');
+            const store = tx.objectStore(type === 'invest' ? 'investments' : 'rebalances');
+            await store.delete(id);
+            loadHistory();
+            showNotif('success', '已删除', '记录已移除');
+            updateDashboard();
+        }
+
+        // 保存配置
+        function saveSettings() {
+            localStorage.setItem('userWeights', JSON.stringify(currentWeights));
+            showNotif('success', '配置已保存', '当前权重配置已保存');
+        }
+
+        // 导出配置
         function exportSettings() {
-            const config = {
+            const data = {
                 weights: currentWeights,
                 threshold: document.getElementById('rebalanceThreshold').value,
                 feeRate: document.getElementById('feeRate').value,
-                exportTime: new Date().toISOString()
+                autoBackup: localStorage.getItem('autoBackup') === 'true'
             };
-            
-            const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `portfolio_config_${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `portfolio_settings_${new Date().toISOString().slice(0, 10)}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            
-            showNotif('success', '✓ 已导出', '配置已保存');
+            showNotif('success', '配置已导出', '请查看下载文件');
         }
 
-        function importSettings(input) {
-            const file = input.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const config = JSON.parse(e.target.result);
-                    
-                    if (config.weights) {
-                        currentWeights = config.weights;
-                        createWeightList('settings', currentWeights);
-                        updateWeightTotal('settings');
+        // 导入配置
+        function importSettings() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (data.weights) {
+                            currentWeights = data.weights;
+                            initWeightEditors();
+                        }
+                        if (data.threshold) document.getElementById('rebalanceThreshold').value = data.threshold;
+                        if (data.feeRate) document.getElementById('feeRate').value = data.feeRate;
+                        if (data.autoBackup) {
+                            document.querySelector('.config-item .toggle').classList.add('active');
+                            localStorage.setItem('autoBackup', 'true');
+                        }
+                        showNotif('success', '导入成功', '配置已加载');
+                    } catch (err) {
+                        showNotif('error', '导入失败', '文件格式错误');
                     }
-                    if (config.threshold) document.getElementById('rebalanceThreshold').value = config.threshold;
-                    if (config.feeRate) document.getElementById('feeRate').value = config.feeRate;
-                    
-                    showNotif('success', '✓ 已导入', '配置已成功导入');
-                    saveSettings();
-                } catch (err) {
-                    showNotif('error', '✗ 导入失败', '文件格式错误');
-                }
-            };
-            reader.readAsText(file);
-            input.value = '';
-        }
-
-        function exportAllData() {
-            const tx1 = db.transaction(['investments'], 'readonly');
-            const invStore = tx1.objectStore('investments');
-            const invReq = invStore.getAll();
-            
-            invReq.onsuccess = () => {
-                const investments = invReq.result;
-                
-                const tx2 = db.transaction(['rebalances'], 'readonly');
-                const rebStore = tx2.objectStore('rebalances');
-                const rebReq = rebStore.getAll();
-                
-                rebReq.onsuccess = () => {
-                    const rebalances = rebReq.result;
-                    
-                    const tx3 = db.transaction(['drafts'], 'readonly');
-                    const draftStore = tx3.objectStore('drafts');
-                    const draftReq = draftStore.getAll();
-                    
-                    draftReq.onsuccess = () => {
-                        const drafts = draftReq.result;
-                        
-                        const tx4 = db.transaction(['schemes'], 'readonly');
-                        const schemeStore = tx4.objectStore('schemes');
-                        const schemeReq = schemeStore.getAll();
-                        
-                        schemeReq.onsuccess = () => {
-                            const schemes = schemeReq.result;
-                            
-                            const data = {
-                                exportTime: new Date().toISOString(),
-                                version: '1.0',
-                                config: {
-                                    weights: currentWeights,
-                                    threshold: document.getElementById('rebalanceThreshold').value,
-                                    feeRate: document.getElementById('feeRate').value,
-                                    autoBackup: document.getElementById('autoBackupToggle').classList.contains('active')
-                                },
-                                investments,
-                                rebalances,
-                                drafts,
-                                schemes
-                            };
-                            
-                            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `portfolio_complete_backup_${new Date().toISOString().split('T')[0]}.json`;
-                            a.click();
-                            URL.revokeObjectURL(url);
-                            
-                            showNotif('success', '✓ 备份完成', '所有数据已导出');
-                        };
-                    };
                 };
+                reader.readAsText(file);
             };
+            input.click();
         }
 
-        function autoExport() {
-            setTimeout(exportAllData, 500);
+        // 自动备份切换
+        function toggleAutoBackup() {
+            const toggle = document.querySelector('.config-item .toggle');
+            toggle.classList.toggle('active');
+            const enabled = toggle.classList.contains('active');
+            localStorage.setItem('autoBackup', enabled);
+            showNotif('info', '自动备份', enabled ? '已开启' : '已关闭');
         }
 
-        function clearAllData() {
-            if (!confirm('⚠️ 警告：确定要清空所有数据？\n\n此操作将删除：\n- 所有投资记录\n- 所有再平衡记录\n- 所有草稿\n- 所有自定义方案\n\n此操作不可恢复！')) return;
-            
-            if (!confirm('再次确认：您真的确定要清空所有数据吗？')) return;
-            
-            const stores = ['investments', 'rebalances', 'drafts', 'schemes'];
-            let completed = 0;
-            
-            stores.forEach(storeName => {
-                const tx = db.transaction([storeName], 'readwrite');
+        // 辅助函数
+        function getAll(storeName) {
+            return new Promise((resolve, reject) => {
+                if (!db) return resolve([]);
+                const tx = db.transaction([storeName], 'readonly');
                 const store = tx.objectStore(storeName);
-                const request = store.clear();
-                
-                request.onsuccess = () => {
-                    completed++;
-                    if (completed === stores.length) {
-                        localStorage.removeItem('portfolioConfig');
-                        showNotif('success', '✓ 已清空', '所有数据已重置');
-                        updateDashboard();
-                        loadHistory();
-                    }
-                };
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
             });
         }
 
-        // 设置
-        function toggleAutoBackup() {
-            const toggle = document.getElementById('autoBackupToggle');
-            toggle.classList.toggle('active');
-            const isActive = toggle.classList.contains('active');
-            showNotif('info', isActive ? '自动备份已开启' : '自动备份已关闭', isActive ? '每次操作后将自动导出数据' : '需要手动备份数据');
-        }
-
-        // 通知
         function showNotif(type, title, msg) {
             const notif = document.getElementById('notification');
-            const icon = document.getElementById('notifIcon');
-            const titleEl = document.getElementById('notifTitle');
-            const msgEl = document.getElementById('notifMsg');
-            
-            notif.className = `notification ${type}`;
-            icon.textContent = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
-            titleEl.textContent = title;
-            msgEl.textContent = msg;
-            
-            notif.classList.add('show');
-            setTimeout(() => notif.classList.remove('show'), 3000);
+            notif.className = `notification ${type} show`;
+            document.getElementById('notifTitle').textContent = title;
+            document.getElementById('notifMsg').textContent = msg;
+            setTimeout(() => {
+                notif.classList.remove('show');
+            }, 3000);
         }
-
-        // 键盘快捷键
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeDraftModal();
-            }
-            if (e.ctrlKey && e.key === 'i') {
-                e.preventDefault();
-                quickInvest();
-            }
-        });
     </script>
 </body>
 </html>
