@@ -292,13 +292,18 @@
             gap: 8px;
         }
 
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .btn-primary {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
             box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.5);
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.6);
         }
@@ -309,7 +314,7 @@
             border: 1px solid var(--border);
         }
 
-        .btn-secondary:hover {
+        .btn-secondary:hover:not(:disabled) {
             background: rgba(255, 255, 255, 0.1);
             border-color: var(--primary);
         }
@@ -320,7 +325,7 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
-        .btn-danger:hover {
+        .btn-danger:hover:not(:disabled) {
             background: rgba(239, 68, 68, 0.2);
         }
 
@@ -919,7 +924,6 @@
         .metric-value.positive { color: var(--success); }
         .metric-value.negative { color: var(--danger); }
 
-        /* 模态框样式 */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -1028,6 +1032,20 @@
             .analysis-grid {
                 grid-template-columns: 1fr;
             }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -1158,7 +1176,7 @@
                 </div>
 
                 <div class="btn-group">
-                    <button class="btn btn-primary" onclick="calculateInvestment()">🧮 计算配置方案</button>
+                    <button class="btn btn-primary" onclick="calculateInvestment()" id="calcInvestBtn">🧮 计算配置方案</button>
                     <button class="btn btn-secondary" onclick="saveAsDraft()">💾 保存为草稿</button>
                 </div>
 
@@ -1174,7 +1192,9 @@
                         <div id="investTips" style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.6;"></div>
                     </div>
                     
-                    <button class="btn btn-primary" onclick="confirmInvestment()" style="margin-top: 24px; width: 100%;">✓ 确认执行并记录</button>
+                    <button class="btn btn-primary" onclick="confirmInvestment()" id="confirmInvestBtn" style="margin-top: 24px; width: 100%;">
+                        ✓ 确认执行并记录
+                    </button>
                 </div>
             </div>
         </div>
@@ -1218,7 +1238,7 @@
                     </div>
                 </div>
 
-                <button class="btn btn-primary" onclick="calculateRebalance()" style="width: 100%;">⚖️ 生成再平衡方案</button>
+                <button class="btn btn-primary" onclick="calculateRebalance()" id="calcRebalanceBtn" style="width: 100%;">⚖️ 生成再平衡方案</button>
 
                 <div id="rebalanceResult" style="display: none; margin-top: 32px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
@@ -1235,7 +1255,7 @@
                     </div>
 
                     <div class="btn-group" style="margin-top: 24px;">
-                        <button class="btn btn-primary" onclick="confirmRebalance()" style="flex: 1;">✓ 确认并记录</button>
+                        <button class="btn btn-primary" onclick="confirmRebalance()" id="confirmRebalanceBtn" style="flex: 1;">✓ 确认并记录</button>
                         <button class="btn btn-secondary" onclick="exportPlan('rebalance')">📤 导出方案</button>
                     </div>
                 </div>
@@ -1457,40 +1477,63 @@
             
             const saved = localStorage.getItem('portfolioConfig');
             if (saved) {
-                const config = JSON.parse(saved);
-                currentWeights = config.weights || currentWeights;
-                if (config.threshold) document.getElementById('rebalanceThreshold').value = config.threshold;
-                if (config.feeRate) document.getElementById('feeRate').value = config.feeRate;
+                try {
+                    const config = JSON.parse(saved);
+                    currentWeights = config.weights || currentWeights;
+                    if (config.threshold) document.getElementById('rebalanceThreshold').value = config.threshold;
+                    if (config.feeRate) document.getElementById('feeRate').value = config.feeRate;
+                } catch (e) {
+                    console.error('Failed to load config:', e);
+                }
             }
             
-            await initDB();
-            initWeightEditors();
-            loadSavedSchemes();
-            updateDashboard();
+            try {
+                await initDB();
+                initWeightEditors();
+                loadSavedSchemes();
+                updateDashboard();
+                showNotif('success', '✓ 应用已就绪', '数据加载完成');
+            } catch (e) {
+                console.error('Failed to initialize:', e);
+                showNotif('error', '✗ 初始化失败', '请检查浏览器是否支持IndexedDB');
+            }
         });
 
-        // IndexedDB 初始化
+        // IndexedDB 初始化 - 修复版本
         function initDB() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open('PortfolioDB', 1);
-                request.onerror = () => reject(request.error);
+                
+                request.onerror = () => {
+                    console.error('IndexedDB open error:', request.error);
+                    reject(request.error);
+                };
+                
                 request.onsuccess = () => {
                     db = request.result;
+                    console.log('IndexedDB initialized successfully');
                     resolve(db);
                 };
+                
                 request.onupgradeneeded = (e) => {
+                    console.log('IndexedDB upgrade needed');
                     const db = e.target.result;
+                    
                     if (!db.objectStoreNames.contains('investments')) {
                         db.createObjectStore('investments', {keyPath: 'id', autoIncrement: true});
+                        console.log('Created investments store');
                     }
                     if (!db.objectStoreNames.contains('rebalances')) {
                         db.createObjectStore('rebalances', {keyPath: 'id', autoIncrement: true});
+                        console.log('Created rebalances store');
                     }
                     if (!db.objectStoreNames.contains('drafts')) {
                         db.createObjectStore('drafts', {keyPath: 'id', autoIncrement: true});
+                        console.log('Created drafts store');
                     }
                     if (!db.objectStoreNames.contains('schemes')) {
                         db.createObjectStore('schemes', {keyPath: 'name'});
+                        console.log('Created schemes store');
                     }
                 };
             });
@@ -1523,7 +1566,7 @@
             document.getElementById('investAmount').focus();
         }
 
-        // 权重编辑器
+        // 初始化权重编辑器
         function initWeightEditors() {
             createWeightList('settings', currentWeights);
             createWeightList('invest', tempInvestWeights || currentWeights);
@@ -1648,7 +1691,8 @@
             showNotif('success', '✓ 预设已加载', `已应用"${name}"配置方案`);
         }
 
-        async function saveAsNewScheme() {
+        // 保存方案 - 修复版本
+        function saveAsNewScheme() {
             const name = document.getElementById('newSchemeName').value.trim();
             if (!name) {
                 showNotif('error', '✗ 错误', '请输入方案名称');
@@ -1663,54 +1707,74 @@
             
             const tx = db.transaction(['schemes'], 'readwrite');
             const store = tx.objectStore('schemes');
-            await store.put({
+            
+            const request = store.put({
                 name: name,
                 weights: JSON.parse(JSON.stringify(currentWeights)),
                 createdAt: new Date().toISOString()
             });
             
-            document.getElementById('newSchemeName').value = '';
-            loadSavedSchemes();
-            showNotif('success', '✓ 已保存', `方案"${name}"已保存`);
+            request.onsuccess = () => {
+                document.getElementById('newSchemeName').value = '';
+                loadSavedSchemes();
+                showNotif('success', '✓ 已保存', `方案"${name}"已保存`);
+            };
+            
+            request.onerror = () => {
+                showNotif('error', '✗ 保存失败', '请重试');
+            };
         }
 
-        async function loadSavedSchemes() {
+        // 加载保存的方案 - 修复版本
+        function loadSavedSchemes() {
             const tx = db.transaction(['schemes'], 'readonly');
             const store = tx.objectStore('schemes');
-            const schemes = await store.getAll();
+            const request = store.getAll();
             
-            const container = document.getElementById('savedSchemes');
-            if (schemes.length === 0) {
-                container.innerHTML = '<span style="color: var(--text-muted); font-size: 0.875rem;">暂无自定义方案</span>';
-                return;
-            }
-            
-            container.innerHTML = schemes.map(s => `
-                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(6, 182, 212, 0.1); border: 1px solid var(--info); border-radius: 20px; color: var(--info); font-size: 0.875rem; font-weight: 600;">
-                    <span style="cursor: pointer;" onclick="applyScheme('${s.name}')">${s.name}</span>
-                    <span style="cursor: pointer; opacity: 0.6; font-weight: 700;" onclick="deleteScheme('${s.name}')">×</span>
-                </div>
-            `).join('');
+            request.onsuccess = () => {
+                const schemes = request.result;
+                const container = document.getElementById('savedSchemes');
+                
+                if (schemes.length === 0) {
+                    container.innerHTML = '<span style="color: var(--text-muted); font-size: 0.875rem;">暂无自定义方案</span>';
+                    return;
+                }
+                
+                container.innerHTML = schemes.map(s => `
+                    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(6, 182, 212, 0.1); border: 1px solid var(--info); border-radius: 20px; color: var(--info); font-size: 0.875rem; font-weight: 600;">
+                        <span style="cursor: pointer;" onclick="applyScheme('${s.name}')">${s.name}</span>
+                        <span style="cursor: pointer; opacity: 0.6; font-weight: 700;" onclick="deleteScheme('${s.name}')">×</span>
+                    </div>
+                `).join('');
+            };
         }
 
-        async function applyScheme(name) {
+        function applyScheme(name) {
             const tx = db.transaction(['schemes'], 'readonly');
             const store = tx.objectStore('schemes');
-            const scheme = await store.get(name);
-            if (scheme) {
-                currentWeights = JSON.parse(JSON.stringify(scheme.weights));
-                createWeightList('settings', currentWeights);
-                updateWeightTotal('settings');
-                showNotif('success', '✓ 已应用', `已切换至"${name}"方案`);
-            }
+            const request = store.get(name);
+            
+            request.onsuccess = () => {
+                const scheme = request.result;
+                if (scheme) {
+                    currentWeights = JSON.parse(JSON.stringify(scheme.weights));
+                    createWeightList('settings', currentWeights);
+                    updateWeightTotal('settings');
+                    showNotif('success', '✓ 已应用', `已切换至"${name}"方案`);
+                }
+            };
         }
 
-        async function deleteScheme(name) {
+        function deleteScheme(name) {
             if (!confirm(`确定删除方案"${name}"？`)) return;
+            
             const tx = db.transaction(['schemes'], 'readwrite');
             const store = tx.objectStore('schemes');
-            await store.delete(name);
-            loadSavedSchemes();
+            const request = store.delete(name);
+            
+            request.onsuccess = () => {
+                loadSavedSchemes();
+            };
         }
 
         function saveSettings() {
@@ -1731,7 +1795,7 @@
             showNotif('success', '✓ 配置已保存', '默认配置已更新');
         }
 
-        // 投资功能
+        // 投资功能 - 修复确认按钮无反应问题
         function calculateInvestment() {
             const amount = parseFloat(document.getElementById('investAmount').value);
             const date = document.getElementById('investDate').value;
@@ -1781,15 +1845,18 @@
             const tips = generateInvestTips(weights, amount);
             document.getElementById('investTips').innerHTML = tips;
             
+            // 保存投资计划到全局变量
             lastInvestPlan = {
-                date,
-                amount,
-                allocations,
+                date: date,
+                amount: amount,
+                allocations: allocations,
                 weights: JSON.parse(JSON.stringify(weights)),
-                note,
+                note: note,
                 isCustom: useCustom,
                 timestamp: Date.now()
             };
+            
+            console.log('Investment plan calculated:', lastInvestPlan);
             
             document.getElementById('investResult').style.display = 'block';
             document.getElementById('investResult').scrollIntoView({behavior: 'smooth'});
@@ -1813,32 +1880,74 @@
             return html;
         }
 
-        async function confirmInvestment() {
-            if (!lastInvestPlan) return;
-            
-            const tx = db.transaction(['investments'], 'readwrite');
-            const store = tx.objectStore('investments');
-            await store.add(lastInvestPlan);
-            
-            if (document.getElementById('autoBackupToggle').classList.contains('active')) {
-                autoExport();
+        // 确认投资 - 关键修复：使用正确的IndexedDB事务处理
+        function confirmInvestment() {
+            if (!lastInvestPlan) {
+                showNotif('error', '✗ 错误', '请先计算投资方案');
+                return;
             }
             
-            showNotif('success', '✓ 投资已记录', `成功记录 ${lastInvestPlan.date} 的投资 ¥${lastInvestPlan.amount.toFixed(2)}`);
+            console.log('Confirming investment:', lastInvestPlan);
             
-            document.getElementById('investAmount').value = '';
-            document.getElementById('investNote').value = '';
-            document.getElementById('investResult').style.display = 'none';
-            document.getElementById('investCustomToggle').classList.remove('active');
-            document.getElementById('investWeightPanel').style.display = 'none';
-            tempInvestWeights = null;
-            lastInvestPlan = null;
+            const btn = document.getElementById('confirmInvestBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> 保存中...';
             
-            updateDashboard();
+            try {
+                const tx = db.transaction(['investments'], 'readwrite');
+                const store = tx.objectStore('investments');
+                
+                const request = store.add(lastInvestPlan);
+                
+                request.onsuccess = () => {
+                    console.log('Investment saved successfully, ID:', request.result);
+                    
+                    // 自动备份
+                    if (document.getElementById('autoBackupToggle').classList.contains('active')) {
+                        autoExport();
+                    }
+                    
+                    showNotif('success', '✓ 投资已记录', `成功记录 ${lastInvestPlan.date} 的投资 ¥${lastInvestPlan.amount.toFixed(2)}`);
+                    
+                    // 重置表单
+                    document.getElementById('investAmount').value = '';
+                    document.getElementById('investNote').value = '';
+                    document.getElementById('investResult').style.display = 'none';
+                    document.getElementById('investCustomToggle').classList.remove('active');
+                    document.getElementById('investWeightPanel').style.display = 'none';
+                    tempInvestWeights = null;
+                    lastInvestPlan = null;
+                    
+                    updateDashboard();
+                };
+                
+                request.onerror = (e) => {
+                    console.error('Failed to save investment:', e);
+                    showNotif('error', '✗ 保存失败', '无法保存到数据库，请检查浏览器存储权限');
+                };
+                
+                tx.oncomplete = () => {
+                    console.log('Transaction completed');
+                    btn.disabled = false;
+                    btn.innerHTML = '✓ 确认执行并记录';
+                };
+                
+                tx.onerror = (e) => {
+                    console.error('Transaction error:', e);
+                    btn.disabled = false;
+                    btn.innerHTML = '✓ 确认执行并记录';
+                };
+                
+            } catch (error) {
+                console.error('Error in confirmInvestment:', error);
+                showNotif('error', '✗ 系统错误', error.message);
+                btn.disabled = false;
+                btn.innerHTML = '✓ 确认执行并记录';
+            }
         }
 
-        // 草稿功能
-        async function saveAsDraft() {
+        // 草稿功能 - 修复版本
+        function saveAsDraft() {
             const amount = document.getElementById('investAmount').value;
             const date = document.getElementById('investDate').value;
             const note = document.getElementById('investNote').value;
@@ -1849,62 +1958,74 @@
             }
             
             const draft = {
-                date,
+                date: date,
                 amount: parseFloat(amount) || 0,
-                note,
+                note: note,
                 weights: tempInvestWeights || currentWeights,
                 savedAt: Date.now()
             };
             
             const tx = db.transaction(['drafts'], 'readwrite');
             const store = tx.objectStore('drafts');
-            await store.add(draft);
+            const request = store.add(draft);
             
-            showNotif('info', '💾 已保存草稿', '可在草稿箱中查看');
+            request.onsuccess = () => {
+                showNotif('info', '💾 已保存草稿', '可在草稿箱中查看');
+            };
+            
+            request.onerror = () => {
+                showNotif('error', '✗ 保存失败', '请重试');
+            };
         }
 
-        async function showDrafts() {
+        function showDrafts() {
             const tx = db.transaction(['drafts'], 'readonly');
             const store = tx.objectStore('drafts');
-            const drafts = await store.getAll();
+            const request = store.getAll();
             
-            const modal = document.getElementById('draftModal');
-            const list = document.getElementById('draftList');
-            
-            if (drafts.length === 0) {
-                list.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>暂无草稿</div>';
-            } else {
-                list.innerHTML = drafts.sort((a,b) => b.savedAt - a.savedAt).map(d => `
-                    <div class="draft-item">
-                        <div class="draft-info">
-                            <div class="draft-date">${new Date(d.savedAt).toLocaleString()} · ${d.date || '未设定日期'}</div>
-                            <div class="draft-preview">
-                                ${d.amount > 0 ? `¥${d.amount.toFixed(2)}` : '未设定金额'} 
-                                ${d.note ? '· ' + d.note : ''}
-                                ${JSON.stringify(d.weights) !== JSON.stringify(currentWeights) ? '· ⚙️ 自定义权重' : ''}
+            request.onsuccess = () => {
+                const drafts = request.result;
+                const modal = document.getElementById('draftModal');
+                const list = document.getElementById('draftList');
+                
+                if (drafts.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>暂无草稿</div>';
+                } else {
+                    list.innerHTML = drafts.sort((a,b) => b.savedAt - a.savedAt).map(d => `
+                        <div class="draft-item">
+                            <div class="draft-info">
+                                <div class="draft-date">${new Date(d.savedAt).toLocaleString()} · ${d.date || '未设定日期'}</div>
+                                <div class="draft-preview">
+                                    ${d.amount > 0 ? `¥${d.amount.toFixed(2)}` : '未设定金额'} 
+                                    ${d.note ? '· ' + d.note : ''}
+                                    ${JSON.stringify(d.weights) !== JSON.stringify(currentWeights) ? '· ⚙️ 自定义权重' : ''}
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-primary btn-small" onclick="loadDraft(${d.id})">载入</button>
+                                <button class="icon-btn" onclick="deleteDraft(${d.id})">🗑</button>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 8px;">
-                            <button class="btn btn-primary btn-small" onclick="loadDraft(${d.id})">载入</button>
-                            <button class="icon-btn" onclick="deleteDraft(${d.id})">🗑</button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-            
-            modal.classList.add('active');
+                    `).join('');
+                }
+                
+                modal.classList.add('active');
+            };
         }
 
         function closeDraftModal() {
             document.getElementById('draftModal').classList.remove('active');
         }
 
-        async function loadDraft(id) {
+        function loadDraft(id) {
             const tx = db.transaction(['drafts'], 'readonly');
             const store = tx.objectStore('drafts');
-            const draft = await store.get(id);
+            const request = store.get(id);
             
-            if (draft) {
+            request.onsuccess = () => {
+                const draft = request.result;
+                if (!draft) return;
+                
                 document.getElementById('investDate').value = draft.date || new Date().toISOString().split('T')[0];
                 document.getElementById('investAmount').value = draft.amount || '';
                 document.getElementById('investNote').value = draft.note || '';
@@ -1919,14 +2040,17 @@
                 
                 closeDraftModal();
                 showNotif('success', '✓ 草稿已载入', '请检查并确认投资信息');
-            }
+            };
         }
 
-        async function deleteDraft(id) {
+        function deleteDraft(id) {
             const tx = db.transaction(['drafts'], 'readwrite');
             const store = tx.objectStore('drafts');
-            await store.delete(id);
-            showDrafts();
+            const request = store.delete(id);
+            
+            request.onsuccess = () => {
+                showDrafts();
+            };
         }
 
         // 再平衡功能
@@ -1958,23 +2082,26 @@
             showNotif('info', '✓ 已清空', '所有持仓数据已重置');
         }
 
-        async function loadLastHoldings() {
+        function loadLastHoldings() {
             const tx = db.transaction(['rebalances'], 'readonly');
             const store = tx.objectStore('rebalances');
-            const all = await store.getAll();
+            const request = store.openCursor(null, 'prev');
             
-            if (all.length === 0) {
-                showNotif('error', '✗ 无数据', '没有找到历史持仓记录');
-                return;
-            }
-            
-            const last = all.sort((a,b) => b.timestamp - a.timestamp)[0];
-            Object.entries(last.currentHoldings || {}).forEach(([name, value]) => {
-                const input = document.getElementById(`holding_${name}`);
-                if (input) input.value = value.toFixed(2);
-            });
-            
-            showNotif('success', '✓ 已载入', `已载入 ${last.date} 的持仓数据`);
+            request.onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (!cursor) {
+                    showNotif('error', '✗ 无数据', '没有找到历史持仓记录');
+                    return;
+                }
+                
+                const last = cursor.value;
+                Object.entries(last.currentHoldings || {}).forEach(([name, value]) => {
+                    const input = document.getElementById(`holding_${name}`);
+                    if (input) input.value = value.toFixed(2);
+                });
+                
+                showNotif('success', '✓ 已载入', `已载入 ${last.date} 的持仓数据`);
+            };
         }
 
         function calculateRebalance() {
@@ -2094,13 +2221,13 @@
             
             lastRebalancePlan = {
                 date: document.getElementById('rebalanceDate').value,
-                totalValue,
+                totalValue: totalValue,
                 currentHoldings: holdings,
-                adjustments,
+                adjustments: adjustments,
                 targetWeights: JSON.parse(JSON.stringify(targetWeights)),
-                maxDrift,
+                maxDrift: maxDrift,
                 isCustom: useCustom,
-                estimatedFee,
+                estimatedFee: estimatedFee,
                 timestamp: Date.now()
             };
             
@@ -2108,34 +2235,88 @@
             document.getElementById('rebalanceResult').scrollIntoView({behavior: 'smooth'});
         }
 
-        async function confirmRebalance() {
-            if (!lastRebalancePlan) return;
-            
-            const tx = db.transaction(['rebalances'], 'readwrite');
-            const store = tx.objectStore('rebalances');
-            await store.add(lastRebalancePlan);
-            
-            if (document.getElementById('autoBackupToggle').classList.contains('active')) {
-                autoExport();
+        // 确认再平衡 - 修复版本
+        function confirmRebalance() {
+            if (!lastRebalancePlan) {
+                showNotif('error', '✗ 错误', '请先计算再平衡方案');
+                return;
             }
             
-            showNotif('success', '✓ 再平衡已记录', `已保存${lastRebalancePlan.date}的调仓方案`);
+            const btn = document.getElementById('confirmRebalanceBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> 保存中...';
             
-            document.getElementById('rebalanceResult').style.display = 'none';
-            document.getElementById('rebalanceCustomToggle').classList.remove('active');
-            document.getElementById('rebalanceWeightPanel').style.display = 'none';
-            tempRebalanceWeights = null;
-            lastRebalancePlan = null;
-            
-            clearHoldings();
-            updateDashboard();
+            try {
+                const tx = db.transaction(['rebalances'], 'readwrite');
+                const store = tx.objectStore('rebalances');
+                
+                const request = store.add(lastRebalancePlan);
+                
+                request.onsuccess = () => {
+                    if (document.getElementById('autoBackupToggle').classList.contains('active')) {
+                        autoExport();
+                    }
+                    
+                    showNotif('success', '✓ 再平衡已记录', `已保存${lastRebalancePlan.date}的调仓方案`);
+                    
+                    document.getElementById('rebalanceResult').style.display = 'none';
+                    document.getElementById('rebalanceCustomToggle').classList.remove('active');
+                    document.getElementById('rebalanceWeightPanel').style.display = 'none';
+                    tempRebalanceWeights = null;
+                    lastRebalancePlan = null;
+                    
+                    clearHoldings();
+                    updateDashboard();
+                };
+                
+                request.onerror = () => {
+                    showNotif('error', '✗ 保存失败', '请重试');
+                };
+                
+                tx.oncomplete = () => {
+                    btn.disabled = false;
+                    btn.innerHTML = '✓ 确认并记录';
+                };
+                
+                tx.onerror = () => {
+                    btn.disabled = false;
+                    btn.innerHTML = '✓ 确认并记录';
+                };
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showNotif('error', '✗ 系统错误', error.message);
+                btn.disabled = false;
+                btn.innerHTML = '✓ 确认并记录';
+            }
         }
 
-        // 仪表盘
-        async function updateDashboard() {
-            const investments = await getAll('investments');
-            const rebalances = await getAll('rebalances');
+        // 仪表盘更新
+        function updateDashboard() {
+            if (!db) {
+                console.log('DB not ready yet');
+                return;
+            }
             
+            const tx1 = db.transaction(['investments'], 'readonly');
+            const invStore = tx1.objectStore('investments');
+            const invReq = invStore.getAll();
+            
+            invReq.onsuccess = () => {
+                const investments = invReq.result;
+                
+                const tx2 = db.transaction(['rebalances'], 'readonly');
+                const rebStore = tx2.objectStore('rebalances');
+                const rebReq = rebStore.getAll();
+                
+                rebReq.onsuccess = () => {
+                    const rebalances = rebReq.result;
+                    renderDashboard(investments, rebalances);
+                };
+            };
+        }
+
+        function renderDashboard(investments, rebalances) {
             if (investments.length === 0 && rebalances.length === 0) {
                 document.getElementById('portfolioChart').innerHTML = `
                     <div class="empty-state">
@@ -2307,11 +2488,28 @@
         }
 
         // 分析功能
-        async function updateAnalysis() {
+        function updateAnalysis() {
             const period = document.getElementById('analysisPeriod').value;
-            const investments = await getAll('investments');
-            const rebalances = await getAll('rebalances');
             
+            const tx1 = db.transaction(['investments'], 'readonly');
+            const invStore = tx1.objectStore('investments');
+            const invReq = invStore.getAll();
+            
+            invReq.onsuccess = () => {
+                const investments = invReq.result;
+                
+                const tx2 = db.transaction(['rebalances'], 'readonly');
+                const rebStore = tx2.objectStore('rebalances');
+                const rebReq = rebStore.getAll();
+                
+                rebReq.onsuccess = () => {
+                    const rebalances = rebReq.result;
+                    renderAnalysis(investments, rebalances, period);
+                };
+            };
+        }
+
+        function renderAnalysis(investments, rebalances, period) {
             if (investments.length === 0) {
                 document.getElementById('analysisContent').innerHTML = `
                     <div class="empty-state">
@@ -2335,7 +2533,6 @@
             
             const totalInvested = filteredInv.reduce((sum, i) => sum + i.amount, 0);
             const avgInvest = filteredInv.length > 0 ? totalInvested / filteredInv.length : 0;
-            
             const investFreq = filteredInv.length > 1 ? 
                 (filteredInv[filteredInv.length-1].timestamp - filteredInv[0].timestamp) / (filteredInv.length - 1) / (24*60*60*1000) : 0;
             
@@ -2442,16 +2639,29 @@
         }
 
         // 历史记录
-        async function loadHistory() {
-            const investments = await getAll('investments');
-            const rebalances = await getAll('rebalances');
+        function loadHistory() {
+            const tx1 = db.transaction(['investments'], 'readonly');
+            const invStore = tx1.objectStore('investments');
+            const invReq = invStore.getAll();
             
-            allHistoryData = [
-                ...investments.map(i => ({...i, type: 'invest', displayDate: i.date})),
-                ...rebalances.map(r => ({...r, type: 'rebalance', displayDate: r.date}))
-            ].sort((a,b) => b.timestamp - a.timestamp);
-            
-            renderHistoryList(allHistoryData);
+            invReq.onsuccess = () => {
+                const investments = invReq.result;
+                
+                const tx2 = db.transaction(['rebalances'], 'readonly');
+                const rebStore = tx2.objectStore('rebalances');
+                const rebReq = rebStore.getAll();
+                
+                rebReq.onsuccess = () => {
+                    const rebalances = rebReq.result;
+                    
+                    allHistoryData = [
+                        ...investments.map(i => ({...i, type: 'invest', displayDate: i.date})),
+                        ...rebalances.map(r => ({...r, type: 'rebalance', displayDate: r.date}))
+                    ].sort((a,b) => b.timestamp - a.timestamp);
+                    
+                    renderHistoryList(allHistoryData);
+                };
+            };
         }
 
         function renderHistoryList(data) {
@@ -2511,17 +2721,19 @@
             renderHistoryList(filtered);
         }
 
-        async function deleteRecord(type, id) {
+        function deleteRecord(type, id) {
             if (!confirm('确定删除这条记录？此操作不可恢复。')) return;
             
             const storeName = type === 'invest' ? 'investments' : 'rebalances';
             const tx = db.transaction([storeName], 'readwrite');
             const store = tx.objectStore(storeName);
-            await store.delete(id);
+            const request = store.delete(id);
             
-            showNotif('success', '✓ 已删除', '记录已移除');
-            loadHistory();
-            updateDashboard();
+            request.onsuccess = () => {
+                showNotif('success', '✓ 已删除', '记录已移除');
+                loadHistory();
+                updateDashboard();
+            };
         }
 
         function viewDetail(type, id) {
@@ -2606,84 +2818,119 @@
             showNotif('success', '✓ 已导出', '配置已保存');
         }
 
-        async function importSettings(input) {
+        function importSettings(input) {
             const file = input.files[0];
             if (!file) return;
             
-            try {
-                const text = await file.text();
-                const config = JSON.parse(text);
-                
-                if (config.weights) {
-                    currentWeights = config.weights;
-                    createWeightList('settings', currentWeights);
-                    updateWeightTotal('settings');
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const config = JSON.parse(e.target.result);
+                    
+                    if (config.weights) {
+                        currentWeights = config.weights;
+                        createWeightList('settings', currentWeights);
+                        updateWeightTotal('settings');
+                    }
+                    if (config.threshold) document.getElementById('rebalanceThreshold').value = config.threshold;
+                    if (config.feeRate) document.getElementById('feeRate').value = config.feeRate;
+                    
+                    showNotif('success', '✓ 已导入', '配置已成功导入');
+                    saveSettings();
+                } catch (err) {
+                    showNotif('error', '✗ 导入失败', '文件格式错误');
                 }
-                if (config.threshold) document.getElementById('rebalanceThreshold').value = config.threshold;
-                if (config.feeRate) document.getElementById('feeRate').value = config.feeRate;
-                
-                showNotif('success', '✓ 已导入', '配置已成功导入');
-                saveSettings();
-            } catch (e) {
-                showNotif('error', '✗ 导入失败', '文件格式错误');
-            }
+            };
+            reader.readAsText(file);
             input.value = '';
         }
 
         function exportAllData() {
-            Promise.all([
-                getAll('investments'),
-                getAll('rebalances'),
-                getAll('drafts'),
-                getAll('schemes')
-            ]).then(([investments, rebalances, drafts, schemes]) => {
-                const data = {
-                    exportTime: new Date().toISOString(),
-                    version: '1.0',
-                    config: {
-                        weights: currentWeights,
-                        threshold: document.getElementById('rebalanceThreshold').value,
-                        feeRate: document.getElementById('feeRate').value,
-                        autoBackup: document.getElementById('autoBackupToggle').classList.contains('active')
-                    },
-                    investments,
-                    rebalances,
-                    drafts,
-                    schemes
+            const tx1 = db.transaction(['investments'], 'readonly');
+            const invStore = tx1.objectStore('investments');
+            const invReq = invStore.getAll();
+            
+            invReq.onsuccess = () => {
+                const investments = invReq.result;
+                
+                const tx2 = db.transaction(['rebalances'], 'readonly');
+                const rebStore = tx2.objectStore('rebalances');
+                const rebReq = rebStore.getAll();
+                
+                rebReq.onsuccess = () => {
+                    const rebalances = rebReq.result;
+                    
+                    const tx3 = db.transaction(['drafts'], 'readonly');
+                    const draftStore = tx3.objectStore('drafts');
+                    const draftReq = draftStore.getAll();
+                    
+                    draftReq.onsuccess = () => {
+                        const drafts = draftReq.result;
+                        
+                        const tx4 = db.transaction(['schemes'], 'readonly');
+                        const schemeStore = tx4.objectStore('schemes');
+                        const schemeReq = schemeStore.getAll();
+                        
+                        schemeReq.onsuccess = () => {
+                            const schemes = schemeReq.result;
+                            
+                            const data = {
+                                exportTime: new Date().toISOString(),
+                                version: '1.0',
+                                config: {
+                                    weights: currentWeights,
+                                    threshold: document.getElementById('rebalanceThreshold').value,
+                                    feeRate: document.getElementById('feeRate').value,
+                                    autoBackup: document.getElementById('autoBackupToggle').classList.contains('active')
+                                },
+                                investments,
+                                rebalances,
+                                drafts,
+                                schemes
+                            };
+                            
+                            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `portfolio_complete_backup_${new Date().toISOString().split('T')[0]}.json`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            
+                            showNotif('success', '✓ 备份完成', '所有数据已导出');
+                        };
+                    };
                 };
-                
-                const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `portfolio_complete_backup_${new Date().toISOString().split('T')[0]}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-                
-                showNotif('success', '✓ 备份完成', '所有数据已导出');
-            });
+            };
         }
 
         function autoExport() {
             setTimeout(exportAllData, 500);
         }
 
-        async function clearAllData() {
+        function clearAllData() {
             if (!confirm('⚠️ 警告：确定要清空所有数据？\n\n此操作将删除：\n- 所有投资记录\n- 所有再平衡记录\n- 所有草稿\n- 所有自定义方案\n\n此操作不可恢复！')) return;
             
             if (!confirm('再次确认：您真的确定要清空所有数据吗？')) return;
             
             const stores = ['investments', 'rebalances', 'drafts', 'schemes'];
-            for (const storeName of stores) {
+            let completed = 0;
+            
+            stores.forEach(storeName => {
                 const tx = db.transaction([storeName], 'readwrite');
                 const store = tx.objectStore(storeName);
-                await store.clear();
-            }
-            
-            localStorage.removeItem('portfolioConfig');
-            showNotif('success', '✓ 已清空', '所有数据已重置');
-            updateDashboard();
-            loadHistory();
+                const request = store.clear();
+                
+                request.onsuccess = () => {
+                    completed++;
+                    if (completed === stores.length) {
+                        localStorage.removeItem('portfolioConfig');
+                        showNotif('success', '✓ 已清空', '所有数据已重置');
+                        updateDashboard();
+                        loadHistory();
+                    }
+                };
+            });
         }
 
         // 设置
@@ -2694,17 +2941,7 @@
             showNotif('info', isActive ? '自动备份已开启' : '自动备份已关闭', isActive ? '每次操作后将自动导出数据' : '需要手动备份数据');
         }
 
-        // 辅助函数
-        function getAll(storeName) {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction([storeName], 'readonly');
-                const store = tx.objectStore(storeName);
-                const req = store.getAll();
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-        }
-
+        // 通知
         function showNotif(type, title, msg) {
             const notif = document.getElementById('notification');
             const icon = document.getElementById('notifIcon');
