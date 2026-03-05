@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0f172a">
     <title>智能资产配置器 Pro Max</title>
     <style>
-        /* 此处保留您提供的全部样式，未作删减，仅确保与功能兼容 */
+        /* 完整样式（与之前一致，确保所有UI元素正常显示） */
         * {
             margin: 0;
             padding: 0;
@@ -1455,11 +1455,12 @@
         let currentHistoryFilter = 'all';
         let allHistoryData = [];
 
-        // 初始化
+        // 初始化（关键修复：等待数据库打开后再执行依赖 db 的函数）
         document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('investDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('rebalanceDate').value = new Date().toISOString().split('T')[0];
             
+            // 加载本地存储的配置（不依赖 IndexedDB）
             const saved = localStorage.getItem('portfolioConfig');
             if (saved) {
                 try {
@@ -1473,7 +1474,11 @@
             }
             
             try {
+                // 等待 IndexedDB 初始化完成
                 await initDB();
+                console.log('IndexedDB ready, initializing app...');
+                
+                // 现在可以安全调用依赖 db 的函数
                 initWeightEditors();
                 loadSavedSchemes();
                 updateDashboard();
@@ -1484,7 +1489,7 @@
             }
         });
 
-        // IndexedDB 初始化 - 修复版本
+        // IndexedDB 初始化（返回 Promise）
         function initDB() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open('PortfolioDB', 1);
@@ -1685,7 +1690,7 @@
             showNotif('success', '✓ 预设已加载', `已应用"${name}"配置方案`);
         }
 
-        // 保存方案 - 修复版本
+        // 保存方案
         function saveAsNewScheme() {
             if (!checkDb()) return;
             const name = document.getElementById('newSchemeName').value.trim();
@@ -1720,7 +1725,7 @@
             };
         }
 
-        // 加载保存的方案 - 修复版本
+        // 加载保存的方案
         function loadSavedSchemes() {
             if (!checkDb()) return;
             const tx = db.transaction(['schemes'], 'readonly');
@@ -1875,7 +1880,7 @@
             return html;
         }
 
-        // 确认投资 - 关键修复：使用正确的IndexedDB事务处理
+        // 确认投资
         function confirmInvestment() {
             if (!lastInvestPlan) {
                 showNotif('error', '✗ 错误', '请先计算投资方案');
@@ -2229,7 +2234,7 @@
             document.getElementById('rebalanceResult').scrollIntoView({behavior: 'smooth'});
         }
 
-        // 确认再平衡 - 修复版本
+        // 确认再平衡
         function confirmRebalance() {
             if (!lastRebalancePlan) {
                 showNotif('error', '✗ 错误', '请先计算再平衡方案');
