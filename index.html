@@ -1889,18 +1889,20 @@
                 for (const store of stores) {
                     let data = await getAllData(store);
                     if (store === 'clothes') {
+                        // 仅当 imageBlob 是 Blob 对象时才转换为 base64
                         data = await Promise.all(data.map(async item => {
-                            if (item.imageBlob) {
+                            if (item.imageBlob && item.imageBlob instanceof Blob) {
                                 const base64 = await blobToBase64(item.imageBlob);
                                 return { ...item, imageBlob: base64 };
                             }
+                            // 如果不是 Blob（可能是 null/undefined/已转换过的字符串），则原样保留
                             return item;
                         }));
                     }
                     exportObj[store] = data;
                 }
                 exportObj.exportDate = new Date().toISOString();
-
+        
                 const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -1916,12 +1918,12 @@
                 alert('导出失败：' + error.message);
             }
         }
-
-        // ========== 导入数据 ==========
+        
+        // ========== 导入数据（兼容优化） ==========
         async function importData(input) {
             const file = input.files[0];
             if (!file) return;
-
+        
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
@@ -1930,25 +1932,26 @@
                         alert('无效的数据文件');
                         return;
                     }
-
+        
                     if (!confirm('导入将覆盖当前所有数据，确定继续？')) return;
-
+        
                     const stores = ['outfits', 'weight', 'periods', 'diaries', 'clothes', 'closetCategories'];
                     for (const store of stores) {
                         await clearStore(store);
                     }
-
+        
                     for (const store of stores) {
                         const items = imported[store];
                         for (const item of items) {
                             const { id, ...rest } = item;
                             if (store === 'clothes' && rest.imageBlob && typeof rest.imageBlob === 'string') {
+                                // 将 base64 转回 Blob
                                 rest.imageBlob = await base64ToBlob(rest.imageBlob);
                             }
                             await addData(store, rest);
                         }
                     }
-
+        
                     alert('数据导入成功！');
                     const activeSection = document.querySelector('.nav-tab.active').dataset.section;
                     if (activeSection === 'outfit') loadOutfitHistory();
@@ -1963,7 +1966,6 @@
             };
             reader.readAsText(file);
         }
-
         async function clearAllData() {
             if (!confirm('确定要清空所有数据吗？此操作不可恢复！')) return;
 
@@ -2230,3 +2232,4 @@
     </script>
 </body>
 </html>
+
