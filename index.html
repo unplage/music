@@ -6,8 +6,7 @@
     <title>美丽心情 - 生活管理</title>
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIue+juWbvOW/q+mAiSAtIOeUqOaIt+WuiSWFqCIsICJzaG9ydF9uYW1lIjogIue+juWbvOW/q+mAiSIsICJzdGFydF91cmwiOiAiLiIsICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLCAiYmFja2dyb3VuZF9jb2xvciI6ICIjZmZmZmZmIiwgInRoZW1lX2NvbG9yIjogIiNmZjZiNmIifQ==">
     <style>
-        /* 样式与之前完全相同，此处省略以节省篇幅，实际使用时可保留原样式 */
-        /* 为了完整性，我们保留核心样式（实际复制时请包含原样式全部） */
+        /* ========== 全局样式 ========== */
         * {
             margin: 0;
             padding: 0;
@@ -41,6 +40,7 @@
             position: relative;
             box-shadow: 0 0 60px rgba(0,0,0,0.3);
         }
+        /* 头部 */
         .header {
             background: linear-gradient(135deg, var(--primary) 0%, #ff8e8e 100%);
             color: white;
@@ -48,6 +48,16 @@
             border-radius: 0 0 var(--radius) var(--radius);
             position: relative;
             overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
         }
         .header h1 {
             font-size: 28px;
@@ -60,16 +70,21 @@
             opacity: 0.9;
             font-weight: 400;
         }
+        /* 导航标签 */
         .nav-tabs {
             display: flex;
             gap: 8px;
             padding: 16px;
             overflow-x: auto;
+            scrollbar-width: none;
             background: white;
             position: sticky;
             top: 0;
             z-index: 100;
             box-shadow: var(--shadow);
+        }
+        .nav-tabs::-webkit-scrollbar {
+            display: none;
         }
         .nav-tab {
             flex-shrink: 0;
@@ -82,12 +97,19 @@
             color: var(--text-light);
             cursor: pointer;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         .nav-tab.active {
             background: var(--primary);
             color: white;
             box-shadow: 0 4px 15px rgba(255,107,107,0.4);
         }
+        .nav-tab:hover {
+            transform: translateY(-2px);
+        }
+        /* 内容区域 */
         .content {
             padding: 20px;
             padding-bottom: 100px;
@@ -103,21 +125,38 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* 卡片样式 */
         .card {
             background: white;
             border-radius: var(--radius);
             padding: 24px;
             margin-bottom: 16px;
             box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
         }
         .card-title {
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 16px;
+            color: var(--text);
             display: flex;
             align-items: center;
             gap: 8px;
         }
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        /* 表单样式 */
         .form-group {
             margin-bottom: 16px;
         }
@@ -134,6 +173,17 @@
             border: 2px solid #e0e0e0;
             border-radius: var(--radius-sm);
             font-size: 16px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(255,107,107,0.1);
+        }
+        textarea.form-input {
+            resize: vertical;
+            min-height: 120px;
         }
         .btn {
             width: 100%;
@@ -143,10 +193,17 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
         }
         .btn-primary {
             background: linear-gradient(135deg, var(--primary) 0%, #ff8e8e 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(255,107,107,0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,107,107,0.5);
         }
         .btn-secondary {
             background: var(--light);
@@ -156,6 +213,7 @@
             padding: 8px 16px;
             font-size: 14px;
         }
+        /* ========== 穿搭模块 ========== */
         .outfit-display {
             text-align: center;
             padding: 40px 20px;
@@ -163,11 +221,27 @@
             border-radius: var(--radius);
             color: white;
             margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
         }
         .outfit-emoji {
             font-size: 80px;
             margin-bottom: 16px;
             display: block;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .outfit-desc {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .outfit-temp {
+            font-size: 14px;
+            opacity: 0.9;
         }
         .weather-input {
             display: flex;
@@ -176,6 +250,13 @@
         }
         .weather-input .form-input {
             flex: 1;
+        }
+        /* ========== 衣橱管理 ========== */
+        .closet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
         }
         .closet-categories {
             display: flex;
@@ -190,10 +271,12 @@
             font-size: 14px;
             cursor: pointer;
             border: 2px solid transparent;
+            transition: all 0.3s ease;
         }
         .category-tag.active {
             background: var(--primary);
             color: white;
+            border-color: var(--primary);
         }
         .closet-items {
             display: grid;
@@ -201,6 +284,7 @@
             gap: 12px;
             max-height: 300px;
             overflow-y: auto;
+            padding: 4px;
         }
         .closet-item-card {
             background: white;
@@ -221,6 +305,7 @@
             font-weight: 600;
             font-size: 12px;
             color: var(--primary);
+            margin-bottom: 4px;
         }
         .remove-item {
             position: absolute;
@@ -233,7 +318,11 @@
             height: 24px;
             color: #c62828;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+        /* ========== 体重图表 ========== */
         .chart-container {
             height: 200px;
             margin: 20px 0;
@@ -259,6 +348,12 @@
             font-weight: 700;
             color: var(--primary);
         }
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+        /* ========== 生理期 ========== */
         .period-calendar {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -279,10 +374,17 @@
             justify-content: center;
             border-radius: 50%;
             font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .calendar-day:hover {
+            background: var(--light);
         }
         .calendar-day.period {
             background: var(--primary);
             color: white;
+            font-weight: 600;
         }
         .calendar-day.predicted {
             background: #ffe0e0;
@@ -309,6 +411,11 @@
             font-size: 36px;
             font-weight: 700;
         }
+        .status-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        /* 生理期历史列表 */
         .period-history-list {
             max-height: 200px;
             overflow-y: auto;
@@ -321,6 +428,19 @@
             margin-bottom: 8px;
             border-left: 4px solid var(--primary);
         }
+        .period-history-dates {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .period-history-detail {
+            font-size: 12px;
+            color: var(--text-light);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        /* ========== 日记 ========== */
         .diary-list {
             display: flex;
             flex-direction: column;
@@ -332,7 +452,30 @@
             padding: 20px;
             box-shadow: var(--shadow);
             cursor: pointer;
+            transition: all 0.3s ease;
             border-left: 4px solid var(--primary);
+        }
+        .diary-item:hover {
+            transform: translateX(4px);
+        }
+        .diary-date {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .diary-preview {
+            font-size: 16px;
+            color: var(--text);
+            line-height: 1.5;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .diary-mood {
+            margin-top: 12px;
+            font-size: 20px;
         }
         .mood-selector {
             display: flex;
@@ -345,14 +488,16 @@
             background: none;
             border: none;
             cursor: pointer;
+            transition: transform 0.3s ease;
             filter: grayscale(100%);
             opacity: 0.6;
         }
-        .mood-btn.selected {
+        .mood-btn:hover, .mood-btn.selected {
             transform: scale(1.2);
             filter: grayscale(0%);
             opacity: 1;
         }
+        /* ========== 预留模块 ========== */
         .placeholder-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -364,9 +509,25 @@
             padding: 24px;
             text-align: center;
             box-shadow: var(--shadow);
+            transition: all 0.3s ease;
             cursor: pointer;
             border: 2px dashed #e0e0e0;
         }
+        .placeholder-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+        }
+        .placeholder-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.6;
+        }
+        .placeholder-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+        /* ========== 历史记录 ========== */
         .history-list {
             max-height: 300px;
             overflow-y: auto;
@@ -378,6 +539,17 @@
             padding: 12px 0;
             border-bottom: 1px solid #f0f0f0;
         }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        .history-date {
+            font-size: 14px;
+            color: var(--text-light);
+        }
+        .history-value {
+            font-weight: 600;
+            color: var(--primary);
+        }
         .history-actions {
             display: flex;
             gap: 8px;
@@ -388,11 +560,31 @@
             color: #4ecdc4;
             font-size: 18px;
             cursor: pointer;
+            padding: 4px;
+        }
+        .edit-btn:hover {
+            color: #2c9b92;
         }
         .photo-icon {
             font-size: 20px;
             cursor: pointer;
+            transition: transform 0.2s;
         }
+        .photo-icon:hover {
+            transform: scale(1.2);
+        }
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        /* ========== 底部导航 ========== */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -415,11 +607,20 @@
             gap: 4px;
             padding: 8px;
             cursor: pointer;
+            transition: all 0.3s ease;
             color: var(--text-light);
         }
         .nav-item.active {
             color: var(--primary);
         }
+        .nav-item-icon {
+            font-size: 24px;
+        }
+        .nav-item-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+        /* ========== 模态框 ========== */
         .modal {
             display: none;
             position: fixed;
@@ -443,7 +644,34 @@
             max-width: 400px;
             max-height: 90vh;
             overflow-y: auto;
+            animation: slideUp 0.3s ease;
         }
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        /* 图片查看模态框 */
         .photo-modal-content {
             background: transparent;
             max-width: 90%;
@@ -453,6 +681,37 @@
             max-width: 100%;
             max-height: 80vh;
             border-radius: var(--radius);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .photo-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.8);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* 响应式 */
+        @media (max-width: 480px) {
+            .app-container {
+                max-width: 100%;
+            }
+        }
+        /* 动画 */
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
     </style>
 <base target="_blank">
@@ -483,11 +742,15 @@
                     <div class="outfit-desc" id="outfitDesc">今日穿搭建议</div>
                     <div class="outfit-temp" id="outfitTemp">请输入温度获取建议</div>
                 </div>
+
                 <div class="card">
-                    <div class="card-title">🌡️ 天气设置</div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #e3f2fd;">🌡️</div>
+                        天气设置
+                    </div>
                     <div class="weather-input">
                         <input type="number" class="form-input" id="tempInput" placeholder="温度 (°C)">
-                        <select class="form-input" id="weatherCondition">
+                        <select class="form-input" id="weatherCondition" style="flex: 0.8;">
                             <option value="sunny">☀️ 晴天</option>
                             <option value="cloudy">☁️ 多云</option>
                             <option value="rainy">🌧️ 雨天</option>
@@ -496,13 +759,22 @@
                     </div>
                     <button class="btn btn-primary" onclick="generateOutfit()">生成穿搭建议</button>
                 </div>
+
+                <!-- 衣橱管理按钮 -->
                 <div class="card">
-                    <div class="card-title">👚 衣橱管理</div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #f3e5f5;">👚</div>
+                        衣橱管理
+                    </div>
                     <p style="color: var(--text-light); margin-bottom: 16px;">管理你的衣物，方便每日穿搭选择</p>
                     <button class="btn btn-primary btn-small" onclick="openClosetModal()">打开衣橱</button>
                 </div>
+
                 <div class="card">
-                    <div class="card-title">📸 我的穿搭记录</div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #f3e5f5;">📸</div>
+                        我的穿搭记录
+                    </div>
                     <div class="form-group">
                         <label class="form-label">拍照或上传今日穿搭照片</label>
                         <input type="file" class="form-input" id="outfitPhoto" accept="image/*" capture="environment" onchange="previewOutfitPhoto(this)">
@@ -510,110 +782,227 @@
                     <div id="outfitPreview" style="margin-top: 12px; display: none;">
                         <img id="outfitImg" style="width: 100%; border-radius: 12px; max-height: 300px; object-fit: cover;">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="margin-top: 16px;">
                         <label class="form-label">穿搭备注</label>
                         <input type="text" class="form-input" id="outfitNote" placeholder="记录今天的穿搭心得...">
                     </div>
                     <button class="btn btn-primary" onclick="saveOutfitRecord()">保存穿搭记录</button>
-                    <div class="history-list" id="outfitHistory" style="margin-top: 20px;"></div>
+
+                    <div class="history-list" id="outfitHistory" style="margin-top: 20px;">
+                        <!-- 历史记录将在这里显示 -->
+                    </div>
                 </div>
             </div>
 
-            <!-- 体重模块 -->
+            <!-- 体重模块（支持编辑） -->
             <div class="section" id="weight-section">
                 <div class="card">
-                    <div class="card-title">📊 体重记录</div>
-                    <div class="weight-stats">
-                        <div class="stat-box"><div class="stat-value" id="currentWeight">--</div><div class="stat-label">当前体重 (kg)</div></div>
-                        <div class="stat-box"><div class="stat-value" id="currentBodyFat">--</div><div class="stat-label">体脂率 (%)</div></div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #e8f5e9;">📊</div>
+                        体重记录
                     </div>
-                    <div class="form-group"><label class="form-label">体重 (kg)</label><input type="number" class="form-input" id="weightInput" step="0.1"></div>
-                    <div class="form-group"><label class="form-label">体脂率 (%)</label><input type="number" class="form-input" id="bodyFatInput" step="0.1"></div>
-                    <div class="form-group"><label class="form-label">日期</label><input type="date" class="form-input" id="weightDate"></div>
+                    <div class="weight-stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="currentWeight">--</div>
+                            <div class="stat-label">当前体重 (kg)</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="currentBodyFat">--</div>
+                            <div class="stat-label">体脂率 (%)</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">体重 (kg)</label>
+                        <input type="number" class="form-input" id="weightInput" step="0.1" placeholder="例如: 55.5">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">体脂率 (%)</label>
+                        <input type="number" class="form-input" id="bodyFatInput" step="0.1" placeholder="例如: 22.5">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">日期</label>
+                        <input type="date" class="form-input" id="weightDate">
+                    </div>
                     <button class="btn btn-primary" onclick="saveWeight()">保存记录</button>
                 </div>
+
                 <div class="card">
-                    <div class="card-title">📈 体重与体脂趋势</div>
-                    <div class="chart-container"><canvas id="weightCanvas" width="360" height="200"></canvas></div>
-                    <div class="history-list" id="weightHistory"></div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #fff3e0;">📈</div>
+                        体重与体脂趋势
+                    </div>
+                    <div class="chart-container" id="weightChart">
+                        <canvas id="weightCanvas" width="360" height="200"></canvas>
+                    </div>
+                    <div class="history-list" id="weightHistory">
+                        <!-- 历史记录 + 编辑按钮 -->
+                    </div>
                 </div>
             </div>
 
-            <!-- 生理期模块 -->
+            <!-- 生理期模块（含历史记录） -->
             <div class="section" id="period-section">
                 <div class="period-status" id="periodStatus">
-                    <div class="status-item"><div class="status-number" id="cycleDay">--</div><div class="status-label">周期第几天</div></div>
-                    <div class="status-item"><div class="status-number" id="nextPeriod">--</div><div class="status-label">距离下次</div></div>
+                    <div class="status-item">
+                        <div class="status-number" id="cycleDay">--</div>
+                        <div class="status-label">周期第几天</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-number" id="nextPeriod">--</div>
+                        <div class="status-label">距离下次</div>
+                    </div>
                 </div>
+
                 <div class="card">
-                    <div class="card-title">🗓️ 本月日历</div>
-                    <div class="period-calendar" id="periodCalendar"></div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #fce4ec;">🗓️</div>
+                        本月日历
+                    </div>
+                    <div class="period-calendar" id="periodCalendar">
+                        <!-- 日历由JS生成 -->
+                    </div>
                 </div>
+
                 <div class="card">
-                    <div class="card-title">✏️ 记录生理期</div>
-                    <div class="form-group"><label class="form-label">开始日期</label><input type="date" class="form-input" id="periodStart"></div>
-                    <div class="form-group"><label class="form-label">结束日期 (可选)</label><input type="date" class="form-input" id="periodEnd"></div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #f3e5f5;">✏️</div>
+                        记录生理期
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">开始日期</label>
+                        <input type="date" class="form-input" id="periodStart">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">结束日期 (可选)</label>
+                        <input type="date" class="form-input" id="periodEnd">
+                    </div>
                     <div class="form-group">
                         <label class="form-label">症状记录</label>
-                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                            <label><input type="checkbox" class="period-symptom" value="痛经"> 痛经</label>
-                            <label><input type="checkbox" class="period-symptom" value="头痛"> 头痛</label>
-                            <label><input type="checkbox" class="period-symptom" value="情绪波动"> 情绪波动</label>
-                            <label><input type="checkbox" class="period-symptom" value="腹胀"> 腹胀</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                <input type="checkbox" class="period-symptom" value="痛经"> 痛经
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                <input type="checkbox" class="period-symptom" value="头痛"> 头痛
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                <input type="checkbox" class="period-symptom" value="情绪波动"> 情绪波动
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                <input type="checkbox" class="period-symptom" value="腹胀"> 腹胀
+                            </label>
                         </div>
                     </div>
                     <button class="btn btn-primary" onclick="savePeriod()">保存记录</button>
                 </div>
+
+                <!-- 新增：生理期历史记录列表 -->
                 <div class="card">
-                    <div class="card-title">📜 历史记录</div>
-                    <div class="period-history-list" id="periodHistory"></div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #fce4ec;">📜</div>
+                        历史记录
+                    </div>
+                    <div class="period-history-list" id="periodHistory">
+                        <!-- 动态填充 -->
+                    </div>
                 </div>
             </div>
 
-            <!-- 日记模块 -->
+            <!-- 日记模块（已修复表情） -->
             <div class="section" id="diary-section">
                 <div class="card">
-                    <div class="card-title">📝 写日记</div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #e0f2f1;">📝</div>
+                        写日记
+                    </div>
                     <div class="form-group">
                         <label class="form-label">今天心情如何？</label>
                         <div class="mood-selector">
                             <button class="mood-btn" data-mood="happy">😊</button>
                             <button class="mood-btn" data-mood="calm">😌</button>
-                            <button class="mood-btn" data-mood="tired">😴</button>
+                            <button class="mood-btn" data-mood="tired">😴</button>  <!-- 疲惫 -->
                             <button class="mood-btn" data-mood="sad">😢</button>
-                            <button class="mood-btn" data-mood="excited">🤩</button>
+                            <button class="mood-btn" data-mood="excited">🤩</button> <!-- 兴奋 -->
                             <button class="mood-btn" data-mood="angry">😠</button>
                         </div>
                     </div>
-                    <div class="form-group"><label class="form-label">日期</label><input type="date" class="form-input" id="diaryDate"></div>
-                    <div class="form-group"><label class="form-label">标题</label><input type="text" class="form-input" id="diaryTitle"></div>
-                    <div class="form-group"><label class="form-label">内容</label><textarea class="form-input" id="diaryContent"></textarea></div>
+                    <div class="form-group">
+                        <label class="form-label">日期</label>
+                        <input type="date" class="form-input" id="diaryDate">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">标题</label>
+                        <input type="text" class="form-input" id="diaryTitle" placeholder="今天发生了什么？">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">内容</label>
+                        <textarea class="form-input" id="diaryContent" placeholder="记录下今天的美好时刻..."></textarea>
+                    </div>
                     <button class="btn btn-primary" onclick="saveDiary()">保存日记</button>
                 </div>
+
                 <div class="card">
-                    <div class="card-title">📚 日记列表</div>
-                    <div class="diary-list" id="diaryList"></div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #fff8e1;">📚</div>
+                        日记列表
+                    </div>
+                    <div class="diary-list" id="diaryList">
+                        <!-- 日记列表 -->
+                    </div>
                 </div>
             </div>
 
-            <!-- 更多模块（含导入导出） -->
+            <!-- 更多模块（含导入导出修复） -->
             <div class="section" id="more-section">
                 <div class="card">
-                    <div class="card-title">🎯 功能模块</div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #e8eaf6;">🎯</div>
+                        功能模块
+                    </div>
                     <div class="placeholder-grid">
-                        <div class="placeholder-card" onclick="showFeatureAlert('饮水记录')"><div class="placeholder-icon">💧</div><div class="placeholder-title">饮水记录</div></div>
-                        <div class="placeholder-card" onclick="showFeatureAlert('睡眠追踪')"><div class="placeholder-icon">😴</div><div class="placeholder-title">睡眠追踪</div></div>
-                        <div class="placeholder-card" onclick="showFeatureAlert('运动健身')"><div class="placeholder-icon">🏃</div><div class="placeholder-title">运动健身</div></div>
-                        <div class="placeholder-card" onclick="showFeatureAlert('饮食记录')"><div class="placeholder-icon">🥗</div><div class="placeholder-title">饮食记录</div></div>
-                        <div class="placeholder-card" onclick="showFeatureAlert('财务管理')"><div class="placeholder-icon">💰</div><div class="placeholder-title">财务管理</div></div>
-                        <div class="placeholder-card" onclick="showFeatureAlert('习惯养成')"><div class="placeholder-icon">✨</div><div class="placeholder-title">习惯养成</div></div>
-                        <div class="placeholder-card" onclick="showFeatureAlert('阅读清单')"><div class="placeholder-icon">📖</div><div class="placeholder-title">阅读清单</div></div>
-                        <div class="placeholder-card" onclick="showFeatureAlert('旅行计划')"><div class="placeholder-icon">✈️</div><div class="placeholder-title">旅行计划</div></div>
+                        <div class="placeholder-card" onclick="showFeatureAlert('饮水记录')">
+                            <div class="placeholder-icon">💧</div>
+                            <div class="placeholder-title">饮水记录</div>
+                        </div>
+                        <div class="placeholder-card" onclick="showFeatureAlert('睡眠追踪')">
+                            <div class="placeholder-icon">😴</div>
+                            <div class="placeholder-title">睡眠追踪</div>
+                        </div>
+                        <div class="placeholder-card" onclick="showFeatureAlert('运动健身')">
+                            <div class="placeholder-icon">🏃</div>
+                            <div class="placeholder-title">运动健身</div>
+                        </div>
+                        <div class="placeholder-card" onclick="showFeatureAlert('饮食记录')">
+                            <div class="placeholder-icon">🥗</div>
+                            <div class="placeholder-title">饮食记录</div>
+                        </div>
+                        <div class="placeholder-card" onclick="showFeatureAlert('财务管理')">
+                            <div class="placeholder-icon">💰</div>
+                            <div class="placeholder-title">财务管理</div>
+                        </div>
+                        <div class="placeholder-card" onclick="showFeatureAlert('习惯养成')">
+                            <div class="placeholder-icon">✨</div>
+                            <div class="placeholder-title">习惯养成</div>
+                        </div>
+                        <div class="placeholder-card" onclick="showFeatureAlert('阅读清单')">
+                            <div class="placeholder-icon">📖</div>
+                            <div class="placeholder-title">阅读清单</div>
+                        </div>
+                        <div class="placeholder-card" onclick="showFeatureAlert('旅行计划')">
+                            <div class="placeholder-icon">✈️</div>
+                            <div class="placeholder-title">旅行计划</div>
+                        </div>
                     </div>
                 </div>
+
                 <div class="card">
-                    <div class="card-title">⚙️ 数据管理</div>
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #ffebee;">⚙️</div>
+                        数据管理
+                    </div>
                     <button class="btn btn-secondary" onclick="exportData()" style="margin-bottom: 12px;">📥 导出所有数据</button>
+                    <!-- 导入按钮 -->
                     <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()" style="margin-bottom: 12px;">📤 导入数据</button>
                     <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(this)">
                     <button class="btn btn-secondary" onclick="clearAllData()" style="background: #ffebee; color: #c62828;">🗑️ 清空所有数据</button>
@@ -623,24 +1012,144 @@
 
         <!-- 底部导航 -->
         <div class="bottom-nav">
-            <div class="nav-item active" data-section="outfit"><span class="nav-item-icon">👔</span><span class="nav-item-label">穿搭</span></div>
-            <div class="nav-item" data-section="weight"><span class="nav-item-icon">⚖️</span><span class="nav-item-label">体重</span></div>
-            <div class="nav-item" data-section="period"><span class="nav-item-icon">🌸</span><span class="nav-item-label">生理期</span></div>
-            <div class="nav-item" data-section="diary"><span class="nav-item-icon">📔</span><span class="nav-item-label">日记</span></div>
-            <div class="nav-item" data-section="more"><span class="nav-item-icon">➕</span><span class="nav-item-label">更多</span></div>
+            <div class="nav-item active" data-section="outfit">
+                <span class="nav-item-icon">👔</span>
+                <span class="nav-item-label">穿搭</span>
+            </div>
+            <div class="nav-item" data-section="weight">
+                <span class="nav-item-icon">⚖️</span>
+                <span class="nav-item-label">体重</span>
+            </div>
+            <div class="nav-item" data-section="period">
+                <span class="nav-item-icon">🌸</span>
+                <span class="nav-item-label">生理期</span>
+            </div>
+            <div class="nav-item" data-section="diary">
+                <span class="nav-item-icon">📔</span>
+                <span class="nav-item-label">日记</span>
+            </div>
+            <div class="nav-item" data-section="more">
+                <span class="nav-item-icon">➕</span>
+                <span class="nav-item-label">更多</span>
+            </div>
         </div>
     </div>
 
-    <!-- 模态框（衣橱、分类、衣物、体重编辑、日记详情、图片查看） -->
-    <div class="modal" id="closetModal"><div class="modal-content"><div class="modal-header"><div class="modal-title">我的衣橱</div><button class="modal-close" onclick="closeClosetModal()">&times;</button></div><div class="modal-body"><div class="closet-header"><h4>分类管理</h4><button class="btn btn-primary btn-small" onclick="showAddCategory()">+ 添加分类</button></div><div class="closet-categories" id="closetCategories"></div><div style="margin:20px 0;text-align:right;"><button class="btn btn-primary btn-small" onclick="showAddClothes()">+ 添加衣物</button></div><div class="closet-items" id="closetItems"></div></div></div></div>
-    <div class="modal" id="addCategoryModal"><div class="modal-content"><div class="modal-header"><div class="modal-title">添加分类</div><button class="modal-close" onclick="closeModalById('addCategoryModal')">&times;</button></div><div class="modal-body"><div class="form-group"><label class="form-label">分类名称</label><input type="text" class="form-input" id="newCategoryName"></div><button class="btn btn-primary" onclick="addCategory()">保存</button></div></div></div>
-    <div class="modal" id="addClothesModal"><div class="modal-content"><div class="modal-header"><div class="modal-title">添加衣物</div><button class="modal-close" onclick="closeModalById('addClothesModal')">&times;</button></div><div class="modal-body"><div class="form-group"><label class="form-label">选择分类</label><select class="form-input" id="clothesCategory"></select></div><div class="form-group"><label class="form-label">衣物代码</label><input type="text" class="form-input" id="clothesCode"></div><div class="form-group"><label class="form-label">拍照或上传照片</label><input type="file" class="form-input" id="clothesImage" accept="image/*" capture="environment"></div><button class="btn btn-primary" onclick="addClothes()">保存</button></div></div></div>
-    <div class="modal" id="editWeightModal"><div class="modal-content"><div class="modal-header"><div class="modal-title">编辑体重记录</div><button class="modal-close" onclick="closeModalById('editWeightModal')">&times;</button></div><div class="modal-body"><div class="form-group"><label class="form-label">日期</label><input type="text" class="form-input" id="editWeightDate" readonly disabled></div><div class="form-group"><label class="form-label">体重 (kg)</label><input type="number" step="0.1" class="form-input" id="editWeightValue"></div><div class="form-group"><label class="form-label">体脂率 (%)</label><input type="number" step="0.1" class="form-input" id="editBodyFatValue"></div><input type="hidden" id="editWeightId"><button class="btn btn-primary" onclick="updateWeight()">保存修改</button></div></div></div>
-    <div class="modal" id="diaryModal"><div class="modal-content"><div class="modal-header"><div class="modal-title">日记详情</div><button class="modal-close" onclick="closeModal()">&times;</button></div><div class="modal-body" id="modalBody"></div></div></div>
-    <div class="modal" id="photoModal"><div class="modal-content photo-modal-content"><img id="photoModalImg" src=""><button class="photo-modal-close" onclick="closePhotoModal()">&times;</button></div></div>
+    <!-- ========== 模态框区域 ========== -->
+    <!-- 衣橱管理主模态框 -->
+    <div class="modal" id="closetModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">我的衣橱</div>
+                <button class="modal-close" onclick="closeClosetModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="closet-header">
+                    <h4>分类管理</h4>
+                    <button class="btn btn-primary btn-small" onclick="showAddCategory()">+ 添加分类</button>
+                </div>
+                <div class="closet-categories" id="closetCategories"></div>
+
+                <div style="margin: 20px 0; text-align: right;">
+                    <button class="btn btn-primary btn-small" onclick="showAddClothes()">+ 添加衣物</button>
+                </div>
+
+                <div class="closet-items" id="closetItems"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加分类模态框 -->
+    <div class="modal" id="addCategoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">添加分类</div>
+                <button class="modal-close" onclick="closeModalById('addCategoryModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">分类名称</label>
+                    <input type="text" class="form-input" id="newCategoryName" placeholder="例如: 上衣">
+                </div>
+                <button class="btn btn-primary" onclick="addCategory()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加衣物模态框 -->
+    <div class="modal" id="addClothesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">添加衣物</div>
+                <button class="modal-close" onclick="closeModalById('addClothesModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">选择分类</label>
+                    <select class="form-input" id="clothesCategory"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">衣物代码 (例如 T01)</label>
+                    <input type="text" class="form-input" id="clothesCode" placeholder="如 D01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">拍照或上传照片</label>
+                    <input type="file" class="form-input" id="clothesImage" accept="image/*" capture="environment">
+                </div>
+                <button class="btn btn-primary" onclick="addClothes()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 体重编辑模态框 -->
+    <div class="modal" id="editWeightModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">编辑体重记录</div>
+                <button class="modal-close" onclick="closeModalById('editWeightModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">日期</label>
+                    <input type="text" class="form-input" id="editWeightDate" readonly disabled style="background: #f0f0f0;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">体重 (kg)</label>
+                    <input type="number" step="0.1" class="form-input" id="editWeightValue">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">体脂率 (%)</label>
+                    <input type="number" step="0.1" class="form-input" id="editBodyFatValue">
+                </div>
+                <input type="hidden" id="editWeightId">
+                <button class="btn btn-primary" onclick="updateWeight()">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日记详情模态框 -->
+    <div class="modal" id="diaryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">日记详情</div>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片查看模态框 -->
+    <div class="modal" id="photoModal">
+        <div class="modal-content photo-modal-content" style="background: transparent; box-shadow: none;">
+            <img id="photoModalImg" src="" alt="穿搭照片">
+            <button class="photo-modal-close" onclick="closePhotoModal()">&times;</button>
+        </div>
+    </div>
 
     <script>
-        // IndexedDB 初始化
+        // ========== IndexedDB 初始化 ==========
         const DB_NAME = 'LifeFlowDB';
         const DB_VERSION = 2;
         let db;
@@ -648,106 +1157,125 @@
         const initDB = () => {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
+
                 request.onerror = () => reject(request.error);
-                request.onsuccess = () => { db = request.result; resolve(db); };
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+
                 request.onupgradeneeded = (event) => {
                     const database = event.target.result;
+
+                    // 原有stores
                     if (!database.objectStoreNames.contains('outfits')) {
-                        const store = database.createObjectStore('outfits', { keyPath: 'id', autoIncrement: true });
-                        store.createIndex('date', 'date', { unique: false });
+                        const outfitStore = database.createObjectStore('outfits', { keyPath: 'id', autoIncrement: true });
+                        outfitStore.createIndex('date', 'date', { unique: false });
                     }
+
                     if (!database.objectStoreNames.contains('weight')) {
-                        const store = database.createObjectStore('weight', { keyPath: 'id', autoIncrement: true });
-                        store.createIndex('date', 'date', { unique: false });
+                        const weightStore = database.createObjectStore('weight', { keyPath: 'id', autoIncrement: true });
+                        weightStore.createIndex('date', 'date', { unique: false });
                     }
+
                     if (!database.objectStoreNames.contains('periods')) {
-                        const store = database.createObjectStore('periods', { keyPath: 'id', autoIncrement: true });
-                        store.createIndex('startDate', 'startDate', { unique: false });
+                        const periodStore = database.createObjectStore('periods', { keyPath: 'id', autoIncrement: true });
+                        periodStore.createIndex('startDate', 'startDate', { unique: false });
                     }
+
                     if (!database.objectStoreNames.contains('diaries')) {
-                        const store = database.createObjectStore('diaries', { keyPath: 'id', autoIncrement: true });
-                        store.createIndex('date', 'date', { unique: false });
+                        const diaryStore = database.createObjectStore('diaries', { keyPath: 'id', autoIncrement: true });
+                        diaryStore.createIndex('date', 'date', { unique: false });
                     }
+
+                    // 衣橱分类和衣物
                     if (!database.objectStoreNames.contains('closetCategories')) {
-                        const store = database.createObjectStore('closetCategories', { keyPath: 'id', autoIncrement: true });
-                        store.createIndex('name', 'name', { unique: true });
+                        const catStore = database.createObjectStore('closetCategories', { keyPath: 'id', autoIncrement: true });
+                        catStore.createIndex('name', 'name', { unique: true });
                     }
+
                     if (!database.objectStoreNames.contains('clothes')) {
-                        const store = database.createObjectStore('clothes', { keyPath: 'id', autoIncrement: true });
-                        store.createIndex('categoryId', 'categoryId', { unique: false });
-                        store.createIndex('code', 'code', { unique: false });
+                        const clothesStore = database.createObjectStore('clothes', { keyPath: 'id', autoIncrement: true });
+                        clothesStore.createIndex('categoryId', 'categoryId', { unique: false });
+                        clothesStore.createIndex('code', 'code', { unique: false });
                     }
                 };
             });
         };
 
-        // 数据库操作函数
+        // ========== 数据库操作函数 ==========
         const addData = (storeName, data) => {
             return new Promise((resolve, reject) => {
-                const tx = db.transaction([storeName], 'readwrite');
-                const store = tx.objectStore(storeName);
-                const req = store.add(data);
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-        };
-        const getAllData = (storeName) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction([storeName], 'readonly');
-                const store = tx.objectStore(storeName);
-                const req = store.getAll();
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-        };
-        const deleteData = (storeName, id) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction([storeName], 'readwrite');
-                const store = tx.objectStore(storeName);
-                const req = store.delete(id);
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject(req.error);
-            });
-        };
-        const updateData = (storeName, data) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction([storeName], 'readwrite');
-                const store = tx.objectStore(storeName);
-                const req = store.put(data);
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-        };
-        const clearStore = (storeName) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction([storeName], 'readwrite');
-                const store = tx.objectStore(storeName);
-                const req = store.clear();
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject(req.error);
-            });
-        };
-        const getDataByIndex = (storeName, indexName, value) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction([storeName], 'readonly');
-                const store = tx.objectStore(storeName);
-                const index = store.index(indexName);
-                const req = index.getAll(value);
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-        };
-        const getDataById = (storeName, id) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction([storeName], 'readonly');
-                const store = tx.objectStore(storeName);
-                const req = store.get(id);
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.add(data);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
             });
         };
 
-        // 图片辅助函数
+        const getAllData = (storeName) => {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        };
+
+        const deleteData = (storeName, id) => {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        };
+
+        const updateData = (storeName, data) => {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.put(data);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        };
+
+        const clearStore = (storeName) => {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.clear();
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        };
+
+        const getDataByIndex = (storeName, indexName, value) => {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const index = store.index(indexName);
+                const request = index.getAll(value);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        };
+
+        const getDataById = (storeName, id) => {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.get(id);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        };
+
+        // ========== 图片辅助函数 ==========
         function blobToBase64(blob) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -756,6 +1284,7 @@
                 reader.readAsDataURL(blob);
             });
         }
+
         function base64ToBlob(base64) {
             return new Promise((resolve) => {
                 const arr = base64.split(',');
@@ -763,10 +1292,13 @@
                 const bstr = atob(arr[1]);
                 let n = bstr.length;
                 const u8arr = new Uint8Array(n);
-                while (n--) { u8arr[n] = bstr.charCodeAt(n); }
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
                 resolve(new Blob([u8arr], { type: mime }));
             });
         }
+
         function compressImage(file, maxWidth = 600, quality = 0.8) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -774,25 +1306,30 @@
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        let width = img.width, height = img.height;
+                        let width = img.width;
+                        let height = img.height;
                         if (width > maxWidth) {
                             height *= maxWidth / width;
                             width = maxWidth;
                         }
-                        canvas.width = width; canvas.height = height;
-                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
                         canvas.toBlob((blob) => {
                             const compressedFile = new File([blob], file.name, { type: 'image/jpeg' });
                             resolve(compressedFile);
                         }, 'image/jpeg', quality);
                     };
+                    img.onerror = reject;
                     img.src = e.target.result;
                 };
+                reader.onerror = reject;
                 reader.readAsDataURL(file);
             });
         }
 
-        // 穿搭建议
+        // ========== 穿搭建议逻辑 ==========
         const outfitSuggestions = {
             cold: { emoji: '🧥', desc: '寒冷天气 - 羽绒服/大衣', items: ['羽绒服', '毛衣', '围巾', '手套'] },
             cool: { emoji: '🧥', desc: '凉爽天气 - 外套/夹克', items: ['风衣', '长袖', '牛仔裤'] },
@@ -800,70 +1337,129 @@
             warm: { emoji: '👔', desc: '温暖天气 - 短袖/衬衫', items: ['短袖', '衬衫', '休闲裤'] },
             hot: { emoji: '👗', desc: '炎热天气 - 短袖/裙子', items: ['短袖', '短裤', '裙子', '凉鞋'] }
         };
+
         function generateOutfit() {
             const temp = parseFloat(document.getElementById('tempInput').value);
             const condition = document.getElementById('weatherCondition').value;
-            if (isNaN(temp)) { alert('请输入有效的温度'); return; }
+
+            if (isNaN(temp)) {
+                alert('请输入有效的温度');
+                return;
+            }
+
             let suggestion;
             if (temp < 5) suggestion = outfitSuggestions.cold;
             else if (temp < 15) suggestion = outfitSuggestions.cool;
             else if (temp < 22) suggestion = outfitSuggestions.mild;
             else if (temp < 28) suggestion = outfitSuggestions.warm;
             else suggestion = outfitSuggestions.hot;
-            if (condition === 'rainy') suggestion = { ...suggestion, emoji: '☔', desc: suggestion.desc + ' + 雨具' };
-            else if (condition === 'snowy') suggestion = outfitSuggestions.cold;
+
+            if (condition === 'rainy') {
+                suggestion = { ...suggestion, emoji: '☔', desc: suggestion.desc + ' + 雨具' };
+            } else if (condition === 'snowy') {
+                suggestion = outfitSuggestions.cold;
+            }
+
             document.getElementById('outfitEmoji').textContent = suggestion.emoji;
             document.getElementById('outfitDesc').textContent = suggestion.desc;
             document.getElementById('outfitTemp').textContent = `温度: ${temp}°C | 建议: ${suggestion.items.join(', ')}`;
         }
+
         function previewOutfitPhoto(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = function(e) {
                     document.getElementById('outfitImg').src = e.target.result;
                     document.getElementById('outfitPreview').style.display = 'block';
                 };
                 reader.readAsDataURL(input.files[0]);
             }
         }
+
         async function saveOutfitRecord() {
             const photo = document.getElementById('outfitImg').src;
             const note = document.getElementById('outfitNote').value;
             const temp = document.getElementById('tempInput').value;
-            if (!photo && !note) { alert('请上传照片或填写备注'); return; }
-            const data = { date: new Date().toISOString().split('T')[0], photo: photo || '', note: note || '', temp: temp || '', timestamp: Date.now() };
+
+            if (!photo && !note) {
+                alert('请上传照片或填写备注');
+                return;
+            }
+
+            const data = {
+                date: new Date().toISOString().split('T')[0],
+                photo: photo || '',
+                note: note || '',
+                temp: temp || '',
+                timestamp: new Date().getTime()
+            };
+
             await addData('outfits', data);
             alert('穿搭记录已保存！');
             loadOutfitHistory();
+
             document.getElementById('outfitPhoto').value = '';
             document.getElementById('outfitNote').value = '';
             document.getElementById('outfitPreview').style.display = 'none';
         }
+
         function showOutfitPhoto(photoUrl) {
             if (photoUrl) {
                 document.getElementById('photoModalImg').src = photoUrl;
                 document.getElementById('photoModal').classList.add('active');
             }
         }
-        function closePhotoModal() { document.getElementById('photoModal').classList.remove('active'); }
+
+        function closePhotoModal() {
+            document.getElementById('photoModal').classList.remove('active');
+        }
+
         async function loadOutfitHistory() {
             const history = await getAllData('outfits');
             const container = document.getElementById('outfitHistory');
-            if (history.length === 0) { container.innerHTML = '<div class="empty-state"><div class="empty-icon">📸</div><p>暂无穿搭记录</p></div>'; return; }
-            container.innerHTML = history.reverse().slice(0,5).map(item => `<div class="history-item"><div><div class="history-date">${item.date} ${item.temp||''}</div><div style="font-size:12px;">${item.note||'无备注'}</div></div>${item.photo?`<span class="photo-icon" onclick="showOutfitPhoto('${item.photo}')">📷</span>`:''}</div>`).join('');
+
+            if (history.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📸</div><p>暂无穿搭记录</p></div>';
+                return;
+            }
+
+            container.innerHTML = history.reverse().slice(0, 5).map(item => `
+                <div class="history-item">
+                    <div>
+                        <div class="history-date">${item.date} ${item.temp ? item.temp + '°C' : ''}</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 4px;">${item.note || '无备注'}</div>
+                    </div>
+                    ${item.photo ? `<span class="photo-icon" onclick="showOutfitPhoto('${item.photo}')" style="font-size: 20px; cursor: pointer;">📷</span>` : ''}
+                </div>
+            `).join('');
         }
 
-        // 体重管理
+        // ========== 体重管理 ==========
         async function saveWeight() {
             const weight = parseFloat(document.getElementById('weightInput').value);
             const bodyFat = parseFloat(document.getElementById('bodyFatInput').value);
             const date = document.getElementById('weightDate').value || new Date().toISOString().split('T')[0];
-            if (isNaN(weight)) { alert('请输入有效的体重'); return; }
-            await addData('weight', { date, weight, bodyFat: bodyFat || null, timestamp: Date.now() });
+
+            if (isNaN(weight)) {
+                alert('请输入有效的体重');
+                return;
+            }
+
+            const data = {
+                date: date,
+                weight: weight,
+                bodyFat: bodyFat || null,
+                timestamp: new Date().getTime()
+            };
+
+            await addData('weight', data);
             alert('体重记录已保存！');
             loadWeightData();
-            document.getElementById('weightInput').value = ''; document.getElementById('bodyFatInput').value = '';
+
+            document.getElementById('weightInput').value = '';
+            document.getElementById('bodyFatInput').value = '';
         }
+
         async function editWeight(id) {
             const record = await getDataById('weight', id);
             if (!record) return;
@@ -873,173 +1469,418 @@
             document.getElementById('editBodyFatValue').value = record.bodyFat || '';
             document.getElementById('editWeightModal').classList.add('active');
         }
+
         async function updateWeight() {
             const id = parseInt(document.getElementById('editWeightId').value);
             const weight = parseFloat(document.getElementById('editWeightValue').value);
             const bodyFat = parseFloat(document.getElementById('editBodyFatValue').value) || null;
             const date = document.getElementById('editWeightDate').value;
-            if (isNaN(weight)) { alert('请输入有效的体重'); return; }
-            await updateData('weight', { id, date, weight, bodyFat, timestamp: Date.now() });
+
+            if (isNaN(weight)) {
+                alert('请输入有效的体重');
+                return;
+            }
+
+            const updatedRecord = {
+                id: id,
+                date: date,
+                weight: weight,
+                bodyFat: bodyFat,
+                timestamp: new Date().getTime()
+            };
+
+            await updateData('weight', updatedRecord);
             alert('记录已更新');
             closeModalById('editWeightModal');
             loadWeightData();
         }
+
         async function loadWeightData() {
             const records = await getAllData('weight');
+
             if (records.length === 0) {
                 document.getElementById('currentWeight').textContent = '--';
                 document.getElementById('currentBodyFat').textContent = '--';
                 document.getElementById('weightHistory').innerHTML = '<div class="empty-state"><div class="empty-icon">⚖️</div><p>暂无体重记录</p></div>';
-                drawWeightChart([]); return;
+                drawWeightChart([]);
+                return;
             }
-            records.sort((a,b)=>b.timestamp - a.timestamp);
+
+            records.sort((a, b) => b.timestamp - a.timestamp);
             const latest = records[0];
+
             document.getElementById('currentWeight').textContent = latest.weight.toFixed(1);
             document.getElementById('currentBodyFat').textContent = latest.bodyFat ? latest.bodyFat.toFixed(1) : '--';
-            document.getElementById('weightHistory').innerHTML = records.slice(0,10).map(item => 
-                `<div class="history-item"><span class="history-date">${item.date}</span><span class="history-value">${item.weight}kg ${item.bodyFat?'('+item.bodyFat+'%)':''}</span><div class="history-actions"><button class="edit-btn" onclick="editWeight(${item.id})">✏️</button><button class="delete-btn" onclick="deleteWeight(${item.id})" style="background:none;border:none;color:#f43f5e;">🗑️</button></div></div>`
-            ).join('');
+
+            document.getElementById('weightHistory').innerHTML = records.slice(0, 10).map(item => `
+                <div class="history-item">
+                    <span class="history-date">${item.date}</span>
+                    <span class="history-value">${item.weight}kg ${item.bodyFat ? '(' + item.bodyFat + '%)' : ''}</span>
+                    <div class="history-actions">
+                        <button class="edit-btn" onclick="editWeight(${item.id})" title="编辑">✏️</button>
+                        <button class="delete-btn" onclick="deleteWeight(${item.id})" style="background:none; border:none; color:#f43f5e; font-size:18px;" title="删除">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+
             drawWeightChart(records.slice().reverse());
         }
-        async function deleteWeight(id) { if(confirm('确定删除？')){ await deleteData('weight',id); loadWeightData(); } }
+
+        async function deleteWeight(id) {
+            if (confirm('确定删除这条记录吗？')) {
+                await deleteData('weight', id);
+                loadWeightData();
+            }
+        }
+
         function drawWeightChart(records) {
             const canvas = document.getElementById('weightCanvas');
             const ctx = canvas.getContext('2d');
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            if(records.length<2){ ctx.fillText('需要至少2条记录',120,100); return; }
-            const weights = records.map(r=>r.weight), bodyFats = records.map(r=>r.bodyFat).filter(f=>f!=null);
-            const minW = Math.min(...weights)-1, maxW = Math.max(...weights)+1, rangeW = maxW-minW;
-            let minF=null,maxF=null,rangeF=null;
-            if(bodyFats.length>0){ minF=Math.min(...bodyFats)-1; maxF=Math.max(...bodyFats)+1; rangeF=maxF-minF; }
-            const pad=40, cw=canvas.width-pad*2, ch=canvas.height-pad*2;
-            ctx.strokeStyle='#e0e0e0'; ctx.lineWidth=1;
-            for(let i=0;i<=4;i++){ ctx.beginPath(); ctx.moveTo(pad, pad+ch/4*i); ctx.lineTo(canvas.width-pad, pad+ch/4*i); ctx.stroke(); }
-            ctx.strokeStyle='#ff6b6b'; ctx.lineWidth=3; ctx.beginPath();
-            records.forEach((r,i)=>{ let x=pad+cw/(records.length-1)*i, y=pad+ch-((r.weight-minW)/rangeW)*ch; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            if (records.length < 2) {
+                ctx.fillStyle = '#999';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('需要至少2条记录来显示趋势', width/2, height/2);
+                return;
+            }
+
+            const weights = records.map(r => r.weight);
+            const bodyFats = records.map(r => r.bodyFat).filter(f => f !== null && f !== undefined);
+            
+            const minWeight = Math.min(...weights) - 1;
+            const maxWeight = Math.max(...weights) + 1;
+            const weightRange = maxWeight - minWeight;
+
+            let minFat = null, maxFat = null, fatRange = null;
+            if (bodyFats.length > 0) {
+                minFat = Math.min(...bodyFats) - 1;
+                maxFat = Math.max(...bodyFats) + 1;
+                fatRange = maxFat - minFat;
+            }
+
+            const padding = 40;
+            const chartWidth = width - padding * 2;
+            const chartHeight = height - padding * 2;
+
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = padding + (chartHeight / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = '#ff6b6b';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+
+            records.forEach((record, index) => {
+                const x = padding + (chartWidth / (records.length - 1)) * index;
+                const y = padding + chartHeight - ((record.weight - minWeight) / weightRange) * chartHeight;
+
+                if (index === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+
             ctx.stroke();
-            records.forEach((r,i)=>{ let x=pad+cw/(records.length-1)*i, y=pad+ch-((r.weight-minW)/rangeW)*ch; ctx.fillStyle='#ff6b6b'; ctx.beginPath(); ctx.arc(x,y,5,0,2*Math.PI); ctx.fill(); ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(x,y,2,0,2*Math.PI); ctx.fill(); });
-            if(bodyFats.length>0){
-                ctx.strokeStyle='#4ecdc4'; ctx.lineWidth=2; ctx.setLineDash([5,3]); ctx.beginPath();
-                records.forEach((r,i)=>{ if(r.bodyFat){ let x=pad+cw/(records.length-1)*i, y=pad+ch-((r.bodyFat-minF)/rangeF)*ch; if(i===0||!records[i-1].bodyFat) ctx.moveTo(x,y); else ctx.lineTo(x,y); } });
-                ctx.stroke(); ctx.setLineDash([]);
-                records.forEach((r,i)=>{ if(r.bodyFat){ let x=pad+cw/(records.length-1)*i, y=pad+ch-((r.bodyFat-minF)/rangeF)*ch; ctx.fillStyle='#4ecdc4'; ctx.beginPath(); ctx.arc(x,y,5,0,2*Math.PI); ctx.fill(); ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(x,y,2,0,2*Math.PI); ctx.fill(); } });
-                ctx.font='12px sans-serif'; ctx.fillStyle='#ff6b6b'; ctx.fillText('体重 (kg)', canvas.width-110,20);
-                ctx.fillStyle='#4ecdc4'; ctx.fillText('体脂 (%)', canvas.width-110,40);
-            } else { ctx.fillStyle='#ff6b6b'; ctx.fillText('体重 (kg)', canvas.width-90,20); }
+
+            records.forEach((record, index) => {
+                const x = padding + (chartWidth / (records.length - 1)) * index;
+                const y = padding + chartHeight - ((record.weight - minWeight) / weightRange) * chartHeight;
+
+                ctx.fillStyle = '#ff6b6b';
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(x, y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            if (bodyFats.length > 0) {
+                ctx.strokeStyle = '#4ecdc4';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 3]);
+                ctx.beginPath();
+
+                records.forEach((record, index) => {
+                    if (record.bodyFat) {
+                        const x = padding + (chartWidth / (records.length - 1)) * index;
+                        const y = padding + chartHeight - ((record.bodyFat - minFat) / fatRange) * chartHeight;
+
+                        if (index === 0 || !records[index-1].bodyFat) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                });
+
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                records.forEach((record, index) => {
+                    if (record.bodyFat) {
+                        const x = padding + (chartWidth / (records.length - 1)) * index;
+                        const y = padding + chartHeight - ((record.bodyFat - minFat) / fatRange) * chartHeight;
+
+                        ctx.fillStyle = '#4ecdc4';
+                        ctx.beginPath();
+                        ctx.arc(x, y, 5, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        ctx.fillStyle = 'white';
+                        ctx.beginPath();
+                        ctx.arc(x, y, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+
+                ctx.font = '12px sans-serif';
+                ctx.fillStyle = '#ff6b6b';
+                ctx.fillText('体重 (kg)', width - 110, 20);
+                ctx.fillStyle = '#4ecdc4';
+                ctx.fillText('体脂 (%)', width - 110, 40);
+            } else {
+                ctx.font = '12px sans-serif';
+                ctx.fillStyle = '#ff6b6b';
+                ctx.fillText('体重 (kg)', width - 90, 20);
+            }
         }
 
-        // 生理期管理
+        // ========== 生理期管理 ==========
         async function savePeriod() {
             const startDate = document.getElementById('periodStart').value;
             const endDate = document.getElementById('periodEnd').value;
-            const symptoms = Array.from(document.querySelectorAll('.period-symptom:checked')).map(cb=>cb.value);
-            if(!startDate){ alert('请选择开始日期'); return; }
-            await addData('periods', { startDate, endDate: endDate||null, symptoms, timestamp:Date.now() });
+            const symptoms = Array.from(document.querySelectorAll('.period-symptom:checked')).map(cb => cb.value);
+
+            if (!startDate) {
+                alert('请选择开始日期');
+                return;
+            }
+
+            const data = {
+                startDate: startDate,
+                endDate: endDate || null,
+                symptoms: symptoms,
+                timestamp: new Date().getTime()
+            };
+
+            await addData('periods', data);
             alert('生理期记录已保存！');
             loadPeriodData();
+
             document.getElementById('periodStart').value = new Date().toISOString().split('T')[0];
             document.getElementById('periodEnd').value = '';
-            document.querySelectorAll('.period-symptom').forEach(cb=>cb.checked=false);
+            document.querySelectorAll('.period-symptom').forEach(cb => cb.checked = false);
         }
+
         async function loadPeriodData() {
             const periods = await getAllData('periods');
-            if(periods.length===0){
-                document.getElementById('cycleDay').textContent='--'; document.getElementById('nextPeriod').textContent='--';
-                document.getElementById('periodHistory').innerHTML='<div class="empty-state"><div class="empty-icon">🌸</div><p>暂无生理期记录</p></div>';
+
+            if (periods.length === 0) {
+                document.getElementById('cycleDay').textContent = '--';
+                document.getElementById('nextPeriod').textContent = '--';
+                document.getElementById('periodHistory').innerHTML = '<div class="empty-state"><div class="empty-icon">🌸</div><p>暂无生理期记录</p></div>';
             } else {
-                periods.sort((a,b)=>new Date(b.startDate)-new Date(a.startDate));
-                const last = periods[0], lastDate = new Date(last.startDate), today = new Date();
-                document.getElementById('cycleDay').textContent = Math.floor((today-lastDate)/(1000*3600*24))+1;
-                const next = new Date(lastDate); next.setDate(next.getDate()+28);
-                const days = Math.floor((next-today)/(1000*3600*24));
-                document.getElementById('nextPeriod').textContent = days>0 ? days+'天' : '已到来';
-                let html='';
-                periods.slice(0,10).forEach(p=>{
-                    const start = p.startDate, end = p.endDate||'未记录';
+                periods.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+                const lastPeriod = periods[0];
+                const lastDate = new Date(lastPeriod.startDate);
+                const today = new Date();
+                const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+
+                document.getElementById('cycleDay').textContent = diffDays + 1;
+
+                const nextPeriod = new Date(lastDate);
+                nextPeriod.setDate(nextPeriod.getDate() + 28);
+                const daysUntil = Math.floor((nextPeriod - today) / (1000 * 60 * 60 * 24));
+                document.getElementById('nextPeriod').textContent = daysUntil > 0 ? daysUntil + '天' : '已到来';
+
+                let html = '';
+                periods.slice(0, 10).forEach(p => {
+                    const start = p.startDate;
+                    const end = p.endDate || '未记录';
                     let duration = '';
-                    if(p.endDate){
-                        const s=new Date(p.startDate), e=new Date(p.endDate);
-                        const d = Math.ceil((e-s)/(1000*3600*24))+1;
+                    if (p.endDate) {
+                        const s = new Date(p.startDate);
+                        const e = new Date(p.endDate);
+                        const d = Math.ceil((e - s) / (1000 * 60 * 60 * 24)) + 1;
                         duration = ` (${d}天)`;
                     }
-                    html += `<div class="period-history-item"><div class="period-history-dates">${start} 至 ${end}${duration}</div><div class="period-history-detail">症状: ${p.symptoms?.join('、')||'无'}</div></div>`;
+                    html += `
+                        <div class="period-history-item">
+                            <div class="period-history-dates">${start} 至 ${end}${duration}</div>
+                            <div class="period-history-detail">症状: ${p.symptoms?.join('、') || '无'}</div>
+                        </div>
+                    `;
                 });
                 document.getElementById('periodHistory').innerHTML = html;
             }
+
             generateCalendar(periods);
         }
+
         function generateCalendar(periods) {
-            const cal = document.getElementById('periodCalendar');
-            const today = new Date(), y=today.getFullYear(), m=today.getMonth();
-            const firstDay = new Date(y,m,1).getDay(), days = new Date(y,m+1,0).getDate();
-            const weekDays = ['日','一','二','三','四','五','六'];
-            let html = weekDays.map(d=>`<div class="calendar-header">${d}</div>`).join('');
-            for(let i=0;i<firstDay;i++) html+='<div></div>';
-            for(let d=1;d<=days;d++){
-                const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const isToday = d===today.getDate();
-                const isPeriod = periods.some(p=>{
+            const calendar = document.getElementById('periodCalendar');
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+            let html = weekDays.map(d => `<div class="calendar-header">${d}</div>`).join('');
+
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div></div>';
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isToday = day === today.getDate();
+
+                const isPeriod = periods.some(p => {
                     const start = new Date(p.startDate);
                     const end = p.endDate ? new Date(p.endDate) : new Date(start);
-                    end.setDate(end.getDate()+5);
-                    return new Date(dateStr) >= start && new Date(dateStr) <= end;
+                    end.setDate(end.getDate() + 5);
+                    const current = new Date(dateStr);
+                    return current >= start && current <= end;
                 });
+
                 let isPredicted = false;
-                if(periods.length>0){
-                    const last = new Date(periods[0].startDate);
-                    const predStart = new Date(last); predStart.setDate(predStart.getDate()+28);
-                    const predEnd = new Date(predStart); predEnd.setDate(predEnd.getDate()+5);
-                    const cur = new Date(dateStr);
-                    if(cur>=predStart && cur<=predEnd) isPredicted=true;
+                if (periods.length > 0) {
+                    const lastPeriod = periods[0];
+                    const lastStart = new Date(lastPeriod.startDate);
+                    const predictedStart = new Date(lastStart);
+                    predictedStart.setDate(predictedStart.getDate() + 28);
+                    const predictedEnd = new Date(predictedStart);
+                    predictedEnd.setDate(predictedEnd.getDate() + 5);
+                    const current = new Date(dateStr);
+                    if (current >= predictedStart && current <= predictedEnd) {
+                        isPredicted = true;
+                    }
                 }
-                let cls='calendar-day';
-                if(isToday) cls+=' today';
-                if(isPeriod) cls+=' period';
-                else if(isPredicted) cls+=' predicted';
-                html += `<div class="${cls}">${d}</div>`;
+
+                let className = 'calendar-day';
+                if (isToday) className += ' today';
+                if (isPeriod) className += ' period';
+                if (isPredicted && !isPeriod) className += ' predicted';
+
+                html += `<div class="${className}">${day}</div>`;
             }
-            cal.innerHTML = html;
+
+            calendar.innerHTML = html;
         }
 
-        // 日记管理
-        let selectedMood='';
-        document.querySelectorAll('.mood-btn').forEach(btn=>{
-            btn.addEventListener('click',function(){
-                document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));
+        // ========== 日记管理 ==========
+        let selectedMood = '';
+
+        document.querySelectorAll('.mood-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
-                selectedMood=this.dataset.mood;
+                selectedMood = this.dataset.mood;
             });
         });
+
         async function saveDiary() {
             const date = document.getElementById('diaryDate').value || new Date().toISOString().split('T')[0];
             const title = document.getElementById('diaryTitle').value;
             const content = document.getElementById('diaryContent').value;
-            if(!title&&!content){ alert('请填写标题或内容'); return; }
-            await addData('diaries', { date, title:title||'无标题', content, mood:selectedMood, timestamp:Date.now() });
+
+            if (!title && !content) {
+                alert('请填写标题或内容');
+                return;
+            }
+
+            const data = {
+                date: date,
+                title: title || '无标题',
+                content: content,
+                mood: selectedMood,
+                timestamp: new Date().getTime()
+            };
+
+            await addData('diaries', data);
             alert('日记已保存！');
             loadDiaries();
-            document.getElementById('diaryTitle').value=''; document.getElementById('diaryContent').value='';
-            document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected')); selectedMood='';
+
+            document.getElementById('diaryTitle').value = '';
+            document.getElementById('diaryContent').value = '';
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+            selectedMood = '';
         }
+
         async function loadDiaries() {
             const diaries = await getAllData('diaries');
             const container = document.getElementById('diaryList');
-            if(diaries.length===0){ container.innerHTML='<div class="empty-state"><div class="empty-icon">📔</div><p>还没有日记</p></div>'; return; }
-            const moodEmojis = { happy:'😊', calm:'😌', tired:'😴', sad:'😢', excited:'🤩', angry:'😠' };
-            container.innerHTML = diaries.sort((a,b)=>b.timestamp-a.timestamp).map(d=>`<div class="diary-item" onclick="showDiaryDetail(${d.id})"><div class="diary-date">${d.date}</div><div class="diary-preview">${d.title}</div>${d.mood?`<div class="diary-mood">${moodEmojis[d.mood]}</div>`:''}</div>`).join('');
+
+            if (diaries.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📔</div><p>还没有日记，开始记录吧！</p></div>';
+                return;
+            }
+
+            const moodEmojis = {
+                happy: '😊', calm: '😌', tired: '😴', sad: '😢', excited: '🤩', angry: '😠'
+            };
+
+            container.innerHTML = diaries.sort((a, b) => b.timestamp - a.timestamp).map(diary => `
+                <div class="diary-item" onclick="showDiaryDetail(${diary.id})">
+                    <div class="diary-date">${diary.date}</div>
+                    <div class="diary-preview">${diary.title}</div>
+                    ${diary.mood ? `<div class="diary-mood">${moodEmojis[diary.mood]}</div>` : ''}
+                </div>
+            `).join('');
         }
+
         async function showDiaryDetail(id) {
             const diaries = await getAllData('diaries');
-            const diary = diaries.find(d=>d.id===id);
-            if(!diary) return;
-            const moodEmojis = { happy:'😊 开心', calm:'😌 平静', tired:'😴 疲惫', sad:'😢 难过', excited:'🤩 兴奋', angry:'😠 生气' };
-            document.getElementById('modalBody').innerHTML = `<div><strong>${diary.date}</strong>${diary.mood?`<span> ${moodEmojis[diary.mood]}</span>`:''}</div><h3>${diary.title}</h3><p style="white-space:pre-wrap;">${diary.content}</p><button class="btn btn-primary" onclick="deleteDiary(${id})" style="background:#ffebee;color:#c62828;">删除日记</button>`;
+            const diary = diaries.find(d => d.id === id);
+            if (!diary) return;
+
+            const moodEmojis = {
+                happy: '😊 开心', calm: '😌 平静', tired: '😴 疲惫', 
+                sad: '😢 难过', excited: '🤩 兴奋', angry: '😠 生气'
+            };
+
+            document.getElementById('modalBody').innerHTML = `
+                <div style="margin-bottom: 16px;">
+                    <strong style="color: #666;">${diary.date}</strong>
+                    ${diary.mood ? `<span style="margin-left: 12px;">${moodEmojis[diary.mood]}</span>` : ''}
+                </div>
+                <h3 style="margin-bottom: 12px; color: #333;">${diary.title}</h3>
+                <p style="line-height: 1.8; color: #555; white-space: pre-wrap;">${diary.content}</p>
+                <button class="btn btn-primary" onclick="deleteDiary(${id})" style="margin-top: 20px; background: #ffebee; color: #c62828;">删除日记</button>
+            `;
+
             document.getElementById('diaryModal').classList.add('active');
         }
-        async function deleteDiary(id) { if(confirm('确定删除？')){ await deleteData('diaries',id); closeModal(); loadDiaries(); } }
-        function closeModal() { document.getElementById('diaryModal').classList.remove('active'); }
 
-        // 导出数据（修复版）
+        async function deleteDiary(id) {
+            if (confirm('确定要删除这篇日记吗？')) {
+                await deleteData('diaries', id);
+                closeModal();
+                loadDiaries();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('diaryModal').classList.remove('active');
+        }
+
+        // ========== 更多功能 ==========
+        function showFeatureAlert(feature) {
+            alert(`${feature} 功能即将上线，敬请期待！`);
+        }
+
+        // ========== 导出数据（修复版） ==========
         async function exportData() {
             try {
                 alert('正在准备导出数据，请稍候...');
@@ -1048,7 +1889,6 @@
                 for (const store of stores) {
                     let data = await getAllData(store);
                     if (store === 'clothes') {
-                        // 将每个衣物的 imageBlob 转为 base64
                         data = await Promise.all(data.map(async item => {
                             if (item.imageBlob) {
                                 const base64 = await blobToBase64(item.imageBlob);
@@ -1066,9 +1906,9 @@
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = `beautiful_mood_backup_${new Date().toISOString().split('T')[0]}.json`;
-                document.body.appendChild(a); // 确保添加到DOM
+                document.body.appendChild(a);
                 a.click();
-                document.body.removeChild(a); // 清理
+                document.body.removeChild(a);
                 URL.revokeObjectURL(url);
                 alert('导出成功！');
             } catch (error) {
@@ -1077,10 +1917,11 @@
             }
         }
 
-        // 导入数据
+        // ========== 导入数据 ==========
         async function importData(input) {
             const file = input.files[0];
             if (!file) return;
+
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
@@ -1089,22 +1930,25 @@
                         alert('无效的数据文件');
                         return;
                     }
+
                     if (!confirm('导入将覆盖当前所有数据，确定继续？')) return;
 
                     const stores = ['outfits', 'weight', 'periods', 'diaries', 'clothes', 'closetCategories'];
                     for (const store of stores) {
                         await clearStore(store);
                     }
+
                     for (const store of stores) {
                         const items = imported[store];
                         for (const item of items) {
-                            const { id, ...rest } = item; // 移除原有id
+                            const { id, ...rest } = item;
                             if (store === 'clothes' && rest.imageBlob && typeof rest.imageBlob === 'string') {
                                 rest.imageBlob = await base64ToBlob(rest.imageBlob);
                             }
                             await addData(store, rest);
                         }
                     }
+
                     alert('数据导入成功！');
                     const activeSection = document.querySelector('.nav-tab.active').dataset.section;
                     if (activeSection === 'outfit') loadOutfitHistory();
@@ -1122,127 +1966,267 @@
 
         async function clearAllData() {
             if (!confirm('确定要清空所有数据吗？此操作不可恢复！')) return;
-            await clearStore('outfits'); await clearStore('weight'); await clearStore('periods');
-            await clearStore('diaries'); await clearStore('clothes'); await clearStore('closetCategories');
-            alert('所有数据已清空'); location.reload();
-        }
-        function showFeatureAlert(feature) { alert(`${feature} 功能即将上线，敬请期待！`); }
 
-        // 导航切换
+            await clearStore('outfits');
+            await clearStore('weight');
+            await clearStore('periods');
+            await clearStore('diaries');
+            await clearStore('clothes');
+            await clearStore('closetCategories');
+
+            alert('所有数据已清空');
+            location.reload();
+        }
+
+        // ========== 导航切换 ==========
         function switchSection(sectionName) {
-            document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.section===sectionName));
-            document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.section===sectionName));
-            document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-            document.getElementById(sectionName+'-section').classList.add('active');
-            if(sectionName==='weight') loadWeightData();
-            if(sectionName==='period') loadPeriodData();
-            if(sectionName==='diary') loadDiaries();
-            if(sectionName==='outfit') loadOutfitHistory();
-        }
-        document.querySelectorAll('.nav-tab').forEach(t=>t.addEventListener('click',()=>switchSection(t.dataset.section)));
-        document.querySelectorAll('.nav-item').forEach(i=>i.addEventListener('click',()=>switchSection(i.dataset.section)));
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.section === sectionName);
+            });
 
-        // 初始化
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.section === sectionName);
+            });
+
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionName + '-section').classList.add('active');
+
+            if (sectionName === 'weight') loadWeightData();
+            if (sectionName === 'period') loadPeriodData();
+            if (sectionName === 'diary') loadDiaries();
+            if (sectionName === 'outfit') loadOutfitHistory();
+        }
+
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => switchSection(tab.dataset.section));
+        });
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => switchSection(item.dataset.section));
+        });
+
+        // ========== 初始化 ==========
         document.addEventListener('DOMContentLoaded', async () => {
             const now = new Date();
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-CN', { year:'numeric',month:'long',day:'numeric',weekday:'long' });
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-CN', options);
+
             const todayStr = now.toISOString().split('T')[0];
             document.getElementById('weightDate').value = todayStr;
             document.getElementById('diaryDate').value = todayStr;
             document.getElementById('periodStart').value = todayStr;
+
             try {
                 await initDB();
                 console.log('数据库初始化成功');
-                loadOutfitHistory(); loadWeightData(); loadPeriodData(); loadDiaries();
+
+                loadOutfitHistory();
+                loadWeightData();
+                loadPeriodData();
+                loadDiaries();
             } catch (error) {
                 console.error('数据库初始化失败:', error);
                 alert('数据库初始化失败，请检查浏览器是否支持IndexedDB');
             }
         });
 
-        // 模态框关闭事件
-        document.getElementById('diaryModal').addEventListener('click',e=>{if(e.target===document.getElementById('diaryModal')) closeModal();});
-        document.getElementById('photoModal').addEventListener('click',function(e){if(e.target===this) closePhotoModal();});
-        function closeModalById(id){ document.getElementById(id).classList.remove('active'); }
-        function closeClosetModal(){ document.getElementById('closetModal').classList.remove('active'); }
+        // ========== 模态框点击外部关闭 ==========
+        document.getElementById('diaryModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('diaryModal')) {
+                closeModal();
+            }
+        });
 
-        // 衣橱管理功能
+        document.getElementById('photoModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePhotoModal();
+            }
+        });
+
+        document.getElementById('closetModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('closetModal')) {
+                closeClosetModal();
+            }
+        });
+
+        document.getElementById('addCategoryModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('addCategoryModal')) {
+                closeModalById('addCategoryModal');
+            }
+        });
+
+        document.getElementById('addClothesModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('addClothesModal')) {
+                closeModalById('addClothesModal');
+            }
+        });
+
+        document.getElementById('editWeightModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('editWeightModal')) {
+                closeModalById('editWeightModal');
+            }
+        });
+
+        function closeModalById(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // ========== 衣橱管理功能 ==========
         let currentCategoryId = null;
-        async function openClosetModal() { await loadClosetCategories(); document.getElementById('closetModal').classList.add('active'); }
+
+        async function openClosetModal() {
+            await loadClosetCategories();
+            document.getElementById('closetModal').classList.add('active');
+        }
+
+        function closeClosetModal() {
+            document.getElementById('closetModal').classList.remove('active');
+        }
+
         async function loadClosetCategories() {
-            const cats = await getAllData('closetCategories');
-            const cont = document.getElementById('closetCategories');
-            if(!cats.length){ cont.innerHTML='<p>暂无分类</p>'; return; }
-            let html='';
-            cats.forEach(c=>html+=`<span class="category-tag ${currentCategoryId===c.id?'active':''}" onclick="selectCategory(${c.id})">${c.name}</span>`);
-            cont.innerHTML=html;
-            if(!currentCategoryId && cats.length>0) selectCategory(cats[0].id);
-            else loadClothesByCategory(currentCategoryId);
-        }
-        function selectCategory(id){ currentCategoryId=id; loadClosetCategories(); loadClothesByCategory(id); }
-        async function loadClothesByCategory(cid){
-            if(!cid) return;
-            const clothes = await getDataByIndex('clothes','categoryId',cid);
-            const cont = document.getElementById('closetItems');
-            if(!clothes.length){ cont.innerHTML='<p>该分类下暂无衣物</p>'; return; }
-            let html='';
-            clothes.forEach(item=>{
-                let imgUrl = item.imageBlob ? URL.createObjectURL(item.imageBlob) : '';
-                html+=`<div class="closet-item-card"><img src="${imgUrl||'https://via.placeholder.com/70'}"><div class="closet-item-code">${item.code}</div><button class="remove-item" onclick="deleteClothes(${item.id})">✕</button></div>`;
+            const categories = await getAllData('closetCategories');
+            const container = document.getElementById('closetCategories');
+            if (categories.length === 0) {
+                container.innerHTML = '<p style="color: #999;">暂无分类，请添加</p>';
+                return;
+            }
+            let html = '';
+            categories.forEach(cat => {
+                html += `<span class="category-tag ${currentCategoryId === cat.id ? 'active' : ''}" onclick="selectCategory(${cat.id})">${cat.name}</span>`;
             });
-            cont.innerHTML=html;
+            container.innerHTML = html;
+
+            if (!currentCategoryId && categories.length > 0) {
+                selectCategory(categories[0].id);
+            } else {
+                loadClothesByCategory(currentCategoryId);
+            }
         }
-        function showAddCategory(){ document.getElementById('addCategoryModal').classList.add('active'); }
-        async function addCategory(){
+
+        function selectCategory(categoryId) {
+            currentCategoryId = categoryId;
+            loadClosetCategories();
+            loadClothesByCategory(categoryId);
+        }
+
+        async function loadClothesByCategory(categoryId) {
+            if (!categoryId) return;
+            const clothes = await getDataByIndex('clothes', 'categoryId', categoryId);
+            const container = document.getElementById('closetItems');
+            if (clothes.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center;">该分类下暂无衣物</p>';
+                return;
+            }
+            let html = '';
+            clothes.forEach(item => {
+                let imgUrl = '';
+                if (item.imageBlob) {
+                    imgUrl = URL.createObjectURL(item.imageBlob);
+                }
+                html += `
+                    <div class="closet-item-card">
+                        <img src="${imgUrl || 'https://via.placeholder.com/70'}" alt="衣物">
+                        <div class="closet-item-code">${item.code}</div>
+                        <button class="remove-item" onclick="deleteClothes(${item.id})">✕</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function showAddCategory() {
+            document.getElementById('addCategoryModal').classList.add('active');
+        }
+
+        async function addCategory() {
             const name = document.getElementById('newCategoryName').value.trim();
-            if(!name){ alert('请输入分类名称'); return; }
-            const existing = await getDataByIndex('closetCategories','name',name);
-            if(existing.length>0){ alert('分类名称已存在'); return; }
-            await addData('closetCategories',{name});
-            document.getElementById('newCategoryName').value='';
+            if (!name) {
+                alert('请输入分类名称');
+                return;
+            }
+            const existing = await getDataByIndex('closetCategories', 'name', name);
+            if (existing.length > 0) {
+                alert('分类名称已存在');
+                return;
+            }
+            await addData('closetCategories', { name });
+            document.getElementById('newCategoryName').value = '';
             closeModalById('addCategoryModal');
             loadClosetCategories();
         }
-        function showAddClothes(){
-            if(!currentCategoryId){ alert('请先选择一个分类'); return; }
-            const sel = document.getElementById('clothesCategory');
-            sel.innerHTML='';
-            getAllData('closetCategories').then(cats=>{
-                cats.forEach(c=>{ let opt=document.createElement('option'); opt.value=c.id; opt.textContent=c.name; if(c.id===currentCategoryId) opt.selected=true; sel.appendChild(opt); });
+
+        function showAddClothes() {
+            if (!currentCategoryId) {
+                alert('请先选择一个分类');
+                return;
+            }
+            const select = document.getElementById('clothesCategory');
+            select.innerHTML = '';
+            getAllData('closetCategories').then(cats => {
+                cats.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    if (cat.id === currentCategoryId) option.selected = true;
+                    select.appendChild(option);
+                });
             });
             document.getElementById('addClothesModal').classList.add('active');
         }
-        async function addClothes(){
-            const catId = parseInt(document.getElementById('clothesCategory').value);
+
+        async function addClothes() {
+            const categoryId = parseInt(document.getElementById('clothesCategory').value);
             const code = document.getElementById('clothesCode').value.trim();
-            const file = document.getElementById('clothesImage').files[0];
-            if(!code){ alert('请输入衣物代码'); return; }
-            if(!file){ alert('请上传照片'); return; }
-            const compressed = await compressImage(file);
+            const fileInput = document.getElementById('clothesImage');
+            if (!code) {
+                alert('请输入衣物代码');
+                return;
+            }
+            if (!fileInput.files[0]) {
+                alert('请上传照片');
+                return;
+            }
+
+            const compressedFile = await compressImage(fileInput.files[0], 600, 0.8);
+            
             const reader = new FileReader();
-            reader.onload = async function(e){
+            reader.onload = async function(e) {
                 const blob = dataURLToBlob(e.target.result);
-                await addData('clothes', { categoryId:catId, code, imageBlob:blob, timestamp:Date.now() });
-                document.getElementById('clothesCode').value='';
-                document.getElementById('clothesImage').value='';
+                const clothesData = {
+                    categoryId: categoryId,
+                    code: code,
+                    imageBlob: blob,
+                    timestamp: new Date().getTime()
+                };
+                await addData('clothes', clothesData);
+                document.getElementById('clothesCode').value = '';
+                document.getElementById('clothesImage').value = '';
                 closeModalById('addClothesModal');
                 loadClothesByCategory(currentCategoryId);
             };
-            reader.readAsDataURL(compressed);
+            reader.readAsDataURL(compressedFile);
         }
-        function dataURLToBlob(dataURL){
-            const arr = dataURL.split(','), mime = arr[0].match(/:(.*?);/)[1];
-            const bstr = atob(arr[1]), u8 = new Uint8Array(bstr.length);
-            for(let i=0;i<bstr.length;i++) u8[i]=bstr.charCodeAt(i);
-            return new Blob([u8], {type:mime});
-        }
-        async function deleteClothes(id){ if(confirm('确定删除？')){ await deleteData('clothes',id); loadClothesByCategory(currentCategoryId); } }
 
-        // 为衣橱相关模态框添加点击外部关闭
-        document.getElementById('closetModal').addEventListener('click',e=>{if(e.target===document.getElementById('closetModal')) closeClosetModal();});
-        document.getElementById('addCategoryModal').addEventListener('click',e=>{if(e.target===document.getElementById('addCategoryModal')) closeModalById('addCategoryModal');});
-        document.getElementById('addClothesModal').addEventListener('click',e=>{if(e.target===document.getElementById('addClothesModal')) closeModalById('addClothesModal');});
-        document.getElementById('editWeightModal').addEventListener('click',e=>{if(e.target===document.getElementById('editWeightModal')) closeModalById('editWeightModal');});
+        function dataURLToBlob(dataURL) {
+            const arr = dataURL.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], { type: mime });
+        }
+
+        async function deleteClothes(id) {
+            if (confirm('确定删除这件衣物吗？')) {
+                await deleteData('clothes', id);
+                loadClothesByCategory(currentCategoryId);
+            }
+        }
     </script>
 </body>
 </html>
