@@ -6,7 +6,7 @@
     <title>美丽心情 - 生活管理</title>
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIue+juWbvOW/q+mAiSAtIOeUqOaIt+WuiSWFqCIsICJzaG9ydF9uYW1lIjogIue+juWbvOW/q+mAiSIsICJzdGFydF91cmwiOiAiLiIsICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLCAiYmFja2dyb3VuZF9jb2xvciI6ICIjZmZmZmZmIiwgInRoZW1lX2NvbG9yIjogIiNmZjZiNmIifQ==">
     <style>
-        /* 原有样式保持不变，新增图片模态框样式 */
+        /* 原有样式保持不变，仅补充生理期历史列表样式 */
         * {
             margin: 0;
             padding: 0;
@@ -478,6 +478,35 @@
             opacity: 0.9;
         }
 
+        /* 生理期历史列表 */
+        .period-history-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 16px;
+        }
+
+        .period-history-item {
+            background: #fef0f7;
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .period-history-dates {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .period-history-detail {
+            font-size: 12px;
+            color: var(--text-light);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
         /* 日记 */
         .diary-list {
             display: flex;
@@ -814,7 +843,7 @@
 
         <!-- 内容区域 -->
         <div class="content">
-            <!-- 穿搭模块（拍照上传功能已明确） -->
+            <!-- 穿搭模块 -->
             <div class="section active" id="outfit-section">
                 <div class="outfit-display" id="outfitDisplay">
                     <span class="outfit-emoji" id="outfitEmoji">👕</span>
@@ -856,7 +885,6 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">拍照或上传今日穿搭照片</label>
-                        <!-- 支持拍照或从相册选择 -->
                         <input type="file" class="form-input" id="outfitPhoto" accept="image/*" capture="environment" onchange="previewOutfitPhoto(this)">
                     </div>
                     <div id="outfitPreview" style="margin-top: 12px; display: none;">
@@ -874,7 +902,7 @@
                 </div>
             </div>
 
-            <!-- 体重模块（新增编辑功能） -->
+            <!-- 体重模块 -->
             <div class="section" id="weight-section">
                 <div class="card">
                     <div class="card-title">
@@ -921,7 +949,7 @@
                 </div>
             </div>
 
-            <!-- 生理期模块（不变） -->
+            <!-- 生理期模块（新增历史记录） -->
             <div class="section" id="period-section">
                 <div class="period-status" id="periodStatus">
                     <div class="status-item">
@@ -961,24 +989,35 @@
                         <label class="form-label">症状记录</label>
                         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
                             <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
-                                <input type="checkbox" class="period-symptom" value="cramps"> 痛经
+                                <input type="checkbox" class="period-symptom" value="痛经"> 痛经
                             </label>
                             <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
-                                <input type="checkbox" class="period-symptom" value="headache"> 头痛
+                                <input type="checkbox" class="period-symptom" value="头痛"> 头痛
                             </label>
                             <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
-                                <input type="checkbox" class="period-symptom" value="mood"> 情绪波动
+                                <input type="checkbox" class="period-symptom" value="情绪波动"> 情绪波动
                             </label>
                             <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
-                                <input type="checkbox" class="period-symptom" value="bloating"> 腹胀
+                                <input type="checkbox" class="period-symptom" value="腹胀"> 腹胀
                             </label>
                         </div>
                     </div>
                     <button class="btn btn-primary" onclick="savePeriod()">保存记录</button>
                 </div>
+
+                <!-- 新增：生理期历史记录列表 -->
+                <div class="card">
+                    <div class="card-title">
+                        <div class="card-icon" style="background: #fce4ec;">📜</div>
+                        历史记录
+                    </div>
+                    <div class="period-history-list" id="periodHistory">
+                        <!-- 动态填充 -->
+                    </div>
+                </div>
             </div>
 
-            <!-- 日记模块（已修复表情显示） -->
+            <!-- 日记模块 -->
             <div class="section" id="diary-section">
                 <div class="card">
                     <div class="card-title">
@@ -990,9 +1029,9 @@
                         <div class="mood-selector">
                             <button class="mood-btn" data-mood="happy">😊</button>
                             <button class="mood-btn" data-mood="calm">😌</button>
-                            <button class="mood-btn" data-mood="tired">😴</button>  <!-- 疲惫 -->
+                            <button class="mood-btn" data-mood="tired">😴</button>
                             <button class="mood-btn" data-mood="sad">😢</button>
-                            <button class="mood-btn" data-mood="excited">🤩</button> <!-- 兴奋 -->
+                            <button class="mood-btn" data-mood="excited">🤩</button>
                             <button class="mood-btn" data-mood="angry">😠</button>
                         </div>
                     </div>
@@ -1022,7 +1061,7 @@
                 </div>
             </div>
 
-            <!-- 更多模块（不变） -->
+            <!-- 更多模块（新增导入按钮） -->
             <div class="section" id="more-section">
                 <div class="card">
                     <div class="card-title">
@@ -1071,6 +1110,9 @@
                         数据管理
                     </div>
                     <button class="btn btn-secondary" onclick="exportData()" style="margin-bottom: 12px;">📥 导出所有数据</button>
+                    <!-- 新增导入按钮 -->
+                    <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()" style="margin-bottom: 12px;">📤 导入数据</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(this)">
                     <button class="btn btn-secondary" onclick="clearAllData()" style="background: #ffebee; color: #c62828;">🗑️ 清空所有数据</button>
                 </div>
             </div>
@@ -1205,7 +1247,7 @@
         </div>
     </div>
 
-    <!-- 新增：图片查看模态框 -->
+    <!-- 图片查看模态框 -->
     <div class="modal" id="photoModal">
         <div class="modal-content photo-modal-content" style="background: transparent; box-shadow: none;">
             <img id="photoModalImg" src="" alt="穿搭照片">
@@ -1253,7 +1295,7 @@
                         diaryStore.createIndex('date', 'date', { unique: false });
                     }
 
-                    // 新增：衣橱分类和衣物
+                    // 衣橱分类和衣物
                     if (!database.objectStoreNames.contains('closetCategories')) {
                         const catStore = database.createObjectStore('closetCategories', { keyPath: 'id', autoIncrement: true });
                         catStore.createIndex('name', 'name', { unique: true });
@@ -1303,7 +1345,7 @@
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([storeName], 'readwrite');
                 const store = transaction.objectStore(storeName);
-                const request = store.put(data); // put 会替换具有相同 keyPath 的记录
+                const request = store.put(data);
                 request.onsuccess = () => resolve(request.result);
                 request.onerror = () => reject(request.error);
             });
@@ -1319,7 +1361,6 @@
             });
         };
 
-        // 根据索引获取数据
         const getDataByIndex = (storeName, indexName, value) => {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([storeName], 'readonly');
@@ -1331,7 +1372,6 @@
             });
         };
 
-        // 根据id获取单条记录
         const getDataById = (storeName, id) => {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([storeName], 'readonly');
@@ -1398,7 +1438,6 @@
             else if (temp < 28) suggestion = outfitSuggestions.warm;
             else suggestion = outfitSuggestions.hot;
 
-            // 根据天气调整
             if (condition === 'rainy') {
                 suggestion = { ...suggestion, emoji: '☔', desc: suggestion.desc + ' + 雨具' };
             } else if (condition === 'snowy') {
@@ -1443,13 +1482,11 @@
             alert('穿搭记录已保存！');
             loadOutfitHistory();
 
-            // 清空表单
             document.getElementById('outfitPhoto').value = '';
             document.getElementById('outfitNote').value = '';
             document.getElementById('outfitPreview').style.display = 'none';
         }
 
-        // 新增：显示穿搭照片大图
         function showOutfitPhoto(photoUrl) {
             if (photoUrl) {
                 document.getElementById('photoModalImg').src = photoUrl;
@@ -1481,7 +1518,7 @@
             `).join('');
         }
 
-        // 体重管理：新增编辑功能
+        // 体重管理
         async function saveWeight() {
             const weight = parseFloat(document.getElementById('weightInput').value);
             const bodyFat = parseFloat(document.getElementById('bodyFatInput').value);
@@ -1503,12 +1540,10 @@
             alert('体重记录已保存！');
             loadWeightData();
 
-            // 清空表单
             document.getElementById('weightInput').value = '';
             document.getElementById('bodyFatInput').value = '';
         }
 
-        // 打开编辑模态框
         async function editWeight(id) {
             const record = await getDataById('weight', id);
             if (!record) return;
@@ -1519,7 +1554,6 @@
             document.getElementById('editWeightModal').classList.add('active');
         }
 
-        // 更新体重记录
         async function updateWeight() {
             const id = parseInt(document.getElementById('editWeightId').value);
             const weight = parseFloat(document.getElementById('editWeightValue').value);
@@ -1536,7 +1570,7 @@
                 date: date,
                 weight: weight,
                 bodyFat: bodyFat,
-                timestamp: new Date().getTime()  // 更新时间戳
+                timestamp: new Date().getTime()
             };
 
             await updateData('weight', updatedRecord);
@@ -1556,14 +1590,12 @@
                 return;
             }
 
-            // 排序并获取最新
             records.sort((a, b) => b.timestamp - a.timestamp);
             const latest = records[0];
 
             document.getElementById('currentWeight').textContent = latest.weight.toFixed(1);
             document.getElementById('currentBodyFat').textContent = latest.bodyFat ? latest.bodyFat.toFixed(1) : '--';
 
-            // 显示历史（包含编辑按钮）
             document.getElementById('weightHistory').innerHTML = records.slice(0, 10).map(item => `
                 <div class="history-item">
                     <span class="history-date">${item.date}</span>
@@ -1575,7 +1607,6 @@
                 </div>
             `).join('');
 
-            // 绘制图表
             drawWeightChart(records.slice().reverse());
         }
 
@@ -1609,7 +1640,6 @@
             const maxWeight = Math.max(...weights) + 1;
             const weightRange = maxWeight - minWeight;
 
-            // 如果有体脂数据，计算体脂范围
             let minFat = null, maxFat = null, fatRange = null;
             if (bodyFats.length > 0) {
                 minFat = Math.min(...bodyFats) - 1;
@@ -1621,7 +1651,6 @@
             const chartWidth = width - padding * 2;
             const chartHeight = height - padding * 2;
 
-            // 绘制网格线
             ctx.strokeStyle = '#e0e0e0';
             ctx.lineWidth = 1;
             for (let i = 0; i <= 4; i++) {
@@ -1632,7 +1661,6 @@
                 ctx.stroke();
             }
 
-            // 绘制体重线条 (红色)
             ctx.strokeStyle = '#ff6b6b';
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -1647,7 +1675,6 @@
 
             ctx.stroke();
 
-            // 绘制体重点
             records.forEach((record, index) => {
                 const x = padding + (chartWidth / (records.length - 1)) * index;
                 const y = padding + chartHeight - ((record.weight - minWeight) / weightRange) * chartHeight;
@@ -1663,7 +1690,6 @@
                 ctx.fill();
             });
 
-            // 绘制体脂线条 (蓝色) 仅当有体脂数据时
             if (bodyFats.length > 0) {
                 ctx.strokeStyle = '#4ecdc4';
                 ctx.lineWidth = 2;
@@ -1681,9 +1707,8 @@
                 });
 
                 ctx.stroke();
-                ctx.setLineDash([]); // 恢复实线
+                ctx.setLineDash([]);
 
-                // 绘制体脂点
                 records.forEach((record, index) => {
                     if (record.bodyFat) {
                         const x = padding + (chartWidth / (records.length - 1)) * index;
@@ -1701,7 +1726,6 @@
                     }
                 });
 
-                // 添加图例，包含单位
                 ctx.font = '12px sans-serif';
                 ctx.fillStyle = '#ff6b6b';
                 ctx.fillText('体重 (kg)', width - 110, 20);
@@ -1714,7 +1738,7 @@
             }
         }
 
-        // 生理期管理（不变）
+        // 生理期管理（新增历史记录显示）
         async function savePeriod() {
             const startDate = document.getElementById('periodStart').value;
             const endDate = document.getElementById('periodEnd').value;
@@ -1735,6 +1759,11 @@
             await addData('periods', data);
             alert('生理期记录已保存！');
             loadPeriodData();
+
+            // 清空表单
+            document.getElementById('periodStart').value = new Date().toISOString().split('T')[0];
+            document.getElementById('periodEnd').value = '';
+            document.querySelectorAll('.period-symptom').forEach(cb => cb.checked = false);
         }
 
         async function loadPeriodData() {
@@ -1743,7 +1772,9 @@
             if (periods.length === 0) {
                 document.getElementById('cycleDay').textContent = '--';
                 document.getElementById('nextPeriod').textContent = '--';
+                document.getElementById('periodHistory').innerHTML = '<div class="empty-state"><div class="empty-icon">🌸</div><p>暂无生理期记录</p></div>';
             } else {
+                // 排序，最新的在前
                 periods.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
                 const lastPeriod = periods[0];
                 const lastDate = new Date(lastPeriod.startDate);
@@ -1756,6 +1787,29 @@
                 nextPeriod.setDate(nextPeriod.getDate() + 28);
                 const daysUntil = Math.floor((nextPeriod - today) / (1000 * 60 * 60 * 24));
                 document.getElementById('nextPeriod').textContent = daysUntil > 0 ? daysUntil + '天' : '已到来';
+
+                // 渲染历史列表
+                let historyHtml = '';
+                periods.slice(0, 10).forEach(p => {
+                    const start = p.startDate;
+                    const end = p.endDate || '未记录';
+                    let duration = '';
+                    if (p.endDate) {
+                        const startObj = new Date(p.startDate);
+                        const endObj = new Date(p.endDate);
+                        const diffTime = Math.abs(endObj - startObj);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // 包含开始和结束
+                        duration = ` (${diffDays}天)`;
+                    }
+                    const symptomsText = p.symptoms && p.symptoms.length ? `症状: ${p.symptoms.join('、')}` : '';
+                    historyHtml += `
+                        <div class="period-history-item">
+                            <div class="period-history-dates">${start} 至 ${end}${duration}</div>
+                            <div class="period-history-detail">${symptomsText}</div>
+                        </div>
+                    `;
+                });
+                document.getElementById('periodHistory').innerHTML = historyHtml;
             }
 
             generateCalendar(periods);
@@ -1814,7 +1868,7 @@
             calendar.innerHTML = html;
         }
 
-        // 日记管理（已确保表情正确）
+        // 日记管理
         let selectedMood = '';
 
         document.querySelectorAll('.mood-btn').forEach(btn => {
@@ -1915,24 +1969,109 @@
             alert(`${feature} 功能即将上线，敬请期待！`);
         }
 
+        // 导出数据（包含图片Base64）
         async function exportData() {
-            const data = {
-                outfits: await getAllData('outfits'),
-                weight: await getAllData('weight'),
-                periods: await getAllData('periods'),
-                diaries: await getAllData('diaries'),
-                clothes: await getAllData('clothes'),
-                closetCategories: await getAllData('closetCategories'),
-                exportDate: new Date().toISOString()
-            };
+            const stores = ['outfits', 'weight', 'periods', 'diaries', 'clothes', 'closetCategories'];
+            const exportObj = {};
+            for (const store of stores) {
+                let data = await getAllData(store);
+                if (store === 'clothes') {
+                    // 将每个衣物的 imageBlob 转为 base64
+                    data = await Promise.all(data.map(async item => {
+                        if (item.imageBlob) {
+                            const base64 = await blobToBase64(item.imageBlob);
+                            return { ...item, imageBlob: base64 };
+                        }
+                        return item;
+                    }));
+                }
+                exportObj[store] = data;
+            }
+            exportObj.exportDate = new Date().toISOString();
 
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `beautiful_mood_backup_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             URL.revokeObjectURL(url);
+        }
+
+        // Blob 转 Base64
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        // 导入数据
+        async function importData(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!imported.outfits || !imported.weight || !imported.periods || !imported.diaries || !imported.clothes || !imported.closetCategories) {
+                        alert('无效的数据文件');
+                        return;
+                    }
+
+                    if (!confirm('导入将覆盖当前所有数据，确定继续？')) return;
+
+                    // 清空所有 stores
+                    const stores = ['outfits', 'weight', 'periods', 'diaries', 'clothes', 'closetCategories'];
+                    for (const store of stores) {
+                        await clearStore(store);
+                    }
+
+                    // 重新添加数据（注意移除 id 字段，让数据库自动生成新 id）
+                    for (const store of stores) {
+                        const items = imported[store];
+                        for (const item of items) {
+                            const { id, ...rest } = item; // 移除原有id
+                            if (store === 'clothes' && rest.imageBlob && typeof rest.imageBlob === 'string') {
+                                // 将 base64 转回 Blob
+                                rest.imageBlob = await base64ToBlob(rest.imageBlob);
+                            }
+                            await addData(store, rest);
+                        }
+                    }
+
+                    alert('数据导入成功！');
+                    // 刷新当前页面数据
+                    const activeSection = document.querySelector('.nav-tab.active').dataset.section;
+                    if (activeSection === 'outfit') loadOutfitHistory();
+                    if (activeSection === 'weight') loadWeightData();
+                    if (activeSection === 'period') loadPeriodData();
+                    if (activeSection === 'diary') loadDiaries();
+                } catch (err) {
+                    alert('导入失败：' + err.message);
+                } finally {
+                    input.value = ''; // 清空input
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Base64 转 Blob
+        function base64ToBlob(base64) {
+            return new Promise((resolve) => {
+                const arr = base64.split(',');
+                const mime = arr[0].match(/:(.*?);/)[1];
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                resolve(new Blob([u8arr], { type: mime }));
+            });
         }
 
         async function clearAllData() {
@@ -2009,14 +2148,13 @@
             }
         });
 
-        // 图片模态框关闭（点击背景）
         document.getElementById('photoModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closePhotoModal();
             }
         });
 
-        // 衣橱管理功能（与之前相同，略作调整但核心不变）
+        // 衣橱管理功能（保持不变）
         let currentCategoryId = null;
 
         async function openClosetModal() {
