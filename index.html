@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>美丽心情 - 生活管理</title>
-    <!-- 更新manifest，名称改为美丽心情 -->
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIue+juWbvOW/q+mAiSAtIOeUqOaIt+WuiSWFqCIsICJzaG9ydF9uYW1lIjogIue+juWbvOW/q+mAiSIsICJzdGFydF91cmwiOiAiLiIsICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLCAiYmFja2dyb3VuZF9jb2xvciI6ICIjZmZmZmZmIiwgInRoZW1lX2NvbG9yIjogIiNmZjZiNmIifQ==">
     <style>
-        /* 原有样式保持不变，添加衣橱管理相关样式 */
+        /* 原有样式保持不变，仅添加体重编辑按钮相关样式 */
         * {
             margin: 0;
             padding: 0;
@@ -608,6 +607,24 @@
             color: var(--primary);
         }
 
+        .history-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .edit-btn {
+            background: none;
+            border: none;
+            color: #4ecdc4;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .edit-btn:hover {
+            color: #2c9b92;
+        }
+
         /* 空状态 */
         .empty-state {
             text-align: center;
@@ -742,7 +759,7 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- 头部，名称改为美丽心情 -->
+        <!-- 头部 -->
         <div class="header">
             <h1>美丽心情</h1>
             <div class="date-display" id="currentDate"></div>
@@ -759,7 +776,7 @@
 
         <!-- 内容区域 -->
         <div class="content">
-            <!-- 穿搭模块 -->
+            <!-- 穿搭模块（拍照上传功能已明确） -->
             <div class="section active" id="outfit-section">
                 <div class="outfit-display" id="outfitDisplay">
                     <span class="outfit-emoji" id="outfitEmoji">👕</span>
@@ -784,7 +801,7 @@
                     <button class="btn btn-primary" onclick="generateOutfit()">生成穿搭建议</button>
                 </div>
 
-                <!-- 新增：衣橱管理按钮 -->
+                <!-- 衣橱管理按钮 -->
                 <div class="card">
                     <div class="card-title">
                         <div class="card-icon" style="background: #f3e5f5;">👚</div>
@@ -800,8 +817,9 @@
                         我的穿搭记录
                     </div>
                     <div class="form-group">
-                        <label class="form-label">上传今日穿搭照片</label>
-                        <input type="file" class="form-input" id="outfitPhoto" accept="image/*" onchange="previewOutfitPhoto(this)">
+                        <label class="form-label">拍照或上传今日穿搭照片</label>
+                        <!-- 支持拍照或从相册选择 -->
+                        <input type="file" class="form-input" id="outfitPhoto" accept="image/*" capture="environment" onchange="previewOutfitPhoto(this)">
                     </div>
                     <div id="outfitPreview" style="margin-top: 12px; display: none;">
                         <img id="outfitImg" style="width: 100%; border-radius: 12px; max-height: 300px; object-fit: cover;">
@@ -818,7 +836,7 @@
                 </div>
             </div>
 
-            <!-- 体重模块 -->
+            <!-- 体重模块（新增编辑功能） -->
             <div class="section" id="weight-section">
                 <div class="card">
                     <div class="card-title">
@@ -860,12 +878,12 @@
                         <canvas id="weightCanvas" width="360" height="200"></canvas>
                     </div>
                     <div class="history-list" id="weightHistory">
-                        <!-- 历史记录 -->
+                        <!-- 历史记录 + 编辑按钮 -->
                     </div>
                 </div>
             </div>
 
-            <!-- 生理期模块 -->
+            <!-- 生理期模块（不变） -->
             <div class="section" id="period-section">
                 <div class="period-status" id="periodStatus">
                     <div class="status-item">
@@ -922,7 +940,7 @@
                 </div>
             </div>
 
-            <!-- 日记模块 -->
+            <!-- 日记模块（已修复表情显示） -->
             <div class="section" id="diary-section">
                 <div class="card">
                     <div class="card-title">
@@ -934,9 +952,9 @@
                         <div class="mood-selector">
                             <button class="mood-btn" data-mood="happy">😊</button>
                             <button class="mood-btn" data-mood="calm">😌</button>
-                            <button class="mood-btn" data-mood="tired">😴</button>
+                            <button class="mood-btn" data-mood="tired">😴</button>  <!-- 疲惫 -->
                             <button class="mood-btn" data-mood="sad">😢</button>
-                            <button class="mood-btn" data-mood="excited">🤩</button>
+                            <button class="mood-btn" data-mood="excited">🤩</button> <!-- 兴奋 -->
                             <button class="mood-btn" data-mood="angry">😠</button>
                         </div>
                     </div>
@@ -966,7 +984,7 @@
                 </div>
             </div>
 
-            <!-- 更多模块 -->
+            <!-- 更多模块（不变） -->
             <div class="section" id="more-section">
                 <div class="card">
                     <div class="card-title">
@@ -1045,7 +1063,7 @@
         </div>
     </div>
 
-    <!-- 衣橱管理模态框 -->
+    <!-- 衣橱管理模态框（不变） -->
     <div class="modal" id="closetModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1068,7 +1086,7 @@
         </div>
     </div>
 
-    <!-- 添加分类模态框 -->
+    <!-- 添加分类模态框（不变） -->
     <div class="modal" id="addCategoryModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1085,7 +1103,7 @@
         </div>
     </div>
 
-    <!-- 添加衣物模态框 -->
+    <!-- 添加衣物模态框（不变） -->
     <div class="modal" id="addClothesModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1102,7 +1120,7 @@
                     <input type="text" class="form-input" id="clothesCode" placeholder="如 D01">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">上传照片 (可拍照)</label>
+                    <label class="form-label">拍照或上传照片</label>
                     <input type="file" class="form-input" id="clothesImage" accept="image/*" capture="environment">
                 </div>
                 <button class="btn btn-primary" onclick="addClothes()">保存</button>
@@ -1110,7 +1128,33 @@
         </div>
     </div>
 
-    <!-- 日记详情模态框 -->
+    <!-- 体重编辑模态框（新增） -->
+    <div class="modal" id="editWeightModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">编辑体重记录</div>
+                <button class="modal-close" onclick="closeModalById('editWeightModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">日期</label>
+                    <input type="text" class="form-input" id="editWeightDate" readonly disabled style="background: #f0f0f0;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">体重 (kg)</label>
+                    <input type="number" step="0.1" class="form-input" id="editWeightValue">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">体脂率 (%)</label>
+                    <input type="number" step="0.1" class="form-input" id="editBodyFatValue">
+                </div>
+                <input type="hidden" id="editWeightId">
+                <button class="btn btn-primary" onclick="updateWeight()">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日记详情模态框（不变） -->
     <div class="modal" id="diaryModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1124,7 +1168,7 @@
     </div>
 
     <script>
-        // IndexedDB 初始化，版本升级到2
+        // IndexedDB 初始化，版本升级到2（已有衣橱stores）
         const DB_NAME = 'LifeFlowDB';
         const DB_VERSION = 2;
         let db;
@@ -1209,6 +1253,16 @@
             });
         };
 
+        const updateData = (storeName, data) => {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.put(data); // put 会替换具有相同 keyPath 的记录
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        };
+
         const clearStore = (storeName) => {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([storeName], 'readwrite');
@@ -1219,13 +1273,24 @@
             });
         };
 
-        // 新增：根据索引获取数据
+        // 根据索引获取数据
         const getDataByIndex = (storeName, indexName, value) => {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([storeName], 'readonly');
                 const store = transaction.objectStore(storeName);
                 const index = store.index(indexName);
                 const request = index.getAll(value);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        };
+
+        // 根据id获取单条记录
+        const getDataById = (storeName, id) => {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.get(id);
                 request.onsuccess = () => resolve(request.result);
                 request.onerror = () => reject(request.error);
             });
@@ -1262,7 +1327,7 @@
             });
         }
 
-        // 穿搭建议逻辑 (保持不变)
+        // 穿搭建议逻辑
         const outfitSuggestions = {
             cold: { emoji: '🧥', desc: '寒冷天气 - 羽绒服/大衣', items: ['羽绒服', '毛衣', '围巾', '手套'] },
             cool: { emoji: '🧥', desc: '凉爽天气 - 外套/夹克', items: ['风衣', '长袖', '牛仔裤'] },
@@ -1358,7 +1423,7 @@
             `).join('');
         }
 
-        // 体重管理：新增体脂率趋势
+        // 体重管理：新增编辑功能
         async function saveWeight() {
             const weight = parseFloat(document.getElementById('weightInput').value);
             const bodyFat = parseFloat(document.getElementById('bodyFatInput').value);
@@ -1385,6 +1450,43 @@
             document.getElementById('bodyFatInput').value = '';
         }
 
+        // 打开编辑模态框
+        async function editWeight(id) {
+            const record = await getDataById('weight', id);
+            if (!record) return;
+            document.getElementById('editWeightId').value = record.id;
+            document.getElementById('editWeightDate').value = record.date;
+            document.getElementById('editWeightValue').value = record.weight;
+            document.getElementById('editBodyFatValue').value = record.bodyFat || '';
+            document.getElementById('editWeightModal').classList.add('active');
+        }
+
+        // 更新体重记录
+        async function updateWeight() {
+            const id = parseInt(document.getElementById('editWeightId').value);
+            const weight = parseFloat(document.getElementById('editWeightValue').value);
+            const bodyFat = parseFloat(document.getElementById('editBodyFatValue').value) || null;
+            const date = document.getElementById('editWeightDate').value;
+
+            if (isNaN(weight)) {
+                alert('请输入有效的体重');
+                return;
+            }
+
+            const updatedRecord = {
+                id: id,
+                date: date,
+                weight: weight,
+                bodyFat: bodyFat,
+                timestamp: new Date().getTime()  // 更新时间戳
+            };
+
+            await updateData('weight', updatedRecord);
+            alert('记录已更新');
+            closeModalById('editWeightModal');
+            loadWeightData();
+        }
+
         async function loadWeightData() {
             const records = await getAllData('weight');
 
@@ -1403,16 +1505,27 @@
             document.getElementById('currentWeight').textContent = latest.weight.toFixed(1);
             document.getElementById('currentBodyFat').textContent = latest.bodyFat ? latest.bodyFat.toFixed(1) : '--';
 
-            // 显示历史
+            // 显示历史（包含编辑按钮）
             document.getElementById('weightHistory').innerHTML = records.slice(0, 10).map(item => `
                 <div class="history-item">
                     <span class="history-date">${item.date}</span>
                     <span class="history-value">${item.weight}kg ${item.bodyFat ? '(' + item.bodyFat + '%)' : ''}</span>
+                    <div class="history-actions">
+                        <button class="edit-btn" onclick="editWeight(${item.id})" title="编辑">✏️</button>
+                        <button class="delete-btn" onclick="deleteWeight(${item.id})" style="background:none; border:none; color:#f43f5e; font-size:18px;" title="删除">🗑️</button>
+                    </div>
                 </div>
             `).join('');
 
-            // 绘制图表（同时显示体重和体脂）
+            // 绘制图表
             drawWeightChart(records.slice().reverse());
+        }
+
+        async function deleteWeight(id) {
+            if (confirm('确定删除这条记录吗？')) {
+                await deleteData('weight', id);
+                loadWeightData();
+            }
         }
 
         function drawWeightChart(records) {
@@ -1543,7 +1656,7 @@
             }
         }
 
-        // 生理期管理 (保持不变)
+        // 生理期管理（不变）
         async function savePeriod() {
             const startDate = document.getElementById('periodStart').value;
             const endDate = document.getElementById('periodEnd').value;
@@ -1573,7 +1686,6 @@
                 document.getElementById('cycleDay').textContent = '--';
                 document.getElementById('nextPeriod').textContent = '--';
             } else {
-                // 计算周期
                 periods.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
                 const lastPeriod = periods[0];
                 const lastDate = new Date(lastPeriod.startDate);
@@ -1582,7 +1694,6 @@
 
                 document.getElementById('cycleDay').textContent = diffDays + 1;
 
-                // 预测下次（假设28天周期）
                 const nextPeriod = new Date(lastDate);
                 nextPeriod.setDate(nextPeriod.getDate() + 28);
                 const daysUntil = Math.floor((nextPeriod - today) / (1000 * 60 * 60 * 24));
@@ -1604,26 +1715,22 @@
             const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
             let html = weekDays.map(d => `<div class="calendar-header">${d}</div>`).join('');
 
-            // 空白
             for (let i = 0; i < firstDay; i++) {
                 html += '<div></div>';
             }
 
-            // 日期
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const isToday = day === today.getDate();
 
-                // 检查是否是生理期
                 const isPeriod = periods.some(p => {
                     const start = new Date(p.startDate);
                     const end = p.endDate ? new Date(p.endDate) : new Date(start);
-                    end.setDate(end.getDate() + 5); // 默认5天
+                    end.setDate(end.getDate() + 5);
                     const current = new Date(dateStr);
                     return current >= start && current <= end;
                 });
 
-                // 检查是否是预测生理期
                 let isPredicted = false;
                 if (periods.length > 0) {
                     const lastPeriod = periods[0];
@@ -1649,7 +1756,7 @@
             calendar.innerHTML = html;
         }
 
-        // 日记管理 (保持不变)
+        // 日记管理（已确保表情正确）
         let selectedMood = '';
 
         document.querySelectorAll('.mood-btn').forEach(btn => {
@@ -1682,7 +1789,6 @@
             alert('日记已保存！');
             loadDiaries();
 
-            // 清空表单
             document.getElementById('diaryTitle').value = '';
             document.getElementById('diaryContent').value = '';
             document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
@@ -1787,30 +1893,25 @@
 
         // 导航切换
         function switchSection(sectionName) {
-            // 更新标签状态
             document.querySelectorAll('.nav-tab').forEach(tab => {
                 tab.classList.toggle('active', tab.dataset.section === sectionName);
             });
 
-            // 更新底部导航
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.toggle('active', item.dataset.section === sectionName);
             });
 
-            // 切换内容
             document.querySelectorAll('.section').forEach(section => {
                 section.classList.remove('active');
             });
             document.getElementById(sectionName + '-section').classList.add('active');
 
-            // 加载数据
             if (sectionName === 'weight') loadWeightData();
             if (sectionName === 'period') loadPeriodData();
             if (sectionName === 'diary') loadDiaries();
             if (sectionName === 'outfit') loadOutfitHistory();
         }
 
-        // 事件监听
         document.querySelectorAll('.nav-tab').forEach(tab => {
             tab.addEventListener('click', () => switchSection(tab.dataset.section));
         });
@@ -1821,23 +1922,19 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', async () => {
-            // 设置当前日期
             const now = new Date();
             const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
             document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-CN', options);
 
-            // 设置默认日期
             const todayStr = now.toISOString().split('T')[0];
             document.getElementById('weightDate').value = todayStr;
             document.getElementById('diaryDate').value = todayStr;
             document.getElementById('periodStart').value = todayStr;
 
-            // 初始化数据库
             try {
                 await initDB();
                 console.log('数据库初始化成功');
 
-                // 加载初始数据
                 loadOutfitHistory();
                 loadWeightData();
                 loadPeriodData();
@@ -1848,14 +1945,13 @@
             }
         });
 
-        // 点击模态框外部关闭
         document.getElementById('diaryModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('diaryModal')) {
                 closeModal();
             }
         });
 
-        // ----- 衣橱管理功能 -----
+        // 衣橱管理功能（与之前相同，略作调整但核心不变）
         let currentCategoryId = null;
 
         async function openClosetModal() {
@@ -1880,7 +1976,6 @@
             });
             container.innerHTML = html;
 
-            // 如果还没有选中的分类，默认选中第一个
             if (!currentCategoryId && categories.length > 0) {
                 selectCategory(categories[0].id);
             } else {
@@ -1890,7 +1985,7 @@
 
         function selectCategory(categoryId) {
             currentCategoryId = categoryId;
-            loadClosetCategories(); // 刷新active样式
+            loadClosetCategories();
             loadClothesByCategory(categoryId);
         }
 
@@ -1929,7 +2024,6 @@
                 alert('请输入分类名称');
                 return;
             }
-            // 检查重名
             const existing = await getDataByIndex('closetCategories', 'name', name);
             if (existing.length > 0) {
                 alert('分类名称已存在');
@@ -1946,7 +2040,6 @@
                 alert('请先选择一个分类');
                 return;
             }
-            // 填充分类下拉框
             const select = document.getElementById('clothesCategory');
             select.innerHTML = '';
             getAllData('closetCategories').then(cats => {
@@ -1974,10 +2067,8 @@
                 return;
             }
 
-            // 压缩图片
             const compressedFile = await compressImage(fileInput.files[0], 600, 0.8);
             
-            // 将文件转为Blob存储
             const reader = new FileReader();
             reader.onload = async function(e) {
                 const blob = dataURLToBlob(e.target.result);
@@ -1996,7 +2087,6 @@
             reader.readAsDataURL(compressedFile);
         }
 
-        // 将dataURL转换为Blob
         function dataURLToBlob(dataURL) {
             const arr = dataURL.split(',');
             const mime = arr[0].match(/:(.*?);/)[1];
@@ -2020,7 +2110,6 @@
             document.getElementById(modalId).classList.remove('active');
         }
 
-        // 为衣橱模态框添加点击外部关闭
         document.getElementById('closetModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('closetModal')) {
                 closeClosetModal();
@@ -2034,6 +2123,11 @@
         document.getElementById('addClothesModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('addClothesModal')) {
                 closeModalById('addClothesModal');
+            }
+        });
+        document.getElementById('editWeightModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('editWeightModal')) {
+                closeModalById('editWeightModal');
             }
         });
     </script>
