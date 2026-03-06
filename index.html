@@ -6,7 +6,7 @@
     <title>美丽心情 - 生活管理</title>
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIue+juWbvOW/q+mAiSAtIOeUqOaIt+WuiSWFqCIsICJzaG9ydF9uYW1lIjogIue+juWbvOW/q+mAiSIsICJzdGFydF91cmwiOiAiLiIsICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLCAiYmFja2dyb3VuZF9jb2xvciI6ICIjZmZmZmZmIiwgInRoZW1lX2NvbG9yIjogIiNmZjZiNmIifQ==">
     <style>
-        /* 原有样式保持不变，仅添加体重编辑按钮相关样式 */
+        /* 原有样式保持不变，新增图片模态框样式 */
         * {
             margin: 0;
             padding: 0;
@@ -625,6 +625,15 @@
             color: #2c9b92;
         }
 
+        .photo-icon {
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .photo-icon:hover {
+            transform: scale(1.2);
+        }
+
         /* 空状态 */
         .empty-state {
             text-align: center;
@@ -736,6 +745,35 @@
 
         .modal-body {
             padding: 24px;
+        }
+
+        /* 图片查看模态框 */
+        .photo-modal-content {
+            background: transparent;
+            max-width: 90%;
+            text-align: center;
+        }
+        .photo-modal-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .photo-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.8);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* 响应式 */
@@ -1167,6 +1205,14 @@
         </div>
     </div>
 
+    <!-- 新增：图片查看模态框 -->
+    <div class="modal" id="photoModal">
+        <div class="modal-content photo-modal-content" style="background: transparent; box-shadow: none;">
+            <img id="photoModalImg" src="" alt="穿搭照片">
+            <button class="photo-modal-close" onclick="closePhotoModal()">&times;</button>
+        </div>
+    </div>
+
     <script>
         // IndexedDB 初始化，版本升级到2（已有衣橱stores）
         const DB_NAME = 'LifeFlowDB';
@@ -1403,6 +1449,18 @@
             document.getElementById('outfitPreview').style.display = 'none';
         }
 
+        // 新增：显示穿搭照片大图
+        function showOutfitPhoto(photoUrl) {
+            if (photoUrl) {
+                document.getElementById('photoModalImg').src = photoUrl;
+                document.getElementById('photoModal').classList.add('active');
+            }
+        }
+
+        function closePhotoModal() {
+            document.getElementById('photoModal').classList.remove('active');
+        }
+
         async function loadOutfitHistory() {
             const history = await getAllData('outfits');
             const container = document.getElementById('outfitHistory');
@@ -1418,7 +1476,7 @@
                         <div class="history-date">${item.date} ${item.temp ? item.temp + '°C' : ''}</div>
                         <div style="font-size: 12px; color: #666; margin-top: 4px;">${item.note || '无备注'}</div>
                     </div>
-                    ${item.photo ? '<span style="font-size: 20px;">📷</span>' : ''}
+                    ${item.photo ? `<span class="photo-icon" onclick="showOutfitPhoto('${item.photo}')" style="font-size: 20px; cursor: pointer;">📷</span>` : ''}
                 </div>
             `).join('');
         }
@@ -1643,16 +1701,16 @@
                     }
                 });
 
-                // 添加图例
+                // 添加图例，包含单位
                 ctx.font = '12px sans-serif';
                 ctx.fillStyle = '#ff6b6b';
-                ctx.fillText('体重', width - 100, 20);
+                ctx.fillText('体重 (kg)', width - 110, 20);
                 ctx.fillStyle = '#4ecdc4';
-                ctx.fillText('体脂', width - 100, 40);
+                ctx.fillText('体脂 (%)', width - 110, 40);
             } else {
                 ctx.font = '12px sans-serif';
                 ctx.fillStyle = '#ff6b6b';
-                ctx.fillText('体重', width - 80, 20);
+                ctx.fillText('体重 (kg)', width - 90, 20);
             }
         }
 
@@ -1948,6 +2006,13 @@
         document.getElementById('diaryModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('diaryModal')) {
                 closeModal();
+            }
+        });
+
+        // 图片模态框关闭（点击背景）
+        document.getElementById('photoModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePhotoModal();
             }
         });
 
