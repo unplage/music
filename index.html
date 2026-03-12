@@ -459,7 +459,7 @@
             });
         }
         
-        // ==================== 加载模型（自动缓存） ====================
+        // ==================== 加载模型（自动缓存）- 修复版 ====================
         async function loadModel() {
             document.getElementById('loadingBar').style.display = 'block';
             document.getElementById('loadingProgress').style.width = '0%';
@@ -468,7 +468,24 @@
             document.getElementById('errorBox').classList.remove('show');
             
             try {
-                // 1. 尝试从缓存读取
+                // 关键修复1：配置WASM路径 - 使用与JS库完全匹配的版本
+                if (typeof ort === 'undefined') {
+                    throw new Error('ONNX Runtime 库未加载，请检查网络连接');
+                }
+                
+                // 使用与 ort.min.js 完全相同的版本 1.20.0
+                ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.0/dist/';
+                
+                // 关键修复2：禁用多线程和SIMD，避免兼容性问题
+                ort.env.wasm.numThreads = 1;
+                ort.env.wasm.simd = false;
+                
+                // 关键修复3：设置代理模式，避免Worker问题
+                ort.env.wasm.proxy = false;
+                
+                logDebug(`WASM路径已设置: ${ort.env.wasm.wasmPaths}`);
+                
+                // 1. 尝试从缓存读取模型
                 let modelData = await getCachedModel();
                 
                 if (modelData) {
@@ -476,12 +493,18 @@
                     document.getElementById('loadingText').textContent = '从缓存加载模型...';
                     document.getElementById('loadingProgress').style.width = '50%';
                 } else {
-                    // 2. 从 GitHub 下载
+                    // 2. 从服务器下载模型
                     logDebug('未找到缓存，开始下载模型');
                     document.getElementById('loadingText').textContent = '正在下载模型 (首次使用)...';
                     
-                    const response = await fetch(MODEL_URL, { method: 'GET' });
-                    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    const response = await fetch(MODEL_URL, { 
+                        method: 'GET',
+                        cache: 'force-cache' // 尝试使用浏览器缓存
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText} - 请确保 ${MODEL_URL} 文件存在`);
+                    }
                     
                     const contentLength = response.headers.get('content-length');
                     const total = contentLength ? parseInt(contentLength) : 0;
@@ -504,6 +527,7 @@
                         }
                     }
                     
+                    // 合并chunks
                     const arrayBuffer = new Uint8Array(received);
                     let position = 0;
                     for (const chunk of chunks) {
@@ -513,7 +537,7 @@
                     
                     modelData = arrayBuffer.buffer;
                     
-                    // 存入缓存
+                    // 存入IndexedDB缓存
                     await cacheModel(modelData);
                     logDebug('模型已缓存到本地');
                 }
@@ -521,21 +545,19 @@
                 document.getElementById('loadingProgress').style.width = '100%';
                 document.getElementById('loadingText').textContent = '正在初始化模型...';
                 
-                // 3. 初始化 ONNX Runtime
-                if (typeof ort === 'undefined') throw new Error('ONNX Runtime 库未加载');
+                // 3. 初始化 ONNX Runtime - 使用更保守的配置
+                logDebug('正在创建推理会话...');
                 
-                // 关键修复：指定 wasm 文件路径
-                ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.0/dist/';
-                ort.env.wasm.numThreads = 1;
-                ort.env.wasm.simd = false;
+                const sessionOptions = {
+                    executionProviders: ['wasm'], // 仅使用WASM，避免其他后端冲突
+                    graphOptimizationLevel: 'basic', // 使用basic级别，避免高级优化导致的问题
+                    logSeverityLevel: 2 // 显示警告和错误
+                };
                 
-                session = await ort.InferenceSession.create(modelData, {
-                    executionProviders: ['wasm'],
-                    graphOptimizationLevel: 'basic'
-                });
+                session = await ort.InferenceSession.create(modelData, sessionOptions);
                 
                 modelLoaded = true;
-                logDebug(`模型加载成功，输入: ${session.inputNames[0]}, 输出: ${session.outputNames[0]}`);
+                logDebug(`模型加载成功！输入: ${session.inputNames.join(', ')}, 输出: ${session.outputNames.join(', ')}`);
                 
                 // 更新界面
                 document.getElementById('splash').classList.add('hidden');
@@ -546,15 +568,33 @@
             } catch (error) {
                 let errorMsg = error.message || error.toString();
                 logDebug(`加载失败: ${errorMsg}`, true);
+                console.error('完整错误:', error);
+                
                 document.getElementById('loadingBar').style.display = 'none';
                 document.getElementById('loadingStatus').style.display = 'none';
-                document.getElementById('errorMessage').innerHTML = errorMsg;
+                document.getElementById('errorMessage').innerHTML = `
+                    <div style="margin-bottom: 10px;">${errorMsg}</div>
+                    <div style="font-size: 0.8rem; color: #94a3b8;">
+                        提示：如果问题持续存在，请检查：<br>
+                        1. 网络连接是否正常<br>
+                        2. 浏览器是否支持 WebAssembly<br>
+                        3. 是否有广告拦截器阻止了CDN资源加载
+                    </div>
+                `;
                 document.getElementById('errorBox').classList.add('show');
             }
         }
         
         // 页面加载后自动开始加载模型
         window.addEventListener('load', loadModel);
+        
+        // 重试加载
+        window.retryLoadModel = function() {
+            document.getElementById('loadingBar').style.display = 'block';
+            document.getElementById('loadingStatus').style.display = 'block';
+            document.getElementById('errorBox').classList.remove('show');
+            loadModel();
+        };
         
         // ==================== 图片上传处理 ====================
         document.getElementById('fileInput').addEventListener('change', handleFile);
@@ -661,8 +701,6 @@
                         label: COCO_CLASSES[d.classId] || `class_${d.classId}`,
                         displayLabel: COCO_CLASSES[d.classId] || `c${d.classId}`
                     }));
-                
-                // tensor.dispose(); // 已确认无此方法，故注释
                 
                 const processTime = Math.round(performance.now() - startTime);
                 updateStats(processTime);
@@ -798,9 +836,6 @@
             const zoom = parseFloat(document.getElementById('zoomSlider').value);
             const showLabels = document.getElementById('showLabels').checked;
             const showConfidence = document.getElementById('showConfidence').checked;
-            
-            // 为每个类别分配不同颜色（简单使用 HSL）
-            const colorMap = {};
             
             detections.forEach((det, idx) => {
                 const x = det.x1 * zoom;
@@ -941,4 +976,3 @@
     </script>
 </body>
 </html>
-
