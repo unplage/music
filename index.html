@@ -79,6 +79,7 @@
         .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
         .btn-secondary { background: var(--secondary); color: white; }
         .btn-success { background: var(--success); color: white; }
+        .btn-clear-cache { background: var(--warning); color: white; }
         input[type="file"] { display: none; }
         
         .viewer { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.5s; }
@@ -334,6 +335,10 @@
                             </button>
                             <button class="btn btn-danger btn-small" onclick="resetApp()">
                                 <span>🗑️</span><span>清空</span>
+                            </button>
+                            <!-- 新增：清除模型缓存按钮 -->
+                            <button class="btn btn-clear-cache btn-small" onclick="clearModelCache()">
+                                <span>🧹</span><span>清除模型缓存</span>
                             </button>
                         </div>
                     </div>
@@ -643,6 +648,30 @@
         // 重试加载
         function retryLoadModel() {
             loadModel();
+        }
+        
+        // ==================== 清除模型缓存 ====================
+        async function clearModelCache() {
+            if (!confirm('⚠️ 清除缓存后将删除所有已下载的模型，下次使用需要重新下载。是否继续？')) {
+                return;
+            }
+            
+            try {
+                const db = await openDB();
+                const tx = db.transaction('models', 'readwrite');
+                const store = tx.objectStore('models');
+                await store.clear();
+                await tx.done;
+                
+                showToast('🧹 模型缓存已清除');
+                logDebug('所有模型缓存已清除');
+                
+                // 重新加载当前模型（会重新下载）
+                await loadModel();
+            } catch (error) {
+                console.error('清除缓存失败:', error);
+                showToast('❌ 清除缓存失败: ' + error.message);
+            }
         }
         
         // ==================== 图片上传处理 ====================
@@ -1041,7 +1070,7 @@
                     eCtx.lineWidth = 1;
                     eCtx.stroke();
                     
-                    const label = `#${idx+1}`;
+                    let label = `#${idx+1}`;
                     if (document.getElementById('showConfidence').checked) label += ` ${(confidence*100).toFixed(0)}%`;
                     eCtx.fillStyle = 'black';
                     eCtx.font = 'bold 12px Arial';
