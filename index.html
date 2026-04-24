@@ -1,2125 +1,633 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
-    <title>高级像素方块</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        html, body {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        }
-        
-        body {
-            color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none;
-            user-select: none;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-        
-        #gameContainer {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            padding: 8px 8px 0;
-        }
-        
-        #topBar {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            flex-shrink: 0;
-            height: 40px;
-            min-height: 40px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 10px;
-            padding: 0 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        #info {
-            font-size: 14px;
-            font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-            flex: 1;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .info-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .info-label {
-            font-size: 10px;
-            opacity: 0.8;
-            margin-bottom: 2px;
-        }
-        
-        .info-value {
-            font-size: 16px;
-            color: #4fc3f7;
-            font-weight: bold;
-        }
-        
-        .small-btn {
-            background: linear-gradient(145deg, #2d2d2d, #222);
-            color: #fff;
-            border: 1px solid #555;
-            padding: 6px 12px;
-            font-size: 12px;
-            font-family: 'Segoe UI', sans-serif;
-            font-weight: 600;
-            cursor: pointer;
-            touch-action: manipulation;
-            margin: 0 2px;
-            white-space: nowrap;
-            border-radius: 6px;
-            user-select: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            transition: all 0.1s ease;
-        }
-        
-        .small-btn:active {
-            transform: translateY(1px);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        }
-        
-        #gameArea {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            max-width: 100%;
-            min-height: 0;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        #canvas {
-            border: 3px solid rgba(0, 0, 0, 0.7);
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-            background: #0f1525;
-            max-width: 100%;
-            max-height: 60vh;
-            width: auto;
-            height: auto;
-            display: block;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            border-radius: 4px;
-        }
-        
-        #nextPieceContainer {
-            position: absolute;
-            top: 10px;
-            right: 5px;
-            width: 60px;
-            height: 60px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(79, 195, 247, 0.3);
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 4px;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            z-index: 10;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>随行天气 · 精准预报</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1E88E5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        .next-piece-label {
-            font-size: 9px;
-            color: #4fc3f7;
-            margin-bottom: 2px;
-            text-shadow: 0 0 4px rgba(79, 195, 247, 0.5);
-            font-weight: bold;
-        }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Helvetica, 'Noto Sans', sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+      padding: 0 0 20px 0;
+    }
 
-        #nextPieceCanvas {
-            width: 52px;
-            height: 52px;
-            border-radius: 4px;
-            background: rgba(0, 0, 0, 0.3);
-            display: block;
-        }
-        
-        #sidePanel {
-            position: absolute;
-            top: 10px;
-            left: 0px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 6px;
-            border-radius: 6px;
-            border: 1px solid rgba(79, 195, 247, 0.3);
-            backdrop-filter: blur(5px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            z-index: 10;
-        }
+    /* 滚动条美化 */
+    ::-webkit-scrollbar {
+      height: 4px;
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #e2e8f0;
+      border-radius: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 8px;
+    }
 
-        .panel-title {
-            font-size: 9px;
-            color: #4fc3f7;
-            margin-bottom: 2px;
-            text-align: center;
-            font-weight: bold;
-        }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px;
+    }
 
-        #holdCanvas {
-            width: 52px;
-            height: 52px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-            display: block;
-        }
-        
-        #settingsPanel {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.95);
-            border: 2px solid rgba(79, 195, 247, 0.5);
-            padding: 15px;
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-            z-index: 50;
-            min-width: 200px;
-            max-width: 90vw;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-            display: none;
-        }
-        
-        .settings-title {
-            font-size: 16px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 12px;
-            color: #4fc3f7;
-            text-shadow: 0 0 8px rgba(79, 195, 247, 0.5);
-        }
-        
-        .setting-group {
-            margin-bottom: 12px;
-        }
-        
-        .setting-label {
-            font-size: 13px;
-            margin-bottom: 6px;
-            display: block;
-            color: #fff;
-        }
-        
-        select {
-            width: 100%;
-            padding: 8px;
-            border-radius: 6px;
-            background: #222;
-            color: white;
-            border: 1px solid #555;
-            font-size: 13px;
-            outline: none;
-        }
-        
-        select:focus {
-            border-color: #4fc3f7;
-        }
-        
-        #touchControls {
-            display: grid;
-            grid-template-columns: 90px 90px 90px;
-            grid-template-rows: 70px 70px;
-            gap: 12px;
-            justify-content: center;
-            margin: 20px 0 15px;
-            padding: 20px;
-            background: rgba(0,0,0,0.7);
-            border-radius: 20px;
-            flex-shrink: 0;
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-        }
-        
-        .touch-btn {
-            background: linear-gradient(145deg, #2d2d2d, #222);
-            color: #fff;
-            border: 2px solid #555;
-            font-size: 26px;
-            font-weight: bold;
-            cursor: pointer;
-            touch-action: manipulation;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            user-select: none;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-            transition: all 0.1s ease;
-        }
-        
-        .touch-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            background: linear-gradient(145deg, #222, #2d2d2d);
-            border-color: #4fc3f7;
-        }
-        
-        #btnLeft { grid-column: 1; grid-row: 2; }
-        #btnRight { grid-column: 3; grid-row: 2; }
-        #btnRotate { 
-            grid-column: 2; 
-            grid-row: 1; 
-            background: linear-gradient(145deg, #3d3d3d, #2d2d2d);
-        }
-        #btnDown { grid-column: 2; grid-row: 2; }
-        #btnHold { 
-            grid-column: 1; 
-            grid-row: 1; 
-            font-size: 20px;
-            background: linear-gradient(145deg, #3d3d3d, #2d2d2d);
-        }
-        #btnHardDrop { 
-            grid-column: 3; 
-            grid-row: 1; 
-            font-size: 20px;
-            background: linear-gradient(145deg, #3d3d3d, #2d2d2d);
-        }
-        
-        #gameOver {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.95);
-            border: 2px solid #4fc3f7;
-            padding: 30px 25px;
-            text-align: center;
-            display: none;
-            z-index: 100;
-            box-shadow: 0 0 40px rgba(79, 195, 247, 0.3);
-            border-radius: 15px;
-            min-width: 320px;
-            max-width: 90vw;
-            backdrop-filter: blur(10px);
-        }
-        
-        #gameOver h2 {
-            font-size: 28px;
-            margin-bottom: 20px;
-            color: #4fc3f7;
-            text-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
-        }
-        
-        #finalScore {
-            font-size: 24px;
-            margin: 15px 0;
-            color: #ffeb3b;
-            font-weight: bold;
-        }
-        
-        #recordsPanel {
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .records-title {
-            font-size: 16px;
-            color: #4fc3f7;
-            margin-bottom: 12px;
-            text-align: center;
-            font-weight: bold;
-        }
-        
-        .record-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .record-rank {
-            width: 30px;
-            text-align: center;
-            font-weight: bold;
-            color: #ffeb3b;
-            font-size: 16px;
-        }
-        
-        .record-score {
-            flex: 1;
-            text-align: center;
-            font-weight: bold;
-            font-size: 16px;
-            color: #fff;
-        }
-        
-        .record-details {
-            width: 120px;
-            text-align: right;
-            font-size: 12px;
-            opacity: 0.8;
-        }
-        
-        .record-date {
-            display: block;
-        }
-        
-        .record-time {
-            display: block;
-        }
-        
-        #leaderboardPanel {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.95);
-            border: 2px solid #4fc3f7;
-            padding: 30px 25px;
-            text-align: center;
-            display: none;
-            z-index: 101;
-            box-shadow: 0 0 40px rgba(79, 195, 247, 0.3);
-            border-radius: 15px;
-            min-width: 350px;
-            max-width: 90vw;
-            backdrop-filter: blur(10px);
-        }
-        
-        #leaderboardPanel h2 {
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #4fc3f7;
-        }
-        
-        #leaderboardList {
-            max-height: 300px;
-            overflow-y: auto;
-            margin-bottom: 20px;
-        }
-        
-        .leaderboard-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        
-        @media (max-height: 700px) {
-            #nextPieceContainer, #sidePanel {
-                width: 55px;
-                height: 55px;
-                padding: 3px;
-            }
-            #nextPieceCanvas, #holdCanvas {
-                width: 47px;
-                height: 47px;
-            }
-            .next-piece-label, .panel-title {
-                font-size: 8px;
-            }
-        }
-        
-        @media (max-height: 600px) {
-            #touchControls {
-                grid-template-columns: 80px 80px 80px;
-                grid-template-rows: 60px 60px;
-                gap: 8px;
-                padding: 12px;
-            }
-            .touch-btn {
-                font-size: 22px;
-            }
-            #btnHold, #btnHardDrop {
-                font-size: 16px;
-            }
-            #canvas {
-                max-height: 50vh;
-            }
-            #nextPieceContainer, #sidePanel {
-                display: none !important;
-            }
-        }
-        
-        @media (max-width: 400px) {
-            #touchControls {
-                grid-template-columns: 75px 75px 75px;
-                grid-template-rows: 60px 60px;
-            }
-            #topBar {
-                padding: 0 8px;
-            }
-            .info-item {
-                min-width: 50px;
-            }
-            #gameOver, #leaderboardPanel {
-                min-width: 280px;
-                padding: 20px 15px;
-            }
-        }
-        
-        /* 方块颜色 */
-        .color-1 { background-color: #00bcd4; } /* I型 - 青色 */
-        .color-2 { background-color: #ff9800; } /* O型 - 橙色 */
-        .color-3 { background-color: #9c27b0; } /* T型 - 紫色 */
-        .color-4 { background-color: #4caf50; } /* S型 - 绿色 */
-        .color-5 { background-color: #f44336; } /* Z型 - 红色 */
-        .color-6 { background-color: #2196f3; } /* J型 - 蓝色 */
-        .color-7 { background-color: #ffeb3b; } /* L型 - 黄色 */
-        
-        /* 自定义滚动条 */
-        #recordsPanel::-webkit-scrollbar,
-        #leaderboardList::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        #recordsPanel::-webkit-scrollbar-track,
-        #leaderboardList::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-        }
-        
-        #recordsPanel::-webkit-scrollbar-thumb,
-        #leaderboardList::-webkit-scrollbar-thumb {
-            background: #4fc3f7;
-            border-radius: 4px;
-        }
-        
-        #recordsPanel::-webkit-scrollbar-thumb:hover,
-        #leaderboardList::-webkit-scrollbar-thumb:hover {
-            background: #29b6f6;
-        }
-    </style>
+    /* 头部城市栏 */
+    .city-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .city-info {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .city-name {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+    .city-name i {
+      font-size: 22px;
+      font-weight: 400;
+      color: #5b6e8c;
+    }
+    .refresh-btn {
+      background: white;
+      border: none;
+      border-radius: 40px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.2s;
+    }
+    .refresh-btn:active {
+      transform: scale(0.96);
+      background: #f1f5f9;
+    }
+    .search-box {
+      background: white;
+      border-radius: 40px;
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .search-box input {
+      border: none;
+      outline: none;
+      font-size: 15px;
+      width: 140px;
+      background: transparent;
+    }
+    .search-box button {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    /* 卡片通用样式 */
+    .card {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(0px);
+      background: white;
+      border-radius: 32px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: transform 0.1s ease;
+    }
+
+    /* 实时天气 */
+    .temp-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .now-temp {
+      font-size: 64px;
+      font-weight: 700;
+    }
+    .now-temp small {
+      font-size: 24px;
+      font-weight: 400;
+    }
+    .weather-desc {
+      font-size: 20px;
+      color: #4b5563;
+      text-transform: capitalize;
+    }
+    .high-low {
+      font-size: 18px;
+      color: #6c757d;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #edf2f7;
+    }
+    .detail-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .detail-icon {
+      font-size: 24px;
+    }
+    .detail-label {
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .detail-value {
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    /* 预警条 */
+    .alert-card {
+      background: #fff1f0;
+      border-left: 6px solid #f97316;
+      border-radius: 24px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .alert-title {
+      font-weight: 700;
+      color: #c2410c;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .alert-text {
+      font-size: 14px;
+      margin-top: 6px;
+      color: #7c2d12;
+    }
+
+    /* 滚动小时预报 */
+    .hourly-scroll {
+      display: flex;
+      overflow-x: auto;
+      gap: 20px;
+      padding-bottom: 8px;
+      scroll-snap-type: x mandatory;
+    }
+    .hour-item {
+      flex: 0 0 70px;
+      text-align: center;
+      scroll-snap-align: start;
+    }
+    .hour-time {
+      font-size: 14px;
+      font-weight: 500;
+      color: #4b5563;
+    }
+    .hour-temp {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 8px 0;
+    }
+    .hour-rain {
+      font-size: 13px;
+      color: #3b82f6;
+    }
+
+    /* 逐日预报 */
+    .daily-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .daily-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .daily-date {
+      width: 90px;
+      font-weight: 500;
+    }
+    .daily-icon {
+      font-size: 28px;
+      width: 48px;
+      text-align: center;
+    }
+    .daily-temp {
+      width: 100px;
+      text-align: right;
+      font-weight: 500;
+    }
+    .daily-range {
+      color: #6c757d;
+      font-size: 14px;
+      margin-left: 8px;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 24px;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #6c757d;
+    }
+    button {
+      background: none;
+      border: none;
+    }
+  </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <div id="topBar">
-            <button class="small-btn" onclick="toggleSettings()">设置</button>
-            <div id="info">
-                <div class="info-item">
-                    <div class="info-label">分数</div>
-                    <div class="info-value" id="score">0</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">等级</div>
-                    <div class="info-value" id="level">1</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">消除</div>
-                    <div class="info-value" id="lines">0</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">最高分</div>
-                    <div class="info-value" id="highScore">0</div>
-                </div>
-            </div>
-            <button class="small-btn" onclick="togglePause()" id="pauseBtn">暂停</button>
-        </div>
-        
-        <div id="gameArea">
-            <canvas id="canvas"></canvas>
-            
-            <div id="sidePanel">
-                <div class="panel-title">暂存</div>
-                <canvas id="holdCanvas"></canvas>
-            </div>
-            
-            <div id="nextPieceContainer">
-                <div class="next-piece-label">下一个</div>
-                <canvas id="nextPieceCanvas"></canvas>
-            </div>
-            
-            <div id="settingsPanel">
-                <div class="settings-title">游戏设置</div>
-                <div class="setting-group">
-                    <label class="setting-label">难度等级</label>
-                    <select id="difficultySelect" onchange="changeDifficulty(this.value)">
-                        <option value="EASY">简单</option>
-                        <option value="NORMAL" selected>普通</option>
-                        <option value="HARD">困难</option>
-                        <option value="EXPERT">专家</option>
-                    </select>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">网格尺寸</label>
-                    <select id="gridSizeSelect" onchange="changeGridSize(this.value)">
-                        <option value="10x20">小 (10x20)</option>
-                        <option value="12x24" selected>中 (12x24)</option>
-                        <option value="15x30">大 (15x30)</option>
-                    </select>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">方块生成模式</label>
-                    <select id="pieceModeSelect" onchange="changePieceMode(this.value)">
-                        <option value="BAG7" selected>7袋模式</option>
-                        <option value="RANDOM">完全随机</option>
-                        <option value="MEMORY">记忆模式</option>
-                    </select>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">
-                        <input type="checkbox" id="ghostPieceCheck" onchange="toggleGhostPiece(this.checked)" checked>
-                        显示影子方块
-                    </label>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">
-                        <input type="checkbox" id="soundCheck" onchange="toggleSound(this.checked)">
-                        开启音效
-                    </label>
-                </div>
-                <div class="leaderboard-buttons">
-                    <button class="small-btn" onclick="showLeaderboard()">排行榜</button>
-                    <button class="small-btn" onclick="saveSettings()">保存</button>
-                </div>
-            </div>
-        </div>
-        
-        <div id="touchControls">
-            <button class="touch-btn" id="btnHold">暂存</button>
-            <button class="touch-btn" id="btnRotate">↻</button>
-            <button class="touch-btn" id="btnHardDrop">↓↓</button>
-            <button class="touch-btn" id="btnLeft">←</button>
-            <button class="touch-btn" id="btnDown">↓</button>
-            <button class="touch-btn" id="btnRight">→</button>
-        </div>
+<div class="container" id="app">
+  <div class="city-bar">
+    <div class="city-info">
+      <div class="city-name" id="cityName">定位中...</div>
     </div>
-    
-    <div id="gameOver">
-        <h2>游戏结束</h2>
-        <div>最终分数: <span id="finalScore">0</span></div>
-        <div>消除行数: <span id="finalLines">0</span></div>
-        <div>最高等级: <span id="finalLevel">1</span></div>
-        
-        <div id="recordsPanel">
-            <div class="records-title">本次游戏排行榜</div>
-            <div id="recordsList">
-                <!-- 记录将通过JS动态生成 -->
-            </div>
-        </div>
-        
-        <div class="leaderboard-buttons" style="margin-top: 20px;">
-            <button class="small-btn" onclick="restart()" style="padding: 12px 25px; font-size: 16px;">再玩一次</button>
-            <button class="small-btn" onclick="showLeaderboard()" style="padding: 12px 20px; font-size: 14px;">历史排行榜</button>
-            <button class="small-btn" onclick="toggleSettings()" style="padding: 12px 20px; font-size: 14px;">游戏设置</button>
-        </div>
+    <div style="display: flex; gap: 8px;">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="搜索城市" autocomplete="off">
+        <button id="searchBtn">🔍</button>
+      </div>
+      <button class="refresh-btn" id="refreshBtn">⟳ 刷新</button>
     </div>
-    
-    <div id="leaderboardPanel">
-        <h2>历史排行榜</h2>
-        <div id="leaderboardList">
-            <!-- 排行榜数据将通过JS动态生成 -->
-        </div>
-        <div class="leaderboard-buttons">
-            <button class="small-btn" onclick="hideLeaderboard()" style="padding: 10px 20px; font-size: 14px;">返回游戏</button>
-            <button class="small-btn" onclick="clearAllRecords()" style="padding: 10px 20px; font-size: 14px;">清空记录</button>
-        </div>
+  </div>
+
+  <!-- 预警专用卡片 -->
+  <div class="alert-card" id="alertCard">
+    <div class="alert-title">⚠️ 天气预警</div>
+    <div id="alertContent" class="alert-text"></div>
+  </div>
+
+  <!-- 实时天气卡片 -->
+  <div class="card" id="currentCard">
+    <div class="temp-row">
+      <div>
+        <span class="now-temp" id="tempNow">--<small>°</small></span>
+        <div class="weather-desc" id="weatherDesc">---</div>
+      </div>
+      <div class="high-low" id="highLow">↑ --° ↓ --°</div>
     </div>
+    <div class="detail-grid">
+      <div class="detail-item"><span class="detail-icon">💧</span><div><div class="detail-label">湿度</div><div class="detail-value" id="humidity">--%</div></div></div>
+      <div class="detail-item"><span class="detail-icon">🌬️</span><div><div class="detail-label">风速</div><div class="detail-value" id="windSpeed">-- km/h</div></div></div>
+      <div class="detail-item"><span class="detail-icon">☀️</span><div><div class="detail-label">紫外线</div><div class="detail-value" id="uvIndex">--</div></div></div>
+      <div class="detail-item"><span class="detail-icon">🫁</span><div><div class="detail-label">空气质量</div><div class="detail-value" id="aqi">--</div></div></div>
+    </div>
+  </div>
 
-    <!-- 音效文件 (Base64编码的简单音效) -->
-    <audio id="moveSound" preload="auto">
-        <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" type="audio/wav">
-    </audio>
-    <audio id="rotateSound" preload="auto">
-        <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" type="audio/wav">
-    </audio>
-    <audio id="dropSound" preload="auto">
-        <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" type="audio/wav">
-    </audio>
-    <audio id="lineSound" preload="auto">
-        <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" type="audio/wav">
-    </audio>
-    <audio id="gameOverSound" preload="auto">
-        <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" type="audio/wav">
-    </audio>
+  <!-- 逐小时预报 -->
+  <div class="card">
+    <div style="font-weight: 600; margin-bottom: 14px;">⏱️ 逐小时天气</div>
+    <div class="hourly-scroll" id="hourlyContainer">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
 
-    <script>
-        // IndexedDB数据库配置
-        const DB_NAME = 'TetrisGameDB';
-        const DB_VERSION = 1;
-        const RECORD_STORE = 'gameRecords';
-        const SETTINGS_STORE = 'gameSettings';
-        
-        let db = null;
-        let highScore = 0;
-        
-        // 游戏配置
-        const DIFFICULTY = {
-            EASY: { speed: 1000, name: '简单', scoreMultiplier: 0.8 },
-            NORMAL: { speed: 600, name: '普通', scoreMultiplier: 1.0 },
-            HARD: { speed: 350, name: '困难', scoreMultiplier: 1.5 },
-            EXPERT: { speed: 200, name: '专家', scoreMultiplier: 2.0 }
-        };
-        
-        // 网格尺寸配置
-        const GRID_SIZES = {
-            '10x20': { cols: 10, rows: 20, blockSize: 24 },
-            '12x24': { cols: 12, rows: 24, blockSize: 20 },
-            '15x30': { cols: 15, rows: 30, blockSize: 16 }
-        };
-        
-        // 方块形状定义（带颜色）
-        const SHAPES = [
-            { shape: [[1,1,1,1]], color: 1, name: 'I' }, // I型
-            { shape: [[1,1],[1,1]], color: 2, name: 'O' }, // O型
-            { shape: [[0,1,0],[1,1,1]], color: 3, name: 'T' }, // T型
-            { shape: [[0,1,1],[1,1,0]], color: 4, name: 'S' }, // S型
-            { shape: [[1,1,0],[0,1,1]], color: 5, name: 'Z' }, // Z型
-            { shape: [[1,0,0],[1,1,1]], color: 6, name: 'J' }, // J型
-            { shape: [[0,0,1],[1,1,1]], color: 7, name: 'L' }  // L型
-        ];
-        
-        // 游戏状态
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const holdCanvas = document.getElementById('holdCanvas');
-        const holdCtx = holdCanvas.getContext('2d');
-        const nextPieceCanvas = document.getElementById('nextPieceCanvas');
-        const nextPieceCtx = nextPieceCanvas.getContext('2d');
-        
-        let COLS = 12;
-        let ROWS = 24;
-        let BLOCK_SIZE = 20;
-        let board = [];
-        let currentPiece = null;
-        let nextPiece = null;
-        let heldPiece = null;
-        let canHold = true;
-        let currentX = 0;
-        let currentY = 0;
-        let score = 0;
-        let level = 1;
-        let lines = 0;
-        let dropSpeed = DIFFICULTY.NORMAL.speed;
-        let currentDifficulty = 'NORMAL';
-        let gameRunning = true;
-        let isPaused = false;
-        let lastDrop = 0;
-        let ghostPieceY = 0;
-        let showGhostPiece = true;
-        let pieceGenerationMode = 'BAG7';
-        let soundEnabled = false;
-        
-        // 7袋模式变量
-        let bag = [];
-        let nextBag = [];
-        
-        // 软移/软降相关变量
-        let softMoveTimeout = null;
-        let softMoveInterval = null;
-        let softMoveDirection = 0;
-        const LONG_PRESS_DELAY = 150;
-        const MOVE_REPEAT_INTERVAL = 80;
-        
-        // 软降相关变量
-        let softDropInterval = null;
-        let isSoftDropping = false;
-        
-        // 音效相关
-        let audioContext = null;
-        let audioInitialized = false;
-        let animationFrameId = null;
-        
-        // 初始化IndexedDB数据库
-        function initDatabase() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                
-                request.onerror = (event) => {
-                    console.error('数据库打开失败:', event.target.error);
-                    reject(event.target.error);
-                };
-                
-                request.onsuccess = (event) => {
-                    db = event.target.result;
-                    console.log('数据库打开成功');
-                    
-                    // 加载最高分和设置
-                    loadHighScore();
-                    loadSettings();
-                    
-                    resolve(db);
-                };
-                
-                request.onupgradeneeded = (event) => {
-                    db = event.target.result;
-                    
-                    // 创建游戏记录存储
-                    if (!db.objectStoreNames.contains(RECORD_STORE)) {
-                        const recordStore = db.createObjectStore(RECORD_STORE, { keyPath: 'id', autoIncrement: true });
-                        recordStore.createIndex('score', 'score', { unique: false });
-                        recordStore.createIndex('date', 'date', { unique: false });
-                        console.log('游戏记录存储创建成功');
-                    }
-                    
-                    // 创建游戏设置存储
-                    if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
-                        db.createObjectStore(SETTINGS_STORE, { keyPath: 'key' });
-                        console.log('游戏设置存储创建成功');
-                    }
-                };
-            });
-        }
-        
-        // 初始化音频系统
-        function initAudio() {
-            if (!audioInitialized && soundEnabled) {
-                try {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    if (AudioContext) {
-                        audioContext = new AudioContext();
-                        
-                        // 解锁音频（移动端需要用户交互）
-                        document.addEventListener('click', unlockAudio, { once: true });
-                        document.addEventListener('touchstart', unlockAudio, { once: true });
-                        document.addEventListener('keydown', unlockAudio, { once: true });
-                        
-                        audioInitialized = true;
-                        console.log('音频系统初始化成功');
-                    }
-                } catch (error) {
-                    console.error('音频系统初始化失败:', error);
-                }
-            }
-        }
-        
-        // 解锁音频
-        function unlockAudio() {
-            if (audioContext && audioContext.state === 'suspended') {
-                audioContext.resume().then(() => {
-                    console.log('音频已解锁');
-                });
-            }
-        }
-        
-        // 播放音效
-        function playSound(type) {
-            if (!soundEnabled) return;
-            
-            try {
-                let soundId;
-                switch(type) {
-                    case 'move':
-                        soundId = 'moveSound';
-                        break;
-                    case 'rotate':
-                        soundId = 'rotateSound';
-                        break;
-                    case 'drop':
-                        soundId = 'dropSound';
-                        break;
-                    case 'line':
-                        soundId = 'lineSound';
-                        break;
-                    case 'gameOver':
-                        soundId = 'gameOverSound';
-                        break;
-                    default:
-                        return;
-                }
-                
-                const sound = document.getElementById(soundId);
-                if (sound) {
-                    // 移动端需要用户交互后解锁音频
-                    if (audioContext && audioContext.state === 'suspended') {
-                        audioContext.resume();
-                    }
-                    
-                    // 重置播放位置
-                    sound.currentTime = 0;
-                    
-                    // 播放声音
-                    const playPromise = sound.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(e => {
-                            console.log('音效播放失败:', e);
-                            initAudio();
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error('播放音效失败:', error);
-            }
-        }
-        
-        // 保存游戏记录到IndexedDB
-        function saveGameRecord() {
-            if (!db) return;
-            
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([RECORD_STORE], 'readwrite');
-                const store = transaction.objectStore(RECORD_STORE);
-                
-                const record = {
-                    score: score,
-                    lines: lines,
-                    level: level,
-                    date: new Date().toISOString().split('T')[0],
-                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                    difficulty: currentDifficulty,
-                    gridSize: `${COLS}x${ROWS}`,
-                    timestamp: Date.now()
-                };
-                
-                const request = store.add(record);
-                
-                request.onsuccess = () => {
-                    console.log('游戏记录保存成功');
-                    
-                    if (score > highScore) {
-                        highScore = score;
-                        saveHighScore();
-                        document.getElementById('highScore').textContent = highScore;
-                    }
-                    
-                    resolve(request.result);
-                };
-                
-                request.onerror = (event) => {
-                    console.error('游戏记录保存失败:', event.target.error);
-                    reject(event.target.error);
-                };
-            });
-        }
-        
-        // 加载最高分
-        function loadHighScore() {
-            if (!db) return;
-            
-            const transaction = db.transaction([SETTINGS_STORE], 'readonly');
-            const store = transaction.objectStore(SETTINGS_STORE);
-            const request = store.get('highScore');
-            
-            request.onsuccess = () => {
-                if (request.result) {
-                    highScore = request.result.value;
-                    document.getElementById('highScore').textContent = highScore;
-                }
-            };
-        }
-        
-        // 保存最高分
-        function saveHighScore() {
-            if (!db) return;
-            
-            const transaction = db.transaction([SETTINGS_STORE], 'readwrite');
-            const store = transaction.objectStore(SETTINGS_STORE);
-            const request = store.put({ key: 'highScore', value: highScore });
-            
-            request.onerror = (event) => {
-                console.error('最高分保存失败:', event.target.error);
-            };
-        }
-        
-        // 加载游戏设置
-        function loadSettings() {
-            if (!db) return;
-            
-            const transaction = db.transaction([SETTINGS_STORE], 'readonly');
-            const store = transaction.objectStore(SETTINGS_STORE);
-            const request = store.get('gameSettings');
-            
-            request.onsuccess = () => {
-                if (request.result) {
-                    const settings = request.result.value;
-                    
-                    currentDifficulty = settings.difficulty || 'NORMAL';
-                    pieceGenerationMode = settings.pieceMode || 'BAG7';
-                    showGhostPiece = settings.showGhostPiece !== false;
-                    soundEnabled = settings.soundEnabled || false;
-                    
-                    // 应用网格尺寸
-                    const gridSize = settings.gridSize || '12x24';
-                    applyGridSize(gridSize);
-                    
-                    // 更新UI
-                    document.getElementById('difficultySelect').value = currentDifficulty;
-                    document.getElementById('pieceModeSelect').value = pieceGenerationMode;
-                    document.getElementById('gridSizeSelect').value = gridSize;
-                    document.getElementById('ghostPieceCheck').checked = showGhostPiece;
-                    document.getElementById('soundCheck').checked = soundEnabled;
-                    
-                    dropSpeed = DIFFICULTY[currentDifficulty].speed;
-                    
-                    // 初始化音频
-                    if (soundEnabled) {
-                        initAudio();
-                    }
-                }
-            };
-        }
-        
-        // 保存游戏设置
-        function saveSettings() {
-            if (!db) {
-                console.error('数据库未初始化');
-                alert('保存失败：数据库未初始化');
-                return;
-            }
-            
-            const settings = {
-                difficulty: document.getElementById('difficultySelect').value,
-                pieceMode: document.getElementById('pieceModeSelect').value,
-                gridSize: document.getElementById('gridSizeSelect').value,
-                showGhostPiece: document.getElementById('ghostPieceCheck').checked,
-                soundEnabled: document.getElementById('soundCheck').checked
-            };
-            
-            console.log('保存设置:', settings);
-            
-            const transaction = db.transaction([SETTINGS_STORE], 'readwrite');
-            const store = transaction.objectStore(SETTINGS_STORE);
-            const request = store.put({ key: 'gameSettings', value: settings });
-            
-            request.onsuccess = () => {
-                console.log('游戏设置保存成功');
-                
-                // 立即应用新设置
-                currentDifficulty = settings.difficulty;
-                pieceGenerationMode = settings.pieceMode;
-                showGhostPiece = settings.showGhostPiece;
-                soundEnabled = settings.soundEnabled;
-                
-                // 应用网格尺寸
-                applyGridSize(settings.gridSize);
-                
-                // 更新速度
-                dropSpeed = DIFFICULTY[currentDifficulty].speed;
-                updateSpeed();
-                
-                // 初始化音频
-                if (soundEnabled) {
-                    initAudio();
-                }
-                
-                // 隐藏设置面板
-                document.getElementById('settingsPanel').style.display = 'none';
-                
-                // 重新开始游戏以应用新设置
-                setTimeout(() => {
-                    restart();
-                }, 100);
-                
-                alert('设置已保存并应用！');
-            };
-            
-            request.onerror = (event) => {
-                console.error('游戏设置保存失败:', event.target.error);
-                alert('保存失败：' + event.target.error);
-            };
-        }
-        
-        // 获取排行榜数据
-        function getLeaderboard(limit = 100) {
-            return new Promise((resolve, reject) => {
-                if (!db) {
-                    resolve([]);
-                    return;
-                }
-                
-                const transaction = db.transaction([RECORD_STORE], 'readonly');
-                const store = transaction.objectStore(RECORD_STORE);
-                const index = store.index('score');
-                const request = index.openCursor(null, 'prev');
-                
-                const records = [];
-                
-                request.onsuccess = (event) => {
-                    const cursor = event.target.result;
-                    if (cursor && records.length < limit) {
-                        records.push(cursor.value);
-                        cursor.continue();
-                    } else {
-                        resolve(records);
-                    }
-                };
-                
-                request.onerror = (event) => {
-                    console.error('获取排行榜失败:', event.target.error);
-                    reject(event.target.error);
-                };
-            });
-        }
-        
-        // 显示排行榜
-        async function showLeaderboard() {
-            document.getElementById('gameOver').style.display = 'none';
-            document.getElementById('settingsPanel').style.display = 'none';
-            
-            const records = await getLeaderboard(50);
-            const leaderboardList = document.getElementById('leaderboardList');
-            
-            if (records.length === 0) {
-                leaderboardList.innerHTML = '<div style="text-align: center; padding: 20px; opacity: 0.7;">暂无游戏记录</div>';
-            } else {
-                let html = '';
-                records.forEach((record, index) => {
-                    const dateObj = new Date(record.timestamp || record.date);
-                    const dateStr = dateObj.toLocaleDateString();
-                    const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    
-                    html += `
-                        <div class="record-item">
-                            <div class="record-rank">${index + 1}</div>
-                            <div class="record-score">${record.score}分</div>
-                            <div class="record-details">
-                                <span class="record-date">${dateStr}</span>
-                                <span class="record-time">${timeStr}</span>
-                            </div>
-                        </div>
-                    `;
-                });
-                leaderboardList.innerHTML = html;
-            }
-            
-            document.getElementById('leaderboardPanel').style.display = 'block';
-        }
-        
-        // 隐藏排行榜
-        function hideLeaderboard() {
-            document.getElementById('leaderboardPanel').style.display = 'none';
-        }
-        
-        // 清空所有记录
-        function clearAllRecords() {
-            if (confirm('确定要清空所有游戏记录吗？此操作不可恢复！')) {
-                const transaction = db.transaction([RECORD_STORE], 'readwrite');
-                const store = transaction.objectStore(RECORD_STORE);
-                const request = store.clear();
-                
-                request.onsuccess = () => {
-                    alert('所有游戏记录已清空！');
-                    showLeaderboard();
-                };
-                
-                request.onerror = (event) => {
-                    console.error('清空记录失败:', event.target.error);
-                    alert('清空记录失败！');
-                };
-            }
-        }
-        
-        // 初始化游戏
-        async function initGame() {
-            // 初始化数据库
-            await initDatabase();
-            
-            // 初始化7袋
-            if (pieceGenerationMode === 'BAG7') {
-                initBags();
-            }
-            
-            // 更新画布大小
-            updateCanvasSize();
-            
-            // 重置游戏板
-            resetBoard();
-            
-            // 生成第一个方块
-            nextPiece = getNextPiece();
-            spawnPiece();
-            
-            // 更新UI
-            updateUI();
-            
-            // 开始游戏循环
-            gameRunning = true;
-            lastDrop = 0;
-            animationFrameId = requestAnimationFrame(gameLoop);
-        }
-        
-        // 应用网格尺寸
-        function applyGridSize(sizeKey) {
-            const size = GRID_SIZES[sizeKey];
-            COLS = size.cols;
-            ROWS = size.rows;
-            BLOCK_SIZE = size.blockSize;
-            
-            // 更新画布大小
-            updateCanvasSize();
-        }
-        
-        // 更改网格尺寸
-        function changeGridSize(sizeKey) {
-            applyGridSize(sizeKey);
-            updateCanvasSize();
-            draw();
-        }
-        
-        // 更新画布大小
-        function updateCanvasSize() {
-            canvas.width = COLS * BLOCK_SIZE;
-            canvas.height = ROWS * BLOCK_SIZE;
-            
-            // 根据屏幕大小调整最大高度
-            const maxHeight = window.innerHeight * 0.6;
-            if (canvas.height > maxHeight) {
-                const scale = maxHeight / canvas.height;
-                canvas.style.width = (canvas.width * scale) + 'px';
-                canvas.style.height = (canvas.height * scale) + 'px';
-            } else {
-                canvas.style.width = 'auto';
-                canvas.style.height = 'auto';
-            }
-            
-            // 重置游戏板
-            resetBoard();
-        }
-        
-        // 重置游戏板
-        function resetBoard() {
-            board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-        }
-        
-        // 初始化7袋
-        function initBags() {
-            bag = [];
-            nextBag = [];
-            refillBag(bag);
-            refillBag(nextBag);
-        }
-        
-        // 填充袋子
-        function refillBag(bagArray) {
-            const indices = [0,1,2,3,4,5,6];
-            shuffleArray(indices);
-            
-            indices.forEach(index => {
-                bagArray.push({ ...SHAPES[index] });
-            });
-        }
-        
-        // 打乱数组（Fisher-Yates洗牌算法）
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
-        
-        // 获取下一个方块
-        function getNextPiece() {
-            let piece;
-            
-            switch(pieceGenerationMode) {
-                case 'BAG7':
-                    if (bag.length === 0) {
-                        refillBag(bag);
-                    }
-                    piece = bag.shift();
-                    break;
-                    
-                case 'MEMORY':
-                    piece = getNextPieceMemory();
-                    break;
-                    
-                case 'RANDOM':
-                default:
-                    const randomIndex = Math.floor(Math.random() * SHAPES.length);
-                    piece = { ...SHAPES[randomIndex] };
-                    break;
-            }
-            
-            // 更新下一个方块预览
-            drawNextPiece(piece);
-            return piece;
-        }
-        
-        // 记忆模式：避免连续出现相同方块
-        let lastPieceIndex = -1;
-        function getNextPieceMemory() {
-            let index;
-            do {
-                index = Math.floor(Math.random() * SHAPES.length);
-            } while (index === lastPieceIndex && SHAPES.length > 1);
-            
-            lastPieceIndex = index;
-            return { ...SHAPES[index] };
-        }
-        
-        // 更改方块生成模式
-        function changePieceMode(mode) {
-            pieceGenerationMode = mode;
-            if (mode === 'BAG7') {
-                initBags();
-            }
-        }
-        
-        // 生成新方块
-        function spawnPiece() {
-            currentPiece = nextPiece;
-            currentX = Math.floor((COLS - currentPiece.shape[0].length) / 2);
-            currentY = 0;
-            
-            // 获取新的下一个方块
-            nextPiece = getNextPiece();
-            
-            canHold = true; // 重置暂存权限
-            
-            // 计算影子方块位置
-            updateGhostPiece();
-            
-            if (collide(currentX, currentY, currentPiece)) {
-                gameOver();
-            }
-        }
-        
-        // 计算影子方块位置
-        function updateGhostPiece() {
-            if (!currentPiece) return;
-            
-            ghostPieceY = currentY;
-            while (!collide(currentX, ghostPieceY + 1, currentPiece)) {
-                ghostPieceY++;
-            }
-        }
-        
-        // 切换显示影子方块
-        function toggleGhostPiece(enabled) {
-            showGhostPiece = enabled;
-            if (currentPiece) {
-                draw();
-            }
-        }
-        
-        // 切换音效
-        function toggleSound(enabled) {
-            soundEnabled = enabled;
-            if (soundEnabled) {
-                initAudio();
-                // 播放测试音效确认音效开启
-                setTimeout(() => playSound('move'), 100);
-            }
-        }
-        
-        // 旋转方块
-        function rotate(piece) {
-            const rows = piece.shape.length;
-            const cols = piece.shape[0].length;
-            const rotated = Array(cols).fill().map(() => Array(rows).fill(0));
-            
-            for (let y = 0; y < rows; y++) {
-                for (let x = 0; x < cols; x++) {
-                    rotated[x][rows - 1 - y] = piece.shape[y][x];
-                }
-            }
-            return { ...piece, shape: rotated };
-        }
-        
-        // 碰撞检测
-        function collide(x, y, piece) {
-            for (let py = 0; py < piece.shape.length; py++) {
-                for (let px = 0; px < piece.shape[py].length; px++) {
-                    if (piece.shape[py][px]) {
-                        const newX = x + px;
-                        const newY = y + py;
-                        if (newX < 0 || newX >= COLS || newY >= ROWS) return true;
-                        if (newY >= 0 && board[newY][newX]) return true;
-                    }
-                }
-            }
-            return false;
-        }
-        
-        // 合并方块
-        function merge() {
-            for (let y = 0; y < currentPiece.shape.length; y++) {
-                for (let x = 0; x < currentPiece.shape[y].length; x++) {
-                    if (currentPiece.shape[y][x]) {
-                        board[currentY + y][currentX + x] = currentPiece.color;
-                    }
-                }
-            }
-            
-            // 播放下落音效
-            playSound('drop');
-        }
-        
-        // 消除行
-        function clearLines() {
-            let linesCleared = 0;
-            for (let y = ROWS - 1; y >= 0; y--) {
-                if (board[y].every(cell => cell)) {
-                    board.splice(y, 1);
-                    board.unshift(Array(COLS).fill(0));
-                    linesCleared++;
-                    y++;
-                }
-            }
-            
-            if (linesCleared > 0) {
-                lines += linesCleared;
-                
-                // 计算得分
-                let lineScore = 0;
-                switch(linesCleared) {
-                    case 1: lineScore = 100; break;
-                    case 2: lineScore = 300; break;
-                    case 3: lineScore = 500; break;
-                    case 4: lineScore = 800; break;
-                }
-                
-                const multiplier = DIFFICULTY[currentDifficulty].scoreMultiplier;
-                score += Math.floor(lineScore * level * multiplier);
-                
-                // 播放消除音效
-                if (linesCleared > 0) {
-                    playSound('line');
-                }
-                
-                // 更新等级
-                const newLevel = Math.floor(lines / 10) + 1;
-                if (newLevel > level) {
-                    level = newLevel;
-                    updateSpeed();
-                }
-                
-                updateUI();
-            }
-        }
-        
-        // 更新速度
-        function updateSpeed() {
-            const baseSpeed = DIFFICULTY[currentDifficulty].speed;
-            dropSpeed = Math.max(100, baseSpeed - (level - 1) * 50);
-        }
-        
-        // 更改难度
-        function changeDifficulty(difficulty) {
-            currentDifficulty = difficulty;
-            dropSpeed = DIFFICULTY[difficulty].speed;
-            updateSpeed();
-        }
-        
-        // 绘制游戏
-        function draw() {
-            // 清空画布
-            ctx.fillStyle = '#0f1525';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // 绘制网格线
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.lineWidth = 0.5;
-            
-            for (let x = 0; x <= COLS; x++) {
-                ctx.beginPath();
-                ctx.moveTo(x * BLOCK_SIZE, 0);
-                ctx.lineTo(x * BLOCK_SIZE, canvas.height);
-                ctx.stroke();
-            }
-            
-            for (let y = 0; y <= ROWS; y++) {
-                ctx.beginPath();
-                ctx.moveTo(0, y * BLOCK_SIZE);
-                ctx.lineTo(canvas.width, y * BLOCK_SIZE);
-                ctx.stroke();
-            }
-            
-            // 绘制已落下的方块
-            for (let y = 0; y < ROWS; y++) {
-                for (let x = 0; x < COLS; x++) {
-                    if (board[y][x]) {
-                        drawBlock(x, y, board[y][x], ctx, BLOCK_SIZE);
-                    }
-                }
-            }
-            
-            // 绘制影子方块
-            if (showGhostPiece && currentPiece) {
-                ctx.globalAlpha = 0.3;
-                for (let y = 0; y < currentPiece.shape.length; y++) {
-                    for (let x = 0; x < currentPiece.shape[y].length; x++) {
-                        if (currentPiece.shape[y][x]) {
-                            drawBlock(currentX + x, ghostPieceY + y, currentPiece.color, ctx, BLOCK_SIZE);
-                        }
-                    }
-                }
-                ctx.globalAlpha = 1.0;
-            }
-            
-            // 绘制当前方块
-            if (currentPiece) {
-                for (let y = 0; y < currentPiece.shape.length; y++) {
-                    for (let x = 0; x < currentPiece.shape[y].length; x++) {
-                        if (currentPiece.shape[y][x]) {
-                            drawBlock(currentX + x, currentY + y, currentPiece.color, ctx, BLOCK_SIZE);
-                        }
-                    }
-                }
-            }
-        }
-        
-        // 绘制单个方块
-        function drawBlock(x, y, color, context, blockSize, offsetX = 0, offsetY = 0) {
-            const pixelSize = blockSize - 1;
-            const xPos = offsetX + x * blockSize;
-            const yPos = offsetY + y * blockSize;
-            
-            // 填充颜色
-            context.fillStyle = getColor(color);
-            context.fillRect(xPos, yPos, pixelSize, pixelSize);
-            
-            // 添加高光效果
-            context.fillStyle = 'rgba(255, 255, 255, 0.3)';
-            context.fillRect(xPos, yPos, pixelSize, 2);
-            context.fillRect(xPos, yPos, 2, pixelSize);
-            
-            // 添加阴影效果
-            context.fillStyle = 'rgba(0, 0, 0, 0.3)';
-            context.fillRect(xPos + pixelSize - 2, yPos, 2, pixelSize);
-            context.fillRect(xPos, yPos + pixelSize - 2, pixelSize, 2);
-            
-            // 添加内部细节
-            context.fillStyle = 'rgba(255, 255, 255, 0.1)';
-            context.fillRect(xPos + 2, yPos + 2, pixelSize - 4, pixelSize - 4);
-        }
-        
-        // 根据颜色编号获取颜色
-        function getColor(colorNum) {
-            const colors = [
-                '', // 索引0不使用
-                '#00bcd4', // I型 - 青色
-                '#ff9800', // O型 - 橙色
-                '#9c27b0', // T型 - 紫色
-                '#4caf50', // S型 - 绿色
-                '#f44336', // Z型 - 红色
-                '#2196f3', // J型 - 蓝色
-                '#ffeb3b'  // L型 - 黄色
-            ];
-            return colors[colorNum] || '#ffffff';
-        }
-        
-        // 绘制下一个方块预览
-        function drawNextPiece(pieceToDraw = null) {
-            const piece = pieceToDraw || nextPiece;
-            if (!piece) return;
-            
-            // 设置画布大小
-            nextPieceCanvas.width = nextPieceCanvas.offsetWidth;
-            nextPieceCanvas.height = nextPieceCanvas.offsetHeight;
-            
-            // 清空画布
-            nextPieceCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-            nextPieceCtx.fillRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
-            
-            const shape = piece.shape;
-            const previewBlockSize = 11;
-            
-            // 计算绘制起点，使其居中
-            const totalWidth = shape[0].length * previewBlockSize;
-            const totalHeight = shape.length * previewBlockSize;
-            const startX = (nextPieceCanvas.width - totalWidth) / 2;
-            const startY = (nextPieceCanvas.height - totalHeight) / 2;
-            
-            // 绘制方块
-            for (let y = 0; y < shape.length; y++) {
-                for (let x = 0; x < shape[y].length; x++) {
-                    if (shape[y][x]) {
-                        drawBlock(x, y, piece.color, nextPieceCtx, previewBlockSize, startX, startY);
-                    }
-                }
-            }
-            
-            // 添加边框
-            nextPieceCtx.strokeStyle = 'rgba(79, 195, 247, 0.5)';
-            nextPieceCtx.lineWidth = 1;
-            nextPieceCtx.strokeRect(startX, startY, totalWidth, totalHeight);
-        }
-        
-        // 绘制暂存方块
-        function drawHoldPiece() {
-            // 设置画布大小
-            holdCanvas.width = holdCanvas.offsetWidth;
-            holdCanvas.height = holdCanvas.offsetHeight;
-            
-            // 清空画布
-            holdCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-            holdCtx.fillRect(0, 0, holdCanvas.width, holdCanvas.height);
-            
-            if (!heldPiece) return;
-            
-            const shape = heldPiece.shape;
-            const holdBlockSize = 11;
-            
-            // 计算绘制起点，使其居中
-            const totalWidth = shape[0].length * holdBlockSize;
-            const totalHeight = shape.length * holdBlockSize;
-            const startX = (holdCanvas.width - totalWidth) / 2;
-            const startY = (holdCanvas.height - totalHeight) / 2;
-            
-            // 绘制方块
-            for (let y = 0; y < shape.length; y++) {
-                for (let x = 0; x < shape[y].length; x++) {
-                    if (shape[y][x]) {
-                        drawBlock(x, y, heldPiece.color, holdCtx, holdBlockSize, startX, startY);
-                    }
-                }
-            }
-            
-            // 添加边框
-            holdCtx.strokeStyle = 'rgba(79, 195, 247, 0.5)';
-            holdCtx.lineWidth = 1;
-            holdCtx.strokeRect(startX, startY, totalWidth, totalHeight);
-        }
-        
-        // 游戏循环
-        function gameLoop(timestamp) {
-            if (!gameRunning) {
-                if (animationFrameId) {
-                    cancelAnimationFrame(animationFrameId);
-                    animationFrameId = null;
-                }
-                return;
-            }
-            
-            if (!isPaused) {
-                if (timestamp - lastDrop > dropSpeed) {
-                    drop();
-                    lastDrop = timestamp;
-                }
-            }
-            
-            draw();
-            animationFrameId = requestAnimationFrame(gameLoop);
-        }
-        
-        // 下落
-        function drop() {
-            if (!currentPiece) return;
-            
-            if (!collide(currentX, currentY + 1, currentPiece)) {
-                currentY++;
-                updateGhostPiece();
-            } else {
-                merge();
-                clearLines();
-                spawnPiece();
-            }
-        }
-        
-        // 移动
-        function move(dir) {
-            if (!currentPiece || isPaused) return;
-            const newX = currentX + dir;
-            if (!collide(newX, currentY, currentPiece)) {
-                currentX = newX;
-                updateGhostPiece();
-                
-                // 播放移动音效
-                playSound('move');
-            }
-        }
-        
-        // 开始软移（连续移动）
-        function startSoftMove(dir) {
-            if (!gameRunning || isPaused) return;
-            
-            softMoveDirection = dir;
-            
-            // 立即移动一次
-            move(dir);
-            
-            // 清除现有定时器
-            if (softMoveTimeout) {
-                clearTimeout(softMoveTimeout);
-            }
-            
-            // 设置长按检测定时器
-            softMoveTimeout = setTimeout(() => {
-                // 长按触发，开始连续移动
-                if (softMoveDirection !== 0) {
-                    softMoveInterval = setInterval(() => {
-                        if (softMoveDirection !== 0) {
-                            move(softMoveDirection);
-                        }
-                    }, MOVE_REPEAT_INTERVAL);
-                }
-            }, LONG_PRESS_DELAY);
-        }
+  <!-- 7日逐日预报 -->
+  <div class="card">
+    <div style="font-weight: 600; margin-bottom: 14px;">📅 未来7天</div>
+    <div class="daily-list" id="dailyContainer">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+  <footer>数据源: Open-Meteo · 空气质量/预警: 和风天气</footer>
+</div>
 
-        // 停止软移
-        function stopSoftMove() {
-            // 清除长按定时器
-            if (softMoveTimeout) {
-                clearTimeout(softMoveTimeout);
-                softMoveTimeout = null;
-            }
-            
-            // 清除连续移动定时器
-            if (softMoveInterval) {
-                clearInterval(softMoveInterval);
-                softMoveInterval = null;
-            }
-            
-            softMoveDirection = 0;
+<script>
+  // ---------- 配置 ----------
+  const QWEATHER_KEY = 'YOUR_QWEATHER_API_KEY';   // 请替换为您的和风天气key
+  const DEFAULT_LAT = 39.9042;
+  const DEFAULT_LON = 116.4074;
+  let currentLat = DEFAULT_LAT;
+  let currentLon = DEFAULT_LON;
+  let currentCityName = '北京';
+
+  // DOM 元素
+  const cityNameEl = document.getElementById('cityName');
+  const tempNowEl = document.getElementById('tempNow');
+  const weatherDescEl = document.getElementById('weatherDesc');
+  const highLowEl = document.getElementById('highLow');
+  const humidityEl = document.getElementById('humidity');
+  const windSpeedEl = document.getElementById('windSpeed');
+  const uvIndexEl = document.getElementById('uvIndex');
+  const aqiEl = document.getElementById('aqi');
+  const alertCard = document.getElementById('alertCard');
+  const alertContent = document.getElementById('alertContent');
+  const hourlyContainer = document.getElementById('hourlyContainer');
+  const dailyContainer = document.getElementById('dailyContainer');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const searchBtn = document.getElementById('searchBtn');
+  const searchInput = document.getElementById('searchInput');
+
+  // 辅助: WMO代码 -> 天气图标和描述
+  function getWeatherIconAndDesc(code) {
+    const map = {
+      0: { icon: '☀️', desc: '晴朗' },
+      1: { icon: '🌤️', desc: '大部晴朗' },
+      2: { icon: '⛅', desc: '局部多云' },
+      3: { icon: '☁️', desc: '阴天' },
+      45: { icon: '🌫️', desc: '雾' },
+      48: { icon: '🌫️', desc: '雾' },
+      51: { icon: '🌦️', desc: '毛毛雨' },
+      53: { icon: '🌦️', desc: '毛毛雨' },
+      55: { icon: '🌦️', desc: '毛毛雨' },
+      61: { icon: '🌧️', desc: '小雨' },
+      63: { icon: '🌧️', desc: '中雨' },
+      65: { icon: '🌧️', desc: '大雨' },
+      71: { icon: '❄️', desc: '小雪' },
+      73: { icon: '❄️', desc: '中雪' },
+      75: { icon: '❄️', desc: '大雪' },
+      80: { icon: '🌧️', desc: '阵雨' },
+      81: { icon: '🌧️', desc: '阵雨' },
+      82: { icon: '🌧️', desc: '强阵雨' },
+      95: { icon: '⛈️', desc: '雷雨' },
+      96: { icon: '⛈️', desc: '雷阵雨' },
+      99: { icon: '⛈️', desc: '强雷暴' }
+    };
+    return map[code] || { icon: '🌡️', desc: '未知' };
+  }
+
+  // 获取城市名 (Open-Meteo Geocoding)
+  async function fetchCityName(lat, lon) {
+    try {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+      // 单纯为了城市名，其实可用 reverse geocoding: 使用 bigdatacloud 但为了省事，先保留经纬度显示
+      // 改用 nominatim? 但可能限制，简单使用 openmeteo 自身不返回城市名，用离线库？ 调用 geocoding api 反向查找:
+      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${lat},${lon}&count=1`);
+      // 反向不太好，直接用经纬度转中文城市：第三方，但为了稳定，做一个简单备用，让用户手动搜索。默认显示坐标或“当前位置”
+      // 改进：调用 bigdatacloud 免费反向地理编码（无需key）
+      const rev = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=zh`);
+      const data = await rev.json();
+      return data.city || data.locality || `${lat.toFixed(2)},${lon.toFixed(2)}`;
+    } catch {
+      return `${lat.toFixed(2)}°,${lon.toFixed(2)}°`;
+    }
+  }
+
+  // 搜索城市
+  async function searchCity(query) {
+    if (!query) return;
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=zh`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.results && data.results.length > 0) {
+        const first = data.results[0];
+        currentLat = first.latitude;
+        currentLon = first.longitude;
+        currentCityName = first.name;
+        cityNameEl.innerText = currentCityName;
+        localStorage.setItem('lastCity', JSON.stringify({ lat: currentLat, lon: currentLon, name: currentCityName }));
+        loadAllWeather();
+      } else {
+        alert('未找到该城市，试试拼音或英文名');
+      }
+    } catch (e) {
+      alert('搜索失败');
+    }
+  }
+
+  // 获取当前位置
+  function getCurrentPosition() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          currentLat = pos.coords.latitude;
+          currentLon = pos.coords.longitude;
+          updateCityNameByCoords();
+          loadAllWeather();
+        },
+        () => {
+          // 定位失败使用默认或缓存
+          loadCachedCity();
+          loadAllWeather();
         }
-        
-        // 旋转
-        function rotatePiece() {
-            if (!currentPiece || isPaused) return;
-            const rotated = rotate(currentPiece);
-            
-            // 尝试墙踢（wall kick）
-            if (!collide(currentX, currentY, rotated)) {
-                currentPiece = rotated;
-            } else {
-                // 尝试向右移动一格
-                if (!collide(currentX + 1, currentY, rotated)) {
-                    currentX++;
-                    currentPiece = rotated;
-                }
-                // 尝试向左移动一格
-                else if (!collide(currentX - 1, currentY, rotated)) {
-                    currentX--;
-                    currentPiece = rotated;
-                }
-                // 尝试向上移动一格
-                else if (!collide(currentX, currentY - 1, rotated)) {
-                    currentY--;
-                    currentPiece = rotated;
-                }
-            }
-            
-            updateGhostPiece();
-            
-            // 播放旋转音效
-            playSound('rotate');
-        }
-        
-        // 暂存方块
-        function holdPiece() {
-            if (!currentPiece || isPaused || !canHold) return;
-            
-            if (heldPiece) {
-                // 交换当前方块和暂存方块
-                const temp = currentPiece;
-                currentPiece = heldPiece;
-                heldPiece = temp;
-            } else {
-                // 暂存当前方块，生成新方块
-                heldPiece = currentPiece;
-                currentPiece = null;
-                spawnPiece();
-            }
-            
-            // 重置位置
-            currentX = Math.floor((COLS - currentPiece.shape[0].length) / 2);
-            currentY = 0;
-            canHold = false; // 一次只能暂存一次，直到下一个方块落地
-            
-            updateGhostPiece();
-            drawHoldPiece();
-        }
-        
-        // 快速下落（软降）
-        function startSoftDrop() {
-            if (!gameRunning || isPaused || isSoftDropping) return;
-            isSoftDropping = true;
-            
-            // 立即执行一次软降
-            if (!collide(currentX, currentY + 1, currentPiece)) {
-                currentY++;
-                score += 1;
-                updateUI();
-            }
-            
-            // 设置连续软降间隔
-            softDropInterval = setInterval(() => {
-                if (isSoftDropping && !collide(currentX, currentY + 1, currentPiece)) {
-                    currentY++;
-                    score += 1;
-                    updateUI();
-                } else {
-                    // 碰到底部时自动停止软降
-                    stopSoftDrop();
-                }
-            }, 100);
-        }
-        
-        // 停止软降
-        function stopSoftDrop() {
-            if (softDropInterval) {
-                clearInterval(softDropInterval);
-                softDropInterval = null;
-                isSoftDropping = false;
-            }
-        }
-        
-        // 瞬降（硬降）
-        function hardDrop() {
-            if (!currentPiece || isPaused) return;
-            
-            let dropDistance = 0;
-            while (!collide(currentX, currentY + 1, currentPiece)) {
-                currentY++;
-                dropDistance++;
-            }
-            
-            // 奖励分数
-            score += dropDistance * 2;
-            updateUI();
-            
-            // 立即合并方块
-            merge();
-            clearLines();
-            spawnPiece();
-        }
-        
-        // 游戏结束
-        async function gameOver() {
-            gameRunning = false;
-            
-            // 保存记录到IndexedDB
-            await saveGameRecord();
-            
-            // 获取最近的记录
-            const recentRecords = await getLeaderboard(10);
-            
-            // 显示游戏结束界面
-            document.getElementById('finalScore').textContent = score;
-            document.getElementById('finalLines').textContent = lines;
-            document.getElementById('finalLevel').textContent = level;
-            
-            // 显示最近记录
-            const recordsList = document.getElementById('recordsList');
-            if (recentRecords.length === 0) {
-                recordsList.innerHTML = '<div style="text-align: center; padding: 20px; opacity: 0.7;">暂无游戏记录</div>';
-            } else {
-                let html = '';
-                recentRecords.forEach((record, index) => {
-                    const dateObj = new Date(record.timestamp || record.date);
-                    const dateStr = dateObj.toLocaleDateString();
-                    const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    
-                    const isCurrentGame = record.score === score && 
-                                         record.lines === lines && 
-                                         record.level === level;
-                    
-                    html += `
-                        <div class="record-item" style="${isCurrentGame ? 'background: rgba(79, 195, 247, 0.2); border-radius: 4px;' : ''}">
-                            <div class="record-rank">${index + 1}</div>
-                            <div class="record-score">${record.score}分</div>
-                            <div class="record-details">
-                                <span class="record-date">${dateStr}</span>
-                                <span class="record-time">${timeStr}</span>
-                            </div>
-                        </div>
-                    `;
-                });
-                recordsList.innerHTML = html;
-            }
-            
-            document.getElementById('gameOver').style.display = 'block';
-            
-            // 播放游戏结束音效
-            setTimeout(() => playSound('gameOver'), 300);
-            
-            stopSoftDrop();
-            stopSoftMove();
-        }
-        
-        // 更新UI
-        function updateUI() {
-            document.getElementById('score').textContent = score;
-            document.getElementById('level').textContent = level;
-            document.getElementById('lines').textContent = lines;
-            document.getElementById('highScore').textContent = highScore;
-        }
-        
-        // 重新开始
-        async function restart() {
-            console.log('重新开始游戏');
-            
-            // 取消之前的动画帧
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            
-            // 停止所有定时器
-            stopSoftDrop();
-            stopSoftMove();
-            
-            if (softDropInterval) {
-                clearInterval(softDropInterval);
-                softDropInterval = null;
-                isSoftDropping = false;
-            }
-            
-            // 重置游戏状态
-            resetBoard();
-            currentPiece = null;
-            nextPiece = null;
-            heldPiece = null;
-            canHold = true;
-            score = 0;
-            level = 1;
-            lines = 0;
-            gameRunning = true;
-            isPaused = false;
-            lastDrop = 0;
-            
-            // 重置7袋
-            if (pieceGenerationMode === 'BAG7') {
-                initBags();
-            }
-            
-            // 更新速度
-            updateSpeed();
-            
-            // 更新UI
-            updateUI();
-            
-            // 隐藏游戏结束和排行榜界面
-            document.getElementById('gameOver').style.display = 'none';
-            document.getElementById('leaderboardPanel').style.display = 'none';
-            document.getElementById('settingsPanel').style.display = 'none';
-            
-            // 生成新方块
-            nextPiece = getNextPiece();
-            spawnPiece();
-            
-            // 清空暂存区
-            drawHoldPiece();
-            
-            // 重置按钮文本
-            document.getElementById('pauseBtn').textContent = '暂停';
-            
-            // 重新开始游戏循环
-            lastDrop = 0;
-            animationFrameId = requestAnimationFrame(gameLoop);
-        }
-        
-        // 切换暂停
-        function togglePause() {
-            isPaused = !isPaused;
-            document.getElementById('pauseBtn').textContent = isPaused ? '继续' : '暂停';
-            
-            if (isPaused) {
-                stopSoftDrop();
-                stopSoftMove();
-            } else {
-                // 继续游戏时确保软降状态正确
-                if (isSoftDropping) {
-                    stopSoftDrop();
-                }
-            }
-        }
-        
-        // 切换设置面板
-        function toggleSettings() {
-            const settingsPanel = document.getElementById('settingsPanel');
-            settingsPanel.style.display = settingsPanel.style.display === 'block' ? 'none' : 'block';
-            
-            // 隐藏其他面板
-            document.getElementById('gameOver').style.display = 'none';
-            document.getElementById('leaderboardPanel').style.display = 'none';
-        }
-        
-        // 键盘控制
-        document.addEventListener('keydown', (e) => {
-            if (!gameRunning) return;
-            
-            switch(e.key) {
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    startSoftMove(-1);
-                    break;
-                case 'ArrowRight':
-                    e.preventDefault();
-                    startSoftMove(1);
-                    break;
-                case 'ArrowDown':
-                    e.preventDefault();
-                    if (!e.repeat) {
-                        startSoftDrop();
-                    }
-                    break;
-                case 'ArrowUp':
-                    e.preventDefault();
-                    rotatePiece();
-                    break;
-                case ' ':
-                    e.preventDefault();
-                    hardDrop();
-                    break;
-                case 'c':
-                case 'C':
-                    e.preventDefault();
-                    holdPiece();
-                    break;
-                case 'p':
-                case 'P':
-                    e.preventDefault();
-                    togglePause();
-                    break;
-                case 'Escape':
-                    e.preventDefault();
-                    toggleSettings();
-                    break;
-            }
-        });
-        
-        document.addEventListener('keyup', (e) => {
-            switch(e.key) {
-                case 'ArrowLeft':
-                case 'ArrowRight':
-                    e.preventDefault();
-                    stopSoftMove();
-                    break;
-                case 'ArrowDown':
-                    e.preventDefault();
-                    stopSoftDrop();
-                    break;
-            }
-        });
-        
-        // 绑定按钮事件
-        function bindButtonEvents() {
-            // 移动按钮
-            const leftBtn = document.getElementById('btnLeft');
-            const rightBtn = document.getElementById('btnRight');
-            
-            // 软移功能：按下开始连续移动，松开停止
-            [leftBtn, rightBtn].forEach((btn, index) => {
-                const dir = index === 0 ? -1 : 1;
-                
-                // 鼠标事件
-                btn.addEventListener('mousedown', () => startSoftMove(dir));
-                btn.addEventListener('mouseup', stopSoftMove);
-                btn.addEventListener('mouseleave', stopSoftMove);
-                
-                // 触摸事件
-                btn.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    startSoftMove(dir);
-                });
-                btn.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    stopSoftMove();
-                });
-                btn.addEventListener('touchcancel', (e) => {
-                    e.preventDefault();
-                    stopSoftMove();
-                });
-            });
-            
-            // 旋转按钮
-            document.getElementById('btnRotate').addEventListener('click', rotatePiece);
-            document.getElementById('btnRotate').addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                rotatePiece();
-            });
-            
-            // 软降按钮
-            const downBtn = document.getElementById('btnDown');
-            downBtn.addEventListener('mousedown', () => {
-                if (!gameRunning || isPaused) return;
-                startSoftDrop();
-            });
-            downBtn.addEventListener('mouseup', stopSoftDrop);
-            downBtn.addEventListener('mouseleave', stopSoftDrop);
-            downBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                if (!gameRunning || isPaused) return;
-                startSoftDrop();
-            });
-            downBtn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                stopSoftDrop();
-            });
-            downBtn.addEventListener('touchcancel', (e) => {
-                e.preventDefault();
-                stopSoftDrop();
-            });
-            
-            // 硬降按钮
-            document.getElementById('btnHardDrop').addEventListener('click', hardDrop);
-            document.getElementById('btnHardDrop').addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                hardDrop();
-            });
-            
-            // 暂存按钮
-            document.getElementById('btnHold').addEventListener('click', holdPiece);
-            document.getElementById('btnHold').addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                holdPiece();
-            });
-            
-            // 初始化音频（通过用户交互）
-            document.getElementById('touchControls').addEventListener('touchstart', initAudio);
-            document.getElementById('touchControls').addEventListener('mousedown', initAudio);
-        }
-        
-        // 防止触摸默认行为
-        document.getElementById('touchControls').addEventListener('touchstart', (e) => {
-            if (e.target === e.currentTarget) {
-                e.preventDefault();
-            }
-        });
-        
-        // 窗口大小变化时更新画布大小和预览
-        window.addEventListener('resize', () => {
-            updateCanvasSize();
-            drawNextPiece();
-            drawHoldPiece();
-        });
-        
-        // 页面卸载时清理
-        window.addEventListener('beforeunload', () => {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-            
-            stopSoftDrop();
-            stopSoftMove();
-            
-            if (softDropInterval) {
-                clearInterval(softDropInterval);
-            }
-        });
-        
-        // 页面加载完成后初始化游戏
-        window.addEventListener('DOMContentLoaded', () => {
-            bindButtonEvents();
-            initGame();
-        });
-    </script>
+      );
+    } else {
+      loadCachedCity();
+      loadAllWeather();
+    }
+  }
+
+  async function updateCityNameByCoords() {
+    try {
+      const rev = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${currentLat}&longitude=${currentLon}&localityLanguage=zh`);
+      const data = await rev.json();
+      currentCityName = data.city || data.locality || "未知城市";
+      cityNameEl.innerText = currentCityName;
+      localStorage.setItem('lastCity', JSON.stringify({ lat: currentLat, lon: currentLon, name: currentCityName }));
+    } catch (e) {
+      cityNameEl.innerText = `${currentLat.toFixed(2)}°,${currentLon.toFixed(2)}°`;
+    }
+  }
+
+  function loadCachedCity() {
+    const cached = localStorage.getItem('lastCity');
+    if (cached) {
+      try {
+        const city = JSON.parse(cached);
+        currentLat = city.lat;
+        currentLon = city.lon;
+        currentCityName = city.name;
+        cityNameEl.innerText = currentCityName;
+      } catch(e) {}
+    } else {
+      currentLat = DEFAULT_LAT;
+      currentLon = DEFAULT_LON;
+      currentCityName = '北京';
+      cityNameEl.innerText = currentCityName;
+    }
+  }
+
+  // 核心: 加载所有天气 (Open-Meteo + 和风天气AQI/预警)
+  async function loadAllWeather() {
+    showLoading();
+    try {
+      // 并行请求 Open-Meteo (实时+小时+7天) 和 和风天气 (aqi+预警)
+      const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current_weather=true&hourly=temperature_2m,precipitation_probability,relative_humidity_2m,windspeed_10m,uv_index&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`;
+      const qweatherAqiUrl = `https://devapi.qweather.com/v7/air/now?location=${currentLon},${currentLat}&key=${QWEATHER_KEY}`;
+      const qweatherWarningUrl = `https://devapi.qweather.com/v7/warning/now?location=${currentLon},${currentLat}&key=${QWEATHER_KEY}`;
+
+      const [weatherRes, aqiRes, warnRes] = await Promise.all([
+        fetch(openMeteoUrl),
+        fetch(qweatherAqiUrl),
+        fetch(qweatherWarningUrl)
+      ]);
+      const weatherData = await weatherRes.json();
+      const aqiData = await aqiRes.json();
+      const warningData = await warnRes.json();
+
+      // 处理实时 & 逐日 & 小时
+      renderCurrentWeather(weatherData);
+      renderHourly(weatherData);
+      renderDaily(weatherData);
+      renderAqi(aqiData);
+      renderWarning(warningData);
+    } catch (error) {
+      console.error(error);
+      alert('天气数据加载失败，可稍后刷新');
+    } finally {
+      hideLoading();
+    }
+  }
+
+  function renderCurrentWeather(data) {
+    if (!data.current_weather) return;
+    const current = data.current_weather;
+    const temperature = current.temperature;
+    const weatherCode = current.weathercode;
+    const { icon, desc } = getWeatherIconAndDesc(weatherCode);
+    tempNowEl.innerHTML = `${Math.round(temperature)}<small>°</small>`;
+    weatherDescEl.innerHTML = `${icon} ${desc}`;
+    if (data.daily && data.daily.temperature_2m_max.length>0) {
+      const max = Math.round(data.daily.temperature_2m_max[0]);
+      const min = Math.round(data.daily.temperature_2m_min[0]);
+      highLowEl.innerHTML = `↑ ${max}°  ↓ ${min}°`;
+    }
+    // 湿度、风速、紫外线从hourly的当前小时取值
+    if (data.hourly && data.hourly.time.length) {
+      const now = new Date();
+      const nowHourStr = now.toISOString().slice(0,13)+":00";
+      const idx = data.hourly.time.findIndex(t => t >= nowHourStr);
+      const validIdx = idx !== -1 ? idx : 0;
+      const humidity = data.hourly.relative_humidity_2m?.[validIdx];
+      const windspeed = data.current_weather.windspeed;
+      const uv = data.hourly.uv_index?.[validIdx];
+      humidityEl.innerText = humidity !== undefined ? `${humidity}%` : '--%';
+      windSpeedEl.innerText = windspeed !== undefined ? `${Math.round(windspeed)} km/h` : '--';
+      uvIndexEl.innerText = uv !== undefined ? uv : '--';
+    }
+  }
+
+  function renderHourly(data) {
+    if (!data.hourly) return;
+    const times = data.hourly.time.slice(0, 24);
+    const temps = data.hourly.temperature_2m.slice(0,24);
+    const rains = data.hourly.precipitation_probability.slice(0,24);
+    hourlyContainer.innerHTML = '';
+    times.forEach((time, i) => {
+      const date = new Date(time);
+      const hour = date.getHours();
+      const temp = Math.round(temps[i]);
+      const rainProb = rains[i];
+      const div = document.createElement('div');
+      div.className = 'hour-item';
+      div.innerHTML = `
+        <div class="hour-time">${hour}:00</div>
+        <div class="hour-temp">${temp}°</div>
+        <div class="hour-rain">💧${rainProb}%</div>
+      `;
+      hourlyContainer.appendChild(div);
+    });
+  }
+
+  function renderDaily(data) {
+    if (!data.daily) return;
+    const dailyList = document.getElementById('dailyContainer');
+    dailyList.innerHTML = '';
+    for (let i = 0; i < Math.min(7, data.daily.time.length); i++) {
+      const date = new Date(data.daily.time[i]);
+      const weekStr = i === 0 ? '今天' : date.toLocaleDateString('zh-CN', { weekday: 'short' });
+      const maxTemp = Math.round(data.daily.temperature_2m_max[i]);
+      const minTemp = Math.round(data.daily.temperature_2m_min[i]);
+      const code = data.daily.weathercode[i];
+      const { icon } = getWeatherIconAndDesc(code);
+      const row = document.createElement('div');
+      row.className = 'daily-row';
+      row.innerHTML = `
+        <div class="daily-date">${weekStr}</div>
+        <div class="daily-icon">${icon}</div>
+        <div class="daily-temp">${maxTemp}° / ${minTemp}°</div>
+      `;
+      dailyList.appendChild(row);
+    }
+  }
+
+  function renderAqi(aqiData) {
+    if (aqiData.code === '200' && aqiData.now) {
+      const aqi = aqiData.now.aqi;
+      aqiEl.innerText = aqi || '--';
+    } else {
+      aqiEl.innerText = '暂不可用';
+    }
+  }
+
+  function renderWarning(warningData) {
+    if (warningData.code === '200' && warningData.warning && warningData.warning.length > 0) {
+      const warn = warningData.warning[0];
+      alertContent.innerHTML = `${warn.title} · ${warn.level} · ${warn.text}`;
+      alertCard.style.display = 'block';
+    } else {
+      alertCard.style.display = 'none';
+    }
+  }
+
+  function showLoading() {
+    // 简单占位，不清空主体，避免闪烁
+    document.querySelectorAll('.loading').forEach(el => el.innerHTML = '加载中...');
+  }
+  function hideLoading() {
+    // 已经渲染过，无需额外清除
+  }
+
+  // 初始化
+  function init() {
+    const stored = localStorage.getItem('lastCity');
+    if (stored) {
+      try {
+        const city = JSON.parse(stored);
+        currentLat = city.lat;
+        currentLon = city.lon;
+        currentCityName = city.name;
+        cityNameEl.innerText = currentCityName;
+        loadAllWeather();
+      } catch(e) { getCurrentPosition(); }
+    } else {
+      getCurrentPosition();
+    }
+    refreshBtn.onclick = () => loadAllWeather();
+    searchBtn.onclick = () => searchCity(searchInput.value.trim());
+    searchInput.addEventListener('keypress', (e) => {
+      if(e.key === 'Enter') searchCity(searchInput.value.trim());
+    });
+    // 注册 Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then(reg => console.log('SW registered', reg)).catch(err => console.log('SW failed', err));
+    }
+  }
+  init();
+</script>
 </body>
 </html>
